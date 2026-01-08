@@ -17,8 +17,6 @@ import { useNavigation } from "@react-navigation/native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Calendar, ChevronLeft } from "@tamagui/lucide-icons";
-
-// Asegúrate de que estos imports existan en tu proyecto
 import { createGoalSchema, CreateGoalFormValues } from "./createGoal.schema";
 import { GoalTypeSelector } from "../../components/goals/GoalTypeSelector";
 import { GoalType } from "../../types/goal.types";
@@ -31,11 +29,7 @@ export const CreateGoalScreen = () => {
     (state) => state.user?.preferences?.mainGoal
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Controla la visibilidad del picker (Solo afecta a Android y modo Modal iOS)
   const [showDatePicker, setShowDatePicker] = useState(false);
-
-  // Lógica para pre-seleccionar el tipo basado en la preferencia
   const getDefaultType = (): GoalType => {
     if (userPreference === "debt") return GoalType.DEBT;
     if (userPreference === "invest" || userPreference === "retire")
@@ -67,7 +61,6 @@ export const CreateGoalScreen = () => {
   const onSubmit = async (data: CreateGoalFormValues) => {
     try {
       setIsSubmitting(true);
-      // El schema de Zod ya se encargó de las transformaciones de string a number
       await GoalService.create({
         ...data,
         deadline: data.deadline.toISOString(),
@@ -94,7 +87,6 @@ export const CreateGoalScreen = () => {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "white" }}>
       <YStack flex={1} paddingHorizontal="$4" paddingTop="$2">
-        {/* Header */}
         <XStack alignItems="center" space="$3" marginBottom="$4">
           <Button
             unstyled
@@ -110,10 +102,9 @@ export const CreateGoalScreen = () => {
 
         <ScrollView
           showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled" // Importante para cerrar teclado al tocar fuera
+          keyboardShouldPersistTaps="handled" 
         >
           <YStack space="$5" paddingBottom="$10">
-            {/* 1. Selector Visual de Tipo */}
             <Controller
               control={control}
               name="type"
@@ -124,9 +115,7 @@ export const CreateGoalScreen = () => {
 
             <Separator />
 
-            {/* 2. Formulario */}
             <YStack space="$4">
-              {/* Nombre */}
               <YStack>
                 <Label htmlFor="name" color="$gray11" fontSize="$3">
                   Nombre de la meta
@@ -149,7 +138,6 @@ export const CreateGoalScreen = () => {
                 <ErrorMessage error={errors.name} />
               </YStack>
 
-              {/* Monto Objetivo */}
               <YStack>
                 <Label htmlFor="target" color="$gray11" fontSize="$3">
                   Monto objetivo ($)
@@ -177,7 +165,6 @@ export const CreateGoalScreen = () => {
                 <ErrorMessage error={errors.targetAmount} />
               </YStack>
 
-              {/* Monto Actual */}
               <YStack>
                 <Label htmlFor="current" color="$gray11" fontSize="$3">
                   ¿Ya tienes algo ahorrado? (Opcional)
@@ -200,7 +187,6 @@ export const CreateGoalScreen = () => {
                 <ErrorMessage error={errors.currentAmount} />
               </YStack>
 
-              {/* Fecha Límite - Lógica Corregida */}
               <YStack>
                 <Label color="$gray11" fontSize="$3">
                   Fecha objetivo
@@ -229,7 +215,6 @@ export const CreateGoalScreen = () => {
                             : "Seleccionar fecha"}
                         </Button>
 
-                        {/* El DatePicker se renderiza condicionalmente */}
                         {showDatePicker && (
                           <DateTimePicker
                             testID="dateTimePicker"
@@ -240,11 +225,9 @@ export const CreateGoalScreen = () => {
                             }
                             minimumDate={new Date()}
                             onChange={(event, selectedDate) => {
-                              // En Android, el picker se cierra al seleccionar
                               if (Platform.OS === "android") {
                                 setShowDatePicker(false);
                               }
-                              // Si el usuario cancela (Android), selectedDate es undefined
                               if (event.type === "set" && selectedDate) {
                                 onChange(selectedDate);
                               }
@@ -252,7 +235,6 @@ export const CreateGoalScreen = () => {
                           />
                         )}
 
-                        {/* Botón "Listo" solo para iOS (porque spinner no tiene botón OK) */}
                         {Platform.OS === "ios" && showDatePicker && (
                           <XStack justifyContent="flex-end" marginTop="$2">
                             <Button
@@ -271,7 +253,6 @@ export const CreateGoalScreen = () => {
                 <ErrorMessage error={errors.deadline} />
               </YStack>
 
-              {/* Campos opcionales (Tasa) */}
               {showInterestField && (
                 <YStack animation="quick" enterStyle={{ opacity: 0, y: -10 }}>
                   <Label htmlFor="interest" color="$gray11" fontSize="$3">
@@ -302,7 +283,6 @@ export const CreateGoalScreen = () => {
               )}
             </YStack>
 
-            {/* Submit Button */}
             <Button
               size="$5"
               backgroundColor="$brand"
