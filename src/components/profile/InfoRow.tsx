@@ -26,28 +26,27 @@ export const InfoRow = ({
         disabled={!isEditable}
         paddingVertical="$4"
         paddingHorizontal="$4"
-        animation="quick" 
-        pressStyle={{ 
-          scale: 0.98, 
+        animation="quick"
+        pressStyle={{
+          scale: 0.98,
           opacity: 0.8,
-          backgroundColor: "#F8FAFC" 
+          backgroundColor: "$backgroundPress",
         }}
       >
         <XStack alignItems="center" space="$4">
-          
           <YStack
-            backgroundColor="#EEF2FF" 
+            backgroundColor="$gray3"
             width={42}
             height={42}
-            borderRadius="$4" 
+            borderRadius="$4"
             alignItems="center"
             justifyContent="center"
             borderWidth={1}
-            borderColor="#E0E7FF" 
-            shadowColor="#4F46E5"
+            borderColor="$borderColor"
+            shadowColor="$shadowColor"
             shadowRadius={4}
             shadowOffset={{ width: 0, height: 2 }}
-            shadowOpacity={0.05} 
+            shadowOpacity={0.05}
           >
             <Icon size={20} color="#4F46E5" strokeWidth={2} />
           </YStack>
@@ -55,18 +54,18 @@ export const InfoRow = ({
           <YStack flex={1} space="$1">
             <Text
               fontSize={11}
-              color="#64748B"
+              color="$gray11"
               fontWeight="700"
-              letterSpacing={0.5} 
+              letterSpacing={0.5}
               textTransform="uppercase"
               opacity={0.8}
             >
               {label}
             </Text>
-            
-            <Text 
-              fontSize={16} 
-              color={value ? "#1E293B" : "#94A3B8"} 
+
+            <Text
+              fontSize={16}
+              color={value ? "$color" : "$gray9"}
               fontWeight="600"
               numberOfLines={1}
             >
@@ -75,21 +74,15 @@ export const InfoRow = ({
           </YStack>
 
           {isEditable ? (
-            <View 
-              backgroundColor="#F1F5F9" 
-              borderRadius="$10" 
-              padding="$1.5"
-            >
-              <ChevronRight size={16} color="#94A3B8" />
+            <View backgroundColor="$gray4" borderRadius="$10" padding="$1.5">
+              <ChevronRight size={16} color="$gray10" />
             </View>
           ) : (
-            <Lock size={14} color="#CBD5E1" />
+            <Lock size={14} color="$gray8" />
           )}
-
         </XStack>
       </Button>
-      
-      {!isLast && <Separator borderColor="#F1F5F9" marginLeft={74} />}
+      {!isLast && <Separator borderColor="$borderColor" marginLeft={74} />}
     </YStack>
   );
 };

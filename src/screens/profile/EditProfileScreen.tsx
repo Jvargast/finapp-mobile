@@ -8,7 +8,10 @@ import {
   Spinner,
   Separator,
 } from "tamagui";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import {
   User,
@@ -26,8 +29,10 @@ import { SensitiveRow } from "../../components/profile/SensitiveRow";
 import { ReadOnlyRow } from "../../components/profile/ReadOnlyRow";
 import { EditInputRow } from "../../components/profile/EditInputRow";
 import { PrimaryButton } from "../../components/ui/PrimaryButton";
+import { FormGroup } from "../../components/ui/FormGroup";
 
 export default function EditProfileScreen() {
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const user = useUserStore((state) => state.user);
   const showToast = useToastStore((state) => state.showToast);
@@ -110,64 +115,50 @@ export default function EditProfileScreen() {
       setSaving(false);
     }
   };
-
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#F8FAFC" }}>
-      <XStack
-        padding="$4"
-        alignItems="center"
-        space="$3"
-        backgroundColor="white"
-        borderBottomWidth={1}
-        borderColor="#E2E8F0"
+    <YStack flex={1} backgroundColor="$background">
+      <ScrollView
+        contentContainerStyle={{
+          paddingHorizontal: 16,
+          paddingTop: 12,
+          paddingBottom: 20,
+        }}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
-        <Button unstyled onPress={() => navigation.goBack()} padding="$2">
-          <ChevronLeft color="#1E293B" />
-        </Button>
-        <Text fontSize={18} fontWeight="700" color="#1E293B">
-          Editar Perfil
-        </Text>
-      </XStack>
+        <FormGroup title="Información Básica">
+          <YStack flex={1}>
+            <EditInputRow
+              label="Nombre"
+              icon={User}
+              value={formData.firstName}
+              onChangeText={(t) => {
+                setFormData({ ...formData, firstName: t });
+                if (errors.firstName) setErrors({ ...errors, firstName: "" });
+              }}
+              placeholder="Nombre"
+              error={errors.firstName}
+              helperText="Tus nombres."
+            />
+          </YStack>
 
-      <ScrollView contentContainerStyle={{ padding: 20 }}>
-        <YStack space="$2" marginBottom="$6">
-          <Text
-            fontSize={13}
-            fontWeight="700"
-            color="#64748B"
-            textTransform="uppercase"
-            marginBottom="$2"
-            letterSpacing={0.5}
-          >
-            Información Básica
-          </Text>
-
-          <EditInputRow
-            label="Nombre"
-            icon={User}
-            value={formData.firstName}
-            onChangeText={(t) => {
-              setFormData({ ...formData, firstName: t });
-              if (errors.firstName) setErrors({ ...errors, firstName: "" });
-            }}
-            placeholder="Tu nombre"
-            error={errors.firstName}
-          />
+          <YStack flex={1}>
+            <EditInputRow
+              label="Apellidos"
+              icon={User}
+              value={formData.lastName}
+              onChangeText={(t) => {
+                setFormData({ ...formData, lastName: t });
+                if (errors.lastName) setErrors({ ...errors, lastName: "" });
+              }}
+              placeholder="Apellido"
+              error={errors.lastName}
+              helperText="Tus apellidos."
+            />
+          </YStack>
 
           <EditInputRow
-            label="Apellido"
-            icon={User}
-            value={formData.lastName}
-            onChangeText={(t) => {
-              setFormData({ ...formData, lastName: t });
-              if (errors.lastName) setErrors({ ...errors, lastName: "" });
-            }}
-            placeholder="Tu apellido"
-            error={errors.lastName}
-          />
-
-          <EditInputRow
-            label="Usuario (@)"
+            label="Usuario"
             icon={AtSign}
             value={formData.username}
             onChangeText={(t) => {
@@ -177,53 +168,48 @@ export default function EditProfileScreen() {
             autoCapitalize="none"
             placeholder="nombre_usuario"
             error={errors.username}
-            helperText="Mínimo 3 caracteres. Solo letras, números, puntos (.) y guiones bajos (_)."
+            helperText="Tu identificador único en Nova."
           />
-        </YStack>
+        </FormGroup>
 
-        <Separator borderColor="#E2E8F0" marginBottom="$6" />
-
-        <YStack space="$2" marginBottom="$6">
-          <Text
-            fontSize={13}
-            fontWeight="700"
-            color="#64748B"
-            textTransform="uppercase"
-            marginBottom="$2"
-            letterSpacing={0.5}
-          >
-            Datos de Contacto
-          </Text>
-
+        <FormGroup title="Datos de Contacto">
           <SensitiveRow
             icon={Mail}
-            label="Correo Electrónico"
+            label="Correo"
             value={user?.email}
             onEdit={() => setModalType("EMAIL")}
           />
 
           <SensitiveRow
             icon={Phone}
-            label="Teléfono Móvil"
+            label="Móvil"
             value={user?.phone}
             onEdit={() => setModalType("PHONE")}
           />
 
           <ReadOnlyRow
-            label="RUT / ID (No editable)"
+            label="RUT / ID Nacional"
             value={user?.rut || "No verificado"}
           />
-        </YStack>
+        </FormGroup>
+      </ScrollView>
 
+      <YStack
+        paddingHorizontal="$4"
+        paddingTop="$4"
+        paddingBottom={insets.bottom + 16}
+        borderTopWidth={1}
+        borderColor="$borderColor"
+        backgroundColor="$background"
+      >
         <PrimaryButton
           label="Guardar Cambios"
           loadingText="Guardando..."
           isLoading={saving}
           onPress={handleSaveSimpleData}
           showIcon={false}
-          marginTop="$6"
         />
-      </ScrollView>
+      </YStack>
 
       {modalType && (
         <SensitiveChangeModal
@@ -232,6 +218,6 @@ export default function EditProfileScreen() {
           onClose={() => setModalType(null)}
         />
       )}
-    </SafeAreaView>
+    </YStack>
   );
 }

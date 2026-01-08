@@ -63,8 +63,13 @@ export const UserService = {
     return data;
   },
 
-  // Aquí podrías agregar cosas a futuro como:
-  // updateProfilePhoto(file)
-  // changePassword(old, new)
-  // deleteAccount()
+  updatePushToken: async (pushToken: string) => {
+    const { data } = await finappApi.patch("/users/push-token", { pushToken });
+    return data;
+  },
+
+  deleteAccount: async () => {
+    const { data } = await finappApi.delete("/users/me");
+    return data;
+  },
 };

@@ -10,19 +10,22 @@ import RootNavigator from "./src/navigation/RootNavigator";
 import { useColorScheme } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { GlobalToast } from "./src/components/ui/GlobalToast";
+import { useUserStore } from "./src/stores/useUserStore";
+import { usePushNotifications } from "./src/hooks/usePushNotifications";
 
 const queryClient = new QueryClient();
 
 export default function App() {
-  console.log("--> INICIANDO APP.TSX");
-
   const colorScheme = useColorScheme();
+  const user = useUserStore((state) => state.user);
+  usePushNotifications();
+  const isDarkMode = user?.preferences?.darkMode ?? colorScheme === "dark";
+  const currentTheme = isDarkMode ? "dark" : "light";
 
   const [loaded, error] = useFonts({
     Inter: require("@tamagui/font-inter/otf/Inter-Medium.otf"),
     InterBold: require("@tamagui/font-inter/otf/Inter-Bold.otf"),
   });
-
 
   if (error) {
     console.error("Error cargando fuentes:", error);
@@ -51,16 +54,16 @@ export default function App() {
     );
   }
 
-  console.log("--> APP LISTA PARA RENDERIZAR");
+  console.log(isDarkMode ? "--> MODO OSCURO" : "--> MODO CLARO");
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
         <TamaguiProvider config={config}>
-          <Theme name={colorScheme === "dark" ? "dark" : "light"}>
+          <Theme name={currentTheme}>
             <SafeAreaProvider>
               <GlobalToast />
-              <StatusBar style="auto" />
+              <StatusBar style={isDarkMode ? "light" : "dark"} />
               <RootNavigator />
             </SafeAreaProvider>
           </Theme>

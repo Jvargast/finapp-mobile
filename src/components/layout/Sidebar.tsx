@@ -10,14 +10,17 @@ import {
 } from "tamagui";
 import {
   Home,
-  TrendingUp,
   Target,
   Settings,
   LogOut,
   Star,
-  ShieldAlert,
   Landmark,
   ChevronRight,
+  Building,
+  Briefcase,
+  ShieldCheck,
+  TrendingDown,
+  TrendingUp,
 } from "@tamagui/lucide-icons";
 import { DrawerContentScrollView } from "@react-navigation/drawer";
 import { useNavigation } from "@react-navigation/native";
@@ -32,13 +35,30 @@ export const Sidebar = (props: any) => {
   const currentRoute = state.routes[state.index].name;
 
   const mainGoal = user?.preferences?.mainGoal || "save";
+  const isPro = user?.plan === "PRO" || user?.plan === "PREMIUM";
 
   const getGoalMenuItem = () => {
     switch (mainGoal) {
       case "invest":
-        return { label: "Inversiones", icon: TrendingUp, route: "Investments" };
+        return { label: "Inversiones", icon: TrendingUp, route: "Goals" };
+
+      case "debt":
+        return { label: "Plan de Deudas", icon: TrendingDown, route: "Goals" };
+
       case "control":
-        return { label: "Plan de Deudas", icon: ShieldAlert, route: "Debts" };
+        return {
+          label: "Control de Gastos",
+          icon: ShieldCheck,
+          route: "Goals",
+        };
+
+      case "house":
+        return { label: "Mi Casa Propia", icon: Building, route: "Goals" };
+
+      case "retire":
+        return { label: "Fondo de Retiro", icon: Briefcase, route: "Goals" };
+
+      case "save":
       default:
         return { label: "Metas de Ahorro", icon: Target, route: "Goals" };
     }
@@ -77,37 +97,46 @@ export const Sidebar = (props: any) => {
   };
 
   return (
-    <YStack flex={1} backgroundColor="#F8FAFC">
+    <YStack flex={1} backgroundColor="$background">
       <Pressable
         onPress={() => handleNavigate("Profile")}
         style={({ pressed }) => ({
           opacity: pressed ? 0.7 : 1,
-          backgroundColor: pressed ? "#F1F5F9" : "transparent",
+          backgroundColor: pressed ? "rgba(0,0,0,0.05)" : "transparent",
         })}
       >
         <YStack paddingTop="$8" paddingHorizontal="$5" paddingBottom="$4">
           <XStack space="$3" alignItems="center">
-            <Avatar circular size="$5">
-              <Avatar.Image
-                src={user?.avatar || user?.avatarUrl}
-                width="100%"
-                height="100%"
-              />
-              <Avatar.Fallback
-                backgroundColor="#4F46E5"
-                alignItems="center"
-                justifyContent="center"
-              >
-                <Text color="white" fontWeight="bold" fontSize={18}>
-                  {user?.firstName?.[0]?.toUpperCase() || "N"}
-                </Text>
-              </Avatar.Fallback>
-            </Avatar>
+            <View
+              padding={4}
+              borderRadius={100}
+              borderWidth={1}
+              borderColor={isPro ? "#F59E0B" : "$brand"}
+              borderStyle={isPro ? "solid" : "dashed"}
+            >
+              <Avatar circular size="$5">
+                <Avatar.Image
+                  src={user?.avatar || user?.avatarUrl}
+                  width="100%"
+                  height="100%"
+                />
+                <Avatar.Fallback
+                  backgroundColor="$brand"
+                  alignItems="center"
+                  justifyContent="center"
+                >
+                  <Text color="white" fontWeight="bold" fontSize={18}>
+                    {user?.firstName?.[0]?.toUpperCase() || "N"}
+                  </Text>
+                </Avatar.Fallback>
+              </Avatar>
+            </View>
+
             <YStack flex={1}>
               <Text
                 fontWeight="800"
                 fontSize={16}
-                color="#1E293B"
+                color="$color"
                 numberOfLines={1}
                 ellipsizeMode="tail"
               >
@@ -115,19 +144,28 @@ export const Sidebar = (props: any) => {
               </Text>
               <Text
                 fontSize={12}
-                color="#64748B"
+                color="$gray11"
                 fontWeight="500"
                 numberOfLines={1}
                 ellipsizeMode="tail"
               >
                 {user?.email}
               </Text>
+              <Text
+                fontSize={12}
+                color="$gray8"
+                fontWeight="500"
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                @{user?.username || "usuario"}
+              </Text>
             </YStack>
           </XStack>
         </YStack>
       </Pressable>
 
-      <Separator borderColor="#E2E8F0" marginHorizontal="$5" />
+      <Separator borderColor="$borderColor" marginHorizontal="$5" />
 
       <DrawerContentScrollView
         {...props}
@@ -136,7 +174,7 @@ export const Sidebar = (props: any) => {
         <YStack paddingHorizontal="$3" space="$1">
           <Text
             fontSize={11}
-            color="#94A3B8"
+            color="$gray10"
             fontWeight="700"
             marginBottom="$2"
             paddingHorizontal="$3"
@@ -159,18 +197,18 @@ export const Sidebar = (props: any) => {
                 paddingVertical={12}
                 paddingHorizontal={16}
                 borderRadius={12}
-                backgroundColor={isActive ? "#4F46E5" : "transparent"}
+                backgroundColor={isActive ? "$brand" : "transparent"}
                 pressStyle={{
-                  backgroundColor: isActive ? "#4338CA" : "#F1F5F9",
+                  backgroundColor: isActive ? "$brand" : "$color2",
                 }}
                 onPress={() => handleNavigate(item.route)}
                 animation="quick"
               >
-                <Icon size={20} color={isActive ? "white" : "#64748B"} />
+                <Icon size={20} color={isActive ? "white" : "$gray10"} />
                 <Text
                   marginLeft="$3"
                   fontSize={15}
-                  color={isActive ? "white" : "#334155"}
+                  color={isActive ? "white" : "$color"}
                   fontWeight={isActive ? "700" : "500"}
                   flex={1}
                 >
@@ -179,12 +217,12 @@ export const Sidebar = (props: any) => {
 
                 {item.badge && !isActive && (
                   <View
-                    backgroundColor="#EEF2FF"
+                    backgroundColor="$blue3"
                     paddingHorizontal={6}
                     paddingVertical={2}
                     borderRadius={4}
                   >
-                    <Text fontSize={10} color="#4F46E5" fontWeight="bold">
+                    <Text fontSize={10} color="$brand" fontWeight="bold">
                       {item.badge}
                     </Text>
                   </View>
@@ -257,8 +295,8 @@ export const Sidebar = (props: any) => {
         padding="$4"
         paddingBottom="$8"
         borderTopWidth={1}
-        borderColor="#E2E8F0"
-        backgroundColor="#F8FAFC"
+        borderColor="$borderColor"
+        backgroundColor="$background"
       >
         <Button
           unstyled
@@ -266,11 +304,11 @@ export const Sidebar = (props: any) => {
           alignItems="center"
           padding="$3"
           borderRadius="$4"
-          pressStyle={{ backgroundColor: "#F1F5F9" }}
+          pressStyle={{ backgroundColor: "$color2" }}
           onPress={() => handleNavigate("Settings")}
         >
-          <Settings size={20} color="#64748B" />
-          <Text marginLeft="$3" fontSize={15} color="#334155" fontWeight="500">
+          <Settings size={20} color="$gray10" />
+          <Text marginLeft="$3" fontSize={15} color="$color" fontWeight="500">
             Configuración
           </Text>
         </Button>
@@ -282,7 +320,7 @@ export const Sidebar = (props: any) => {
           padding="$3"
           marginTop="$1"
           borderRadius="$4"
-          pressStyle={{ backgroundColor: "#FEF2F2" }}
+          pressStyle={{ backgroundColor: "rgba(239, 68, 68, 0.1)" }}
           onPress={handleLogout}
         >
           <LogOut size={20} color="#EF4444" />

@@ -6,7 +6,6 @@ import {
   Button,
   Avatar,
   ScrollView,
-  Separator,
   View,
   Spinner,
 } from "tamagui";
@@ -86,14 +85,14 @@ export default function ProfileScreen() {
   const goToEdit = () => navigation.navigate("EditProfile");
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#F8FAFC" }}>
+    <YStack flex={1} backgroundColor="$background">
       <ScrollView
         contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#4F46E5"
+            tintColor="$brand"
           />
         }
       >
@@ -103,20 +102,20 @@ export default function ProfileScreen() {
               padding={4}
               borderRadius={100}
               borderWidth={1}
-              borderColor={isPro ? "#F59E0B" : "#E2E8F0"}
+              borderColor={isPro ? "#F59E0B" : "$brand"}
               borderStyle={isPro ? "solid" : "dashed"}
             >
               <Avatar circular size="$10">
                 <Avatar.Image source={{ uri: avatarSource }} />
                 <Avatar.Fallback
-                  backgroundColor={isPro ? "#1E293B" : "#4F46E5"}
+                  backgroundColor={isPro ? "#1E293B" : "$brand"}
                   alignItems="center"
                   justifyContent="center"
                 >
                   <Text
                     fontSize={32}
                     fontWeight="bold"
-                    color={isPro ? "#F59E0B" : "white"}
+                    color={isPro ? "#F59E0B" : "$color"}
                   >
                     {initials}
                   </Text>
@@ -130,14 +129,14 @@ export default function ProfileScreen() {
               right={-5}
               size="$3"
               circular
-              backgroundColor="white"
+              backgroundColor="$background"
               borderWidth={1}
-              borderColor="#E2E8F0"
+              borderColor="$borderColor"
               icon={
                 uploading ? (
-                  <Spinner size="small" color="#4F46E5" />
+                  <Spinner size="small" color="$brand" />
                 ) : (
-                  <Camera size={16} color="#1E293B" />
+                  <Camera size={16} color="$color" />
                 )
               }
               onPress={uploading ? undefined : handlePickImage}
@@ -149,30 +148,30 @@ export default function ProfileScreen() {
           <Text
             fontSize={24}
             fontWeight="800"
-            color="#1E293B"
+            color="$color"
             textAlign="center"
           >
             {fullName}
           </Text>
 
           <XStack alignItems="center" space="$2" marginTop="$1">
-            <Text fontSize={14} color="#64748B" fontWeight="500">
+            <Text fontSize={14} color="$gray11" fontWeight="500">
               @{user?.username || "usuario"}
             </Text>
             <View
-              backgroundColor={isPro ? "#FFFBEB" : "#F1F5F9"}
+              backgroundColor={isPro ? "#FFFBEB" : "$background"}
               paddingHorizontal={8}
               paddingVertical={2}
               borderRadius={6}
               borderWidth={1}
-              borderColor={isPro ? "#FCD34D" : "#E2E8F0"}
+              borderColor={isPro ? "#FCD34D" : "$borderColor"}
             >
               <XStack alignItems="center" space="$1">
                 {isPro && <Crown size={10} color="#D97706" />}
                 <Text
                   fontSize={10}
                   fontWeight="800"
-                  color={isPro ? "#D97706" : "#64748B"}
+                  color={isPro ? "#D97706" : "$brand"}
                 >
                   {planName}
                 </Text>
@@ -182,10 +181,11 @@ export default function ProfileScreen() {
           <Button
             marginTop="$4"
             size="$3"
-            backgroundColor="white"
+            backgroundColor="$brand"
+            color="$white"
             borderWidth={1}
-            borderColor="#E2E8F0"
-            icon={<Settings size={16} />}
+            borderColor="$borderColor"
+            icon={<Settings size={16} color="$white" />}
             onPress={goToEdit}
           >
             Editar Perfil Completo
@@ -227,6 +227,6 @@ export default function ProfileScreen() {
           />
         </InfoGroup>
       </ScrollView>
-    </SafeAreaView>
+    </YStack>
   );
 }

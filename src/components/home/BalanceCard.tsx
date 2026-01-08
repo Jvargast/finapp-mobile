@@ -1,33 +1,52 @@
 import { YStack, Text, XStack, Button, Stack } from "tamagui";
 import { Eye, EyeOff, TrendingUp } from "@tamagui/lucide-icons";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useUserStore } from "../../stores/useUserStore";
 
-const MOCK_BALANCE = {
-  amount: "30.000",
-  currency: "$",
-  trend: "+15%",
+const BASE_BALANCE_CLP = 3500000;
+
+const REF_RATES: Record<string, number> = {
+  CLP: 1,
+  USD: 0.0011,
+  EUR: 0.001,
+  UF: 0.000028,
+  CAD: 0.0015,
+  BTC: 0.000000012,
 };
 
 export const BalanceCard = () => {
   const [showBalance, setShowBalance] = useState(true);
-
   const user = useUserStore((state) => state.user);
 
-  const currencyCode = user?.preferences?.currency || "CLP";
+  const targetCurrency = user?.preferences?.currency || "CLP";
+
+  const displayAmount = useMemo(() => {
+    const rate = REF_RATES[targetCurrency] || 1;
+    return BASE_BALANCE_CLP * rate;
+  }, [targetCurrency]);
+
+  const formattedBalance = useMemo(() => {
+    if (targetCurrency === "BTC") return displayAmount.toFixed(8);
+
+    return new Intl.NumberFormat("es-CL", {
+      minimumFractionDigits: targetCurrency === "CLP" ? 0 : 2,
+      maximumFractionDigits: targetCurrency === "CLP" ? 0 : 2,
+    }).format(displayAmount);
+  }, [displayAmount, targetCurrency]);
 
   const getCurrencySymbol = (code: string) => {
     const symbols: Record<string, string> = {
-      EUR: "€",
-      USD: "$",
       CLP: "$",
-      GBP: "£",
-      JPY: "¥",
+      USD: "US$",
+      EUR: "€",
+      CAD: "C$",
+      UF: "UF",
+      BTC: "₿",
     };
     return symbols[code] || code;
   };
 
-  const symbol = getCurrencySymbol(currencyCode);
+  const symbol = getCurrencySymbol(targetCurrency);
 
   return (
     <Stack
@@ -64,6 +83,7 @@ export const BalanceCard = () => {
             unstyled
             onPress={() => setShowBalance(!showBalance)}
             opacity={0.8}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
             {showBalance ? (
               <Eye size={20} color="#C7D2FE" />
@@ -73,20 +93,34 @@ export const BalanceCard = () => {
           </Button>
         </XStack>
 
-        <XStack alignItems="flex-end" space="$2" marginTop="$2">
-          <Text color="white" fontSize="$9" fontWeight="900" lineHeight={48}>
-            {showBalance ? `${symbol} ${MOCK_BALANCE.amount}` : "••••••"}
+        <XStack
+          alignItems="baseline"
+          space="$1.5"
+          marginTop="$2"
+          maxWidth="100%"
+        >
+          {showBalance && (
+            <Text color="#E0E7FF" fontSize="$6" fontWeight="700">
+              {symbol}
+            </Text>
+          )}
+
+          <Text
+            color="white"
+            fontSize="$9"
+            fontWeight="900"
+            lineHeight={56}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.6}
+            flexShrink={1}
+          >
+            {showBalance ? formattedBalance : "••••••••"}
           </Text>
 
-          {/* Opcional: Mostrar el código pequeño al lado si quieres ser explícito */}
           {showBalance && (
-            <Text
-              color="#C7D2FE"
-              fontSize="$3"
-              fontWeight="600"
-              marginBottom="$2"
-            >
-              {currencyCode}
+            <Text color="#C7D2FE" fontSize="$3" fontWeight="600">
+              {targetCurrency}
             </Text>
           )}
         </XStack>
@@ -103,7 +137,7 @@ export const BalanceCard = () => {
         >
           <TrendingUp size={14} color="#A5F3FC" />
           <Text color="#A5F3FC" fontSize="$2" fontWeight="bold">
-            {MOCK_BALANCE.trend} vs mes anterior
+            Tu algoritmo va bien (+15%)
           </Text>
         </XStack>
       </YStack>

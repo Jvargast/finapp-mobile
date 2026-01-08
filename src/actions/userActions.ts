@@ -89,9 +89,9 @@ export const UserActions = {
 
     formData.append("file", {
       uri: asset.uri,
-      name: asset.fileName || `avatar-${Date.now()}.jpg`, 
-      type: asset.mimeType || "image/jpeg", 
-    } as any); 
+      name: asset.fileName || `avatar-${Date.now()}.jpg`,
+      type: asset.mimeType || "image/jpeg",
+    } as any);
 
     try {
       const updatedUser = await UserService.uploadAvatar(formData);
@@ -134,6 +134,16 @@ export const UserActions = {
       await UserActions.refreshProfile();
     } catch (error) {
       console.error(`Error verificando cambio de ${field}`, error);
+      throw error;
+    }
+  },
+
+  registerPushToken: async (token: string) => {
+    try {
+      await UserService.updatePushToken(token);
+      console.log("✅ Push Token registrado exitosamente via Action");
+    } catch (error) {
+      console.error("Error registrando Push Token:", error);
       throw error;
     }
   },

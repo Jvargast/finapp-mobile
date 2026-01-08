@@ -1,22 +1,30 @@
-import { YStack, YStackProps } from "tamagui";
+import { YStack, YStackProps, useTheme, useThemeName } from "tamagui";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "react-native";
 
 interface MainLayoutProps extends YStackProps {
   children: React.ReactNode;
-  noPadding?: boolean; 
+  noPadding?: boolean;
   backgroundColor?: string;
 }
 
 export const MainLayout = ({
   children,
   noPadding = false,
-  backgroundColor = "#F8FAFC",
+  backgroundColor = "$background",
   ...props
 }: MainLayoutProps) => {
+  const theme = useTheme();
+  const themeName = useThemeName();
+  const isDark = themeName.startsWith("dark");
+
   return (
     <YStack flex={1} backgroundColor={backgroundColor}>
-      <StatusBar barStyle="dark-content" backgroundColor={backgroundColor} />
+      <StatusBar
+        barStyle={isDark ? "light-content" : "dark-content"}
+        backgroundColor={theme.background?.val}
+      />
+
       <SafeAreaView style={{ flex: 1 }}>
         <YStack
           flex={1}

@@ -1,4 +1,4 @@
-import { YStack, Label, XStack, Text, Button, View } from "tamagui";
+import { YStack, Label, XStack, Text, Button } from "tamagui";
 import { Edit3, ShieldCheck, AlertTriangle } from "@tamagui/lucide-icons";
 
 interface SensitiveRowProps {
@@ -16,23 +16,26 @@ export const SensitiveRow = ({
 }: SensitiveRowProps) => {
   const hasValue = !!value;
 
+  const brandColor = "#4F46E5";
+  const placeholderColor = "$gray9"; 
+
   return (
     <YStack marginBottom="$4">
       <XStack
-        backgroundColor="white"
+        backgroundColor="$background"
         borderRadius="$6"
         padding="$3.5"
         alignItems="center"
         borderWidth={1}
-        borderColor="#F1F5F9"
-        shadowColor="#64748B"
+        borderColor="$borderColor"
+        shadowColor="$shadowColor"
         shadowRadius={8}
         shadowOffset={{ width: 0, height: 4 }}
-        shadowOpacity={0.04}
+        shadowOpacity={0.05}
         animation="quick"
       >
         <YStack
-          backgroundColor={hasValue ? "#EEF2FF" : "#F1F5F9"} 
+          backgroundColor="$gray2"
           padding="$2.5"
           borderRadius="$4"
           marginRight="$3.5"
@@ -41,7 +44,7 @@ export const SensitiveRow = ({
         >
           <Icon
             size={20}
-            color={hasValue ? "#4F46E5" : "#94A3B8"}
+            color={hasValue ? brandColor : placeholderColor}
             strokeWidth={2}
           />
         </YStack>
@@ -50,7 +53,7 @@ export const SensitiveRow = ({
           <XStack alignItems="center" space="$1.5">
             <Text
               fontSize={11}
-              color="#64748B"
+              color="$gray10" 
               fontWeight="700"
               textTransform="uppercase"
               letterSpacing={0.5}
@@ -62,7 +65,7 @@ export const SensitiveRow = ({
 
           <Text
             fontSize={15}
-            color={hasValue ? "#1E293B" : "#94A3B8"}
+            color={hasValue ? "$color" : placeholderColor}
             fontWeight="600"
             numberOfLines={1}
             ellipsizeMode="middle"
@@ -74,16 +77,16 @@ export const SensitiveRow = ({
         <Button
           onPress={onEdit}
           size="$3"
-          backgroundColor="#F8FAFC" 
-          hoverStyle={{ backgroundColor: "#F1F5F9" }}
-          pressStyle={{ backgroundColor: "#E2E8F0", scale: 0.97 }}
+          backgroundColor="$gray3"
+          hoverStyle={{ backgroundColor: "$gray4" }}
+          pressStyle={{ backgroundColor: "$gray5", scale: 0.97 }}
           borderWidth={1}
-          borderColor="#E2E8F0"
-          borderRadius="$10" 
+          borderColor="$borderColor"
+          borderRadius="$10"
           paddingHorizontal="$3"
-          icon={<Edit3 size={14} color="#4F46E5" />}
+          icon={<Edit3 size={14} color={brandColor} />}
         >
-          <Text fontSize={12} fontWeight="600" color="#4F46E5">
+          <Text fontSize={12} fontWeight="600" color={brandColor}>
             {hasValue ? "Editar" : "Añadir"}
           </Text>
         </Button>

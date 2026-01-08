@@ -7,6 +7,9 @@ import EditPreferenceScreen from "../screens/profile/EditPreferenceScreen";
 import SettingsScreen from "../screens/settings/SettingsScreen";
 import ChangePasswordScreen from "../screens/settings/ChangePasswordScreen";
 import EditProfileScreen from "../screens/profile/EditProfileScreen";
+import { useTheme } from "tamagui";
+import { GoalsScreen } from "../screens/goals/GoalsScreen";
+import { CreateGoalScreen } from "../screens/goals/CreateGoalScreen";
 
 const Drawer = createDrawerNavigator();
 const Stack = createNativeStackNavigator();
@@ -30,6 +33,7 @@ function DrawerGroup() {
 }
 
 export default function MainNavigator() {
+  const theme = useTheme();
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="HomeDrawer" component={DrawerGroup} />
@@ -40,8 +44,8 @@ export default function MainNavigator() {
           headerShown: true,
           title: "Mi Perfil",
           headerBackTitle: "Volver",
-          headerTintColor: "#1E293B",
-          headerStyle: { backgroundColor: "#F8FAFC" },
+          headerTintColor: "$color",
+          headerStyle: { backgroundColor: theme.brand.val },
           headerShadowVisible: false,
           animation: "slide_from_right",
         }}
@@ -53,8 +57,8 @@ export default function MainNavigator() {
           headerShown: true,
           title: "Editar",
           headerBackTitle: "Atrás",
-          headerTintColor: "#1E293B",
-          headerStyle: { backgroundColor: "#F8FAFC" },
+          headerTintColor: "$color",
+          headerStyle: { backgroundColor: theme.brand.val },
           headerShadowVisible: false,
           presentation: "card",
         }}
@@ -62,7 +66,12 @@ export default function MainNavigator() {
       <Stack.Screen
         name="Settings"
         component={SettingsScreen}
-        options={{ title: "Configuración", headerShown: true }}
+        options={{
+          title: "Configuración",
+          headerShown: true,
+          headerTintColor: "$color",
+          headerStyle: { backgroundColor: theme.brand.val },
+        }}
       />
       <Stack.Screen
         name="ChangePassword"
@@ -71,17 +80,23 @@ export default function MainNavigator() {
           headerShown: true,
           title: "Cambiar Contraseña",
           headerBackTitle: "Volver",
+          headerTintColor: "$color",
+          headerStyle: { backgroundColor: theme.brand.val },
         }}
       />
       <Stack.Screen
         name="EditProfile"
         component={EditProfileScreen}
         options={{
-          headerShown: false,
+          headerShown: true,
+          title: "Editar Perfil",
           animation: "slide_from_bottom",
+          headerTintColor: "$color",
+          headerStyle: { backgroundColor: theme.brand.val },
         }}
       />
-      {/* Aquí agregarías Notifications, etc. en el futuro */}
+      <Stack.Screen name="Goals" component={GoalsScreen} options={{ headerShown: false }}/>
+      <Stack.Screen name="CreateGoal" component={CreateGoalScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 }

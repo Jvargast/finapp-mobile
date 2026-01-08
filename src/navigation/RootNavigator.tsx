@@ -20,7 +20,7 @@ export default function RootNavigator() {
   const isLoading = useAuthStore((state) => state.isLoading);
   const user = useUserStore((state) => state.user);
 
-  const isSetupComplete = !!user?.preferences?.currency;
+  const isSetupComplete = user?.preferences?.setupCompleted === true;
 
   useEffect(() => {
     AuthActions.checkAuth();

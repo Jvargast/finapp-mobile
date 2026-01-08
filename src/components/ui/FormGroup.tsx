@@ -1,6 +1,11 @@
 import { YStack, Text } from "tamagui";
 
-export const InfoGroup = ({ children, title }: any) => (
+interface FormGroupProps {
+  children: React.ReactNode;
+  title?: string;
+}
+
+export const FormGroup = ({ children, title }: FormGroupProps) => (
   <YStack marginBottom="$5">
     {title && (
       <Text
@@ -15,12 +20,14 @@ export const InfoGroup = ({ children, title }: any) => (
         {title}
       </Text>
     )}
+
     <YStack
       backgroundColor="$gray2"
       borderRadius="$6"
-      overflow="hidden"
       borderWidth={1}
       borderColor="$borderColor"
+      padding="$4"
+      space="$3"
       shadowColor="$shadowColor"
       shadowRadius={3}
       shadowOffset={{ width: 0, height: 2 }}

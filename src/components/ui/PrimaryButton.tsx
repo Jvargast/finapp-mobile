@@ -2,37 +2,42 @@ import { Button, Text, Spinner, ButtonProps } from "tamagui";
 import { Check } from "@tamagui/lucide-icons";
 
 interface PrimaryButtonProps extends ButtonProps {
-  label: string; 
+  label: string;
   isLoading?: boolean;
   loadingText?: string;
-  showIcon?: boolean; 
+  showIcon?: boolean;
 }
 
 export const PrimaryButton = ({
   label,
   isLoading = false,
   loadingText = "Procesando...",
-  showIcon = false, 
+  showIcon = false,
   disabled,
   ...props
 }: PrimaryButtonProps) => {
+  const BRAND_COLOR = "#4F46E5";
+
   return (
     <Button
-      backgroundColor="#4F46E5"
+      backgroundColor={BRAND_COLOR}
       height={56}
       borderRadius="$6"
-      shadowColor="#4F46E5"
+      shadowColor="$shadowColor"
       shadowOffset={{ width: 0, height: 4 }}
-      shadowOpacity={0.3}
+      shadowOpacity={0.4}
       shadowRadius={10}
       animation="quick"
       pressStyle={{
         scale: 0.97,
         opacity: 0.9,
+        backgroundColor: "#4338CA", 
+      }}
+      hoverStyle={{
         backgroundColor: "#4338CA",
       }}
       disabled={isLoading || disabled}
-      opacity={isLoading || disabled ? 0.7 : 1}
+      opacity={isLoading || disabled ? 0.6 : 1}
       icon={
         isLoading ? (
           <Spinner color="white" />
@@ -43,7 +48,7 @@ export const PrimaryButton = ({
       {...props}
     >
       <Text
-        color="white"
+        color="white" 
         fontWeight="700"
         fontSize={16}
         letterSpacing={0.5}
