@@ -7,19 +7,63 @@ import {
   ScrollView,
   Circle,
 } from "tamagui";
-import { Plus, ChevronLeft } from "@tamagui/lucide-icons";
+import { Plus } from "@tamagui/lucide-icons";
 import { useNavigation } from "@react-navigation/native";
 import { useMyGoals } from "../../hooks/useMyGoals";
 import { GoalCard } from "../../components/goals/GoalCard";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { RefreshControl } from "react-native";
+import { Alert, RefreshControl, Vibration } from "react-native";
+import { useState, useCallback } from "react";
+import { useGoalMutations } from "../../hooks/goals/useGoalMutations";
+import { GoalOptionsSheet } from "../../components/goals/GoalOptionsSheet";
+import { FinancialGoal } from "../../types/goal.types";
+import { GoBackButton } from "../../components/ui/GoBackButton";
 
 export const GoalsScreen = () => {
   const navigation = useNavigation<any>();
+  const [selectedGoal, setSelectedGoal] = useState<FinancialGoal | null>(null);
   const { goals, isLoading, refetch } = useMyGoals();
+
+  const { deleteGoal, isMutating } = useGoalMutations();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [openSheet, setOpenSheet] = useState(false);
 
   const handleCreateGoal = () => {
     navigation.navigate("CreateGoal");
+  };
+
+  const handleLongPress = useCallback((goal: FinancialGoal) => {
+    Vibration.vibrate(50);
+    setSelectedGoal(goal);
+    setTimeout(() => {
+      setOpenSheet(true);
+    }, 100);
+  }, []);
+
+  const handleDelete = () => {
+    if (!selectedGoal) return;
+
+    Alert.alert(
+      "¿Eliminar meta?",
+      `Estás a punto de borrar "${selectedGoal.name}".`,
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Eliminar",
+          style: "destructive",
+          onPress: () => {
+            const idToDelete = selectedGoal.id;
+            setDeletingId(idToDelete);
+            setOpenSheet(false);
+            deleteGoal(idToDelete, async () => {
+              await refetch();
+              setDeletingId(null);
+              setSelectedGoal(null);
+            });
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -27,24 +71,18 @@ export const GoalsScreen = () => {
       <SafeAreaView style={{ flex: 1 }} edges={["top", "left", "right"]}>
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ flexGrow: 1, paddingBottom: 100 }} 
+          contentContainerStyle={{ flexGrow: 1, paddingBottom: 100 }}
           refreshControl={
             <RefreshControl refreshing={isLoading} onRefresh={refetch} />
           }
         >
           <YStack paddingHorizontal="$4" paddingTop="$2" marginBottom="$6">
             <XStack justifyContent="space-between" alignItems="center">
-              <Button
-                unstyled
-                icon={ChevronLeft}
-                color="$gray11"
-                onPress={() => navigation.goBack()}
-                opacity={0.7}
-              />
+              <GoBackButton />
               <Button
                 size="$3"
                 circular
-                backgroundColor="$color" 
+                backgroundColor="$color"
                 color="$background"
                 icon={<Plus size={20} />}
                 onPress={handleCreateGoal}
@@ -78,7 +116,6 @@ export const GoalsScreen = () => {
             </YStack>
           </YStack>
 
-          {/* --- CONTENIDO --- */}
           {isLoading && goals.length === 0 ? (
             <YStack height={300} justifyContent="center" alignItems="center">
               <Spinner size="large" color="$brand" />
@@ -86,7 +123,6 @@ export const GoalsScreen = () => {
           ) : (
             <YStack paddingHorizontal="$4" marginTop="$2">
               {goals.length === 0 ? (
-                // Empty State Elegante
                 <YStack
                   height={300}
                   justifyContent="center"
@@ -123,17 +159,29 @@ export const GoalsScreen = () => {
                   </Button>
                 </YStack>
               ) : (
-                <YStack
-                  paddingTop="$2"
-                >
-                  {goals.map((goal, index) => (
-                    <GoalCard
-                      key={goal.id}
-                      goal={goal}
-                      index={index}
-                      total={goals.length}
-                    />
-                  ))}
+                <YStack paddingTop="$2">
+                  {goals.map((goal, index) => {
+                    const isFocused = selectedGoal?.id === goal.id;
+                    const shouldStayLifted =
+                      (isFocused && openSheet) || deletingId === goal.id;
+
+                    return (
+                      <GoalCard
+                        key={goal.id}
+                        goal={goal}
+                        index={index}
+                        total={goals.length}
+                        isSelected={shouldStayLifted}
+                        onPress={() => {
+                          navigation.navigate("GoalDetail", {
+                            goalId: goal.id,
+                            goal,
+                          });
+                        }}
+                        onLongPress={() => handleLongPress(goal)}
+                      />
+                    );
+                  })}
 
                   <YStack height={50 * (goals.length - 1)} />
                 </YStack>
@@ -142,6 +190,17 @@ export const GoalsScreen = () => {
           )}
         </ScrollView>
       </SafeAreaView>
+      <GoalOptionsSheet
+        open={openSheet}
+        onOpenChange={(isOpen) => {
+          setOpenSheet(isOpen);
+          if (!isOpen && !isMutating && !deletingId) {
+            setTimeout(() => setSelectedGoal(null), 300);
+          }
+        }}
+        onDelete={handleDelete}
+        goal={selectedGoal}
+      />
     </YStack>
   );
 };

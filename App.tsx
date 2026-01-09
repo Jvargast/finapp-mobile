@@ -1,7 +1,6 @@
 import "react-native-gesture-handler";
 import { View, Text } from "react-native";
 import { useFonts } from "expo-font";
-import { TamaguiProvider, Theme } from "tamagui";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import config from "./tamagui.config";
 import { StatusBar } from "expo-status-bar";
@@ -12,6 +11,8 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { GlobalToast } from "./src/components/ui/GlobalToast";
 import { useUserStore } from "./src/stores/useUserStore";
 import { usePushNotifications } from "./src/hooks/usePushNotifications";
+import { PortalProvider } from "@tamagui/portal";
+import { TamaguiProvider, Theme } from "tamagui";
 
 const queryClient = new QueryClient();
 
@@ -60,13 +61,15 @@ export default function App() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
         <TamaguiProvider config={config}>
-          <Theme name={currentTheme}>
-            <SafeAreaProvider>
-              <GlobalToast />
-              <StatusBar style={isDarkMode ? "light" : "dark"} />
-              <RootNavigator />
-            </SafeAreaProvider>
-          </Theme>
+          <PortalProvider shouldAddRootHost>
+            <Theme name={currentTheme}>
+              <SafeAreaProvider>
+                <GlobalToast />
+                <StatusBar style={isDarkMode ? "light" : "dark"} />
+                <RootNavigator />
+              </SafeAreaProvider>
+            </Theme>
+          </PortalProvider>
         </TamaguiProvider>
       </QueryClientProvider>
     </GestureHandlerRootView>

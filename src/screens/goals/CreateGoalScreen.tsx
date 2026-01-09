@@ -1,112 +1,32 @@
-import React, { useState } from "react";
-import { Platform } from "react-native";
-import {
-  YStack,
-  Text,
-  Input,
-  Button,
-  ScrollView,
-  XStack,
-  Separator,
-  Label,
-  Spinner,
-} from "tamagui";
-import { useForm, Controller } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useNavigation } from "@react-navigation/native";
-import DateTimePicker from "@react-native-community/datetimepicker";
+import React from "react";
+import { YStack, ScrollView, Button, Separator, Spinner } from "tamagui";
+import { Controller } from "react-hook-form";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Calendar, ChevronLeft } from "@tamagui/lucide-icons";
-import { createGoalSchema, CreateGoalFormValues } from "./createGoal.schema";
+import { useCreateGoalForm } from "../../hooks/goals/useCreateGoalForm";
+import { CreateGoalHeader } from "../../components/goals/CreateGoalHeader";
 import { GoalTypeSelector } from "../../components/goals/GoalTypeSelector";
+import { GoalFormFields } from "../../components/goals/GoalFormFields";
 import { GoalType } from "../../types/goal.types";
-import { GoalService } from "../../services/goalService";
-import { useUserStore } from "../../stores/useUserStore";
 
 export const CreateGoalScreen = () => {
-  const navigation = useNavigation();
-  const userPreference = useUserStore(
-    (state) => state.user?.preferences?.mainGoal
-  );
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const getDefaultType = (): GoalType => {
-    if (userPreference === "debt") return GoalType.DEBT;
-    if (userPreference === "invest" || userPreference === "retire")
-      return GoalType.INVESTMENT;
-    if (userPreference === "house") return GoalType.PURCHASE;
-    return GoalType.SAVING;
-  };
-
-  const {
-    control,
-    handleSubmit,
-    formState: { errors },
-    watch,
-  } = useForm({
-    resolver: zodResolver(createGoalSchema),
-    defaultValues: {
-      type: getDefaultType(),
-      name: "",
-      targetAmount: "",
-      currentAmount: "",
-      deadline: undefined,
-    },
-  });
+  const { form, submit, isSubmitting, watch } = useCreateGoalForm();
 
   const selectedType = watch("type");
   const showInterestField =
     selectedType === GoalType.DEBT || selectedType === GoalType.INVESTMENT;
 
-  const onSubmit = async (data: CreateGoalFormValues) => {
-    try {
-      setIsSubmitting(true);
-      await GoalService.create({
-        ...data,
-        deadline: data.deadline.toISOString(),
-      });
-
-      if (navigation.canGoBack()) {
-        navigation.goBack();
-      }
-    } catch (error) {
-      console.error("Error creando meta:", error);
-      alert("No se pudo crear la meta. Revisa tu conexión.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const ErrorMessage = ({ error }: { error?: any }) =>
-    error ? (
-      <Text color="$red10" fontSize="$2" marginTop="$1" fontWeight="500">
-        {error.message}
-      </Text>
-    ) : null;
-
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "white" }}>
       <YStack flex={1} paddingHorizontal="$4" paddingTop="$2">
-        <XStack alignItems="center" space="$3" marginBottom="$4">
-          <Button
-            unstyled
-            icon={ChevronLeft}
-            onPress={() => navigation.goBack()}
-            color="$gray11"
-            pressStyle={{ opacity: 0.5 }}
-          />
-          <Text fontSize="$6" fontWeight="bold">
-            Nueva Meta
-          </Text>
-        </XStack>
+        <CreateGoalHeader />
 
         <ScrollView
           showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled" 
+          keyboardShouldPersistTaps="handled"
         >
           <YStack space="$5" paddingBottom="$10">
             <Controller
-              control={control}
+              control={form.control}
               name="type"
               render={({ field: { onChange, value } }) => (
                 <GoalTypeSelector value={value} onChange={onChange} />
@@ -115,173 +35,12 @@ export const CreateGoalScreen = () => {
 
             <Separator />
 
-            <YStack space="$4">
-              <YStack>
-                <Label htmlFor="name" color="$gray11" fontSize="$3">
-                  Nombre de la meta
-                </Label>
-                <Controller
-                  control={control}
-                  name="name"
-                  render={({ field: { onChange, onBlur, value } }) => (
-                    <Input
-                      id="name"
-                      placeholder="Ej: Vacaciones, Pagar Crédito..."
-                      onBlur={onBlur}
-                      onChangeText={onChange}
-                      value={value}
-                      borderColor={errors.name ? "$red8" : "$borderColor"}
-                      backgroundColor="$background"
-                    />
-                  )}
-                />
-                <ErrorMessage error={errors.name} />
-              </YStack>
-
-              <YStack>
-                <Label htmlFor="target" color="$gray11" fontSize="$3">
-                  Monto objetivo ($)
-                </Label>
-                <Controller
-                  control={control}
-                  name="targetAmount"
-                  render={({ field: { onChange, onBlur, value } }) => (
-                    <Input
-                      id="target"
-                      placeholder="0"
-                      keyboardType="numeric"
-                      onBlur={onBlur}
-                      onChangeText={onChange}
-                      value={value?.toString()}
-                      borderColor={
-                        errors.targetAmount ? "$red8" : "$borderColor"
-                      }
-                      fontSize="$5"
-                      fontWeight="bold"
-                      backgroundColor="$background"
-                    />
-                  )}
-                />
-                <ErrorMessage error={errors.targetAmount} />
-              </YStack>
-
-              <YStack>
-                <Label htmlFor="current" color="$gray11" fontSize="$3">
-                  ¿Ya tienes algo ahorrado? (Opcional)
-                </Label>
-                <Controller
-                  control={control}
-                  name="currentAmount"
-                  render={({ field: { onChange, onBlur, value } }) => (
-                    <Input
-                      id="current"
-                      placeholder="0"
-                      keyboardType="numeric"
-                      onBlur={onBlur}
-                      onChangeText={onChange}
-                      value={value?.toString()}
-                      backgroundColor="$background"
-                    />
-                  )}
-                />
-                <ErrorMessage error={errors.currentAmount} />
-              </YStack>
-
-              <YStack>
-                <Label color="$gray11" fontSize="$3">
-                  Fecha objetivo
-                </Label>
-                <Controller
-                  control={control}
-                  name="deadline"
-                  render={({ field: { value, onChange } }) => {
-                    const dateValue =
-                      value instanceof Date ? value : new Date();
-
-                    return (
-                      <>
-                        <Button
-                          variant="outlined"
-                          icon={Calendar}
-                          justifyContent="flex-start"
-                          borderColor={
-                            errors.deadline ? "$red8" : "$borderColor"
-                          }
-                          onPress={() => setShowDatePicker(true)}
-                          backgroundColor="$background"
-                        >
-                          {value
-                            ? value.toLocaleDateString()
-                            : "Seleccionar fecha"}
-                        </Button>
-
-                        {showDatePicker && (
-                          <DateTimePicker
-                            testID="dateTimePicker"
-                            value={dateValue}
-                            mode="date"
-                            display={
-                              Platform.OS === "ios" ? "spinner" : "default"
-                            }
-                            minimumDate={new Date()}
-                            onChange={(event, selectedDate) => {
-                              if (Platform.OS === "android") {
-                                setShowDatePicker(false);
-                              }
-                              if (event.type === "set" && selectedDate) {
-                                onChange(selectedDate);
-                              }
-                            }}
-                          />
-                        )}
-
-                        {Platform.OS === "ios" && showDatePicker && (
-                          <XStack justifyContent="flex-end" marginTop="$2">
-                            <Button
-                              size="$3"
-                              onPress={() => setShowDatePicker(false)}
-                              theme="active"
-                            >
-                              Confirmar Fecha
-                            </Button>
-                          </XStack>
-                        )}
-                      </>
-                    );
-                  }}
-                />
-                <ErrorMessage error={errors.deadline} />
-              </YStack>
-
-              {showInterestField && (
-                <YStack animation="quick" enterStyle={{ opacity: 0, y: -10 }}>
-                  <Label htmlFor="interest" color="$gray11" fontSize="$3">
-                    {selectedType === GoalType.DEBT
-                      ? "Tasa de Interés Anual (%)"
-                      : "Retorno Estimado Anual (%)"}
-                  </Label>
-                  <Controller
-                    control={control}
-                    name="interestRate"
-                    render={({ field: { onChange, onBlur, value } }) => (
-                      <Input
-                        id="interest"
-                        placeholder="Ej: 15.5"
-                        keyboardType="decimal-pad"
-                        onBlur={onBlur}
-                        onChangeText={onChange}
-                        value={value?.toString()}
-                        backgroundColor="$background"
-                      />
-                    )}
-                  />
-                  <Text fontSize="$2" color="$gray10" marginTop="$1">
-                    Opcional. Ayuda al algoritmo a calcular proyecciones.
-                  </Text>
-                  <ErrorMessage error={errors.interestRate} />
-                </YStack>
-              )}
-            </YStack>
+            <GoalFormFields
+              control={form.control}
+              errors={form.formState.errors}
+              showInterestField={showInterestField}
+              goalType={selectedType}
+            />
 
             <Button
               size="$5"
@@ -289,7 +48,7 @@ export const CreateGoalScreen = () => {
               color="white"
               fontWeight="bold"
               marginTop="$4"
-              onPress={handleSubmit(onSubmit)}
+              onPress={submit}
               disabled={isSubmitting}
               icon={isSubmitting ? <Spinner color="white" /> : undefined}
             >

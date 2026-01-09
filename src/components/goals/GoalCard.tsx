@@ -7,31 +7,47 @@ import {
   PiggyBank,
   Target,
   Lightbulb,
+  Briefcase,
 } from "@tamagui/lucide-icons";
 import { FinancialGoal, GoalType } from "../../types/goal.types";
+import { formatGoalAmount } from "../../utils/formatMoney";
 
 interface GoalCardProps {
   goal: FinancialGoal;
-  index: number; 
+  index: number;
+  total: number;
   onPress?: () => void;
+  onLongPress?: () => void;
+  isSelected?: boolean;
 }
 
-export const GoalCard = ({ goal, index, onPress }: GoalCardProps) => {
+export const GoalCard = ({
+  goal,
+  index,
+  total,
+  onPress,
+  onLongPress,
+  isSelected = false,
+}: GoalCardProps) => {
   const { analysis } = goal;
 
   const getTheme = () => {
     switch (goal.type) {
-      case GoalType.PURCHASE:
-        return { bg: "$blue9", iconBg: "$blue5", shadow: "$blue9" }; // Azul Casa
+      case GoalType.HOUSING:
+        return { bg: "$blue9", iconBg: "$blue5", shadow: "$blue9" };
       case GoalType.INVESTMENT:
-        return { bg: "$purple9", iconBg: "$purple5", shadow: "$purple9" }; // Morado Inversión
+        return { bg: "$purple9", iconBg: "$purple5", shadow: "$purple9" };
+      case GoalType.RETIREMENT:
+        return { bg: "$slate9", iconBg: "$slate5", shadow: "$slate9" };
+      case GoalType.CONTROL:
+        return { bg: "$amber9", iconBg: "$amber5", shadow: "$amber9" };
       case GoalType.DEBT:
-        return { bg: "$red9", iconBg: "$red5", shadow: "$red9" }; // Rojo Deuda
+        return { bg: "$red9", iconBg: "$red5", shadow: "$red9" };
       case GoalType.SAVING:
         if (analysis.type === "EMERGENCY_FUND_ANALYSIS") {
-          return { bg: "$orange9", iconBg: "$orange5", shadow: "$orange9" }; // Naranja Emergencia
+          return { bg: "$orange9", iconBg: "$orange5", shadow: "$orange9" };
         }
-        return { bg: "$green9", iconBg: "$green5", shadow: "$green9" }; // Verde Ahorro
+        return { bg: "$green9", iconBg: "$green5", shadow: "$green9" };
       default:
         return { bg: "$gray9", iconBg: "$gray5", shadow: "$gray9" };
     }
@@ -42,8 +58,12 @@ export const GoalCard = ({ goal, index, onPress }: GoalCardProps) => {
   const getIcon = () => {
     const props = { size: 22, color: "white" };
     switch (goal.type) {
-      case GoalType.PURCHASE:
+      case GoalType.HOUSING:
         return <Home {...props} />;
+      case GoalType.RETIREMENT:
+        return <Briefcase {...props} />;
+      case GoalType.CONTROL:
+        return <ShieldCheck {...props} />;
       case GoalType.INVESTMENT:
         return <TrendingUp {...props} />;
       case GoalType.DEBT:
@@ -64,11 +84,17 @@ export const GoalCard = ({ goal, index, onPress }: GoalCardProps) => {
     100
   );
 
+  const goalCurrency = goal.currency || "CLP";
+
   return (
     <Card
+      animation="quick"
       marginTop={index === 0 ? 0 : -55}
-      zIndex={index}
+      zIndex={isSelected ? 1000 : index}
+      y={isSelected ? -30 : 0}
+      scale={isSelected ? 1.02 : 1}
       height={190}
+      animateOnly={["transform", "opacity"]}
       backgroundColor={theme.bg}
       borderRadius="$8"
       padding="$4"
@@ -78,13 +104,13 @@ export const GoalCard = ({ goal, index, onPress }: GoalCardProps) => {
       shadowOffset={{ width: 0, height: 8 }}
       shadowOpacity={0.4}
       onPress={onPress}
-      animation="bouncy"
-      pressStyle={{
-        scale: 1.02,
-        y: -30,
-        zIndex: 100,
-        shadowRadius: 30,
-      }}
+      onLongPress={onLongPress}
+      hitSlop={{ top: 0, left: 0, right: 0, bottom: 40 }}
+      pressStyle={
+        isSelected
+          ? { opacity: 0.9 } 
+          : { scale: 0.98, opacity: 0.9 } 
+      }
       borderWidth={0}
     >
       <YStack flex={1} justifyContent="space-between">
@@ -120,10 +146,7 @@ export const GoalCard = ({ goal, index, onPress }: GoalCardProps) => {
                 textTransform="uppercase"
                 letterSpacing={1}
               >
-                {goal.type === "SAVING" &&
-                analysis.type === "EMERGENCY_FUND_ANALYSIS"
-                  ? "Seguridad"
-                  : goal.type}
+                {goal.type} • {goalCurrency}
               </Text>
             </YStack>
           </XStack>
@@ -148,14 +171,14 @@ export const GoalCard = ({ goal, index, onPress }: GoalCardProps) => {
                 color="rgba(255,255,255,0.8)"
                 fontWeight="600"
               >
-                ${goal.currentAmount.toLocaleString("es-CL")}
+                {formatGoalAmount(goal.currentAmount, goalCurrency)}
               </Text>
               <Text
                 fontSize="$3"
                 color="rgba(255,255,255,0.8)"
                 fontWeight="600"
               >
-                ${goal.targetAmount.toLocaleString("es-CL")}
+                {formatGoalAmount(goal.targetAmount, goalCurrency)}
               </Text>
             </XStack>
 

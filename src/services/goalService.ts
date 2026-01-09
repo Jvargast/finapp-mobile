@@ -7,15 +7,24 @@ export const GoalService = {
     return data;
   },
 
+  getById: async (id: string): Promise<FinancialGoal> => {
+    const { data } = await finappApi.get<FinancialGoal>(`/goals/${id}`);
+    return data;
+  },
+
   create: async (goalData: CreateGoalPayload): Promise<FinancialGoal> => {
     const payload = {
       ...goalData,
       targetAmount: Number(goalData.targetAmount),
-      currentAmount: Number(goalData.currentAmount || 0),
-      interestRate: Number(goalData.interestRate || 0),
+      currentAmount: goalData.currentAmount ?? 0,
+      interestRate: goalData.interestRate ?? 0,
     };
 
     const { data } = await finappApi.post<FinancialGoal>("/goals", payload);
     return data;
+  },
+
+  delete: async (id: string): Promise<void> => {
+    await finappApi.delete(`/goals/${id}`);
   },
 };
