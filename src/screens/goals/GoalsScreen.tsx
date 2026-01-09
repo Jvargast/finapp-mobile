@@ -18,8 +18,10 @@ import { useGoalMutations } from "../../hooks/goals/useGoalMutations";
 import { GoalOptionsSheet } from "../../components/goals/GoalOptionsSheet";
 import { FinancialGoal } from "../../types/goal.types";
 import { GoBackButton } from "../../components/ui/GoBackButton";
+import { useUserStore } from "../../stores/useUserStore";
 
 export const GoalsScreen = () => {
+  const myUserId = useUserStore((state) => state.user?.id);
   const navigation = useNavigation<any>();
   const [selectedGoal, setSelectedGoal] = useState<FinancialGoal | null>(null);
   const { goals, isLoading, refetch } = useMyGoals();
@@ -43,27 +45,32 @@ export const GoalsScreen = () => {
   const handleDelete = () => {
     if (!selectedGoal) return;
 
-    Alert.alert(
-      "¿Eliminar meta?",
-      `Estás a punto de borrar "${selectedGoal.name}".`,
-      [
-        { text: "Cancelar", style: "cancel" },
-        {
-          text: "Eliminar",
-          style: "destructive",
-          onPress: () => {
-            const idToDelete = selectedGoal.id;
-            setDeletingId(idToDelete);
-            setOpenSheet(false);
-            deleteGoal(idToDelete, async () => {
-              await refetch();
-              setDeletingId(null);
-              setSelectedGoal(null);
-            });
-          },
+    const isOwner = selectedGoal.userId === myUserId;
+
+    const title = isOwner ? "¿Eliminar meta?" : "¿Salir de la meta?";
+    const message = isOwner
+      ? `Estás a punto de borrar "${selectedGoal.name}". Esta acción es irreversible.`
+      : `¿Seguro que quieres dejar de participar en "${selectedGoal.name}"?`;
+    const actionButton = isOwner ? "Eliminar" : "Salir";
+
+    Alert.alert(title, message, [
+      { text: "Cancelar", style: "cancel" },
+      {
+        text: actionButton,
+        style: "destructive",
+        onPress: () => {
+          const idToDelete = selectedGoal.id;
+          setDeletingId(idToDelete);
+          setOpenSheet(false);
+          // NOTA: Si eres invitado, idealmente aquí llamarías a un 'leaveGoal'
+          deleteGoal(idToDelete, async () => {
+            await refetch();
+            setDeletingId(null);
+            setSelectedGoal(null);
+          });
         },
-      ]
-    );
+      },
+    ]);
   };
 
   return (

@@ -11,6 +11,7 @@ import {
 } from "@tamagui/lucide-icons";
 import { FinancialGoal, GoalType } from "../../types/goal.types";
 import { formatGoalAmount } from "../../utils/formatMoney";
+import { ParticipantAvatars } from "./ParticipantAvatars";
 
 interface GoalCardProps {
   goal: FinancialGoal;
@@ -106,16 +107,12 @@ export const GoalCard = ({
       onPress={onPress}
       onLongPress={onLongPress}
       hitSlop={{ top: 0, left: 0, right: 0, bottom: 40 }}
-      pressStyle={
-        isSelected
-          ? { opacity: 0.9 } 
-          : { scale: 0.98, opacity: 0.9 } 
-      }
+      pressStyle={isSelected ? { opacity: 0.9 } : { scale: 0.98, opacity: 0.9 }}
       borderWidth={0}
     >
       <YStack flex={1} justifyContent="space-between">
         <XStack justifyContent="space-between" alignItems="flex-start">
-          <XStack space="$3">
+          <XStack space="$3" flex={1} paddingRight="$2">
             <YStack
               backgroundColor={theme.iconBg}
               width={45}
@@ -129,13 +126,14 @@ export const GoalCard = ({
               {getIcon()}
             </YStack>
 
-            <YStack justifyContent="center">
+            <YStack justifyContent="center" flex={1}>
               <Text
                 color="white"
                 fontWeight="900"
                 fontSize="$6"
                 letterSpacing={0.5}
                 numberOfLines={1}
+                ellipsizeMode="tail"
               >
                 {goal.name}
               </Text>
@@ -148,6 +146,10 @@ export const GoalCard = ({
               >
                 {goal.type} • {goalCurrency}
               </Text>
+              <ParticipantAvatars
+                participants={goal.participants}
+                borderColor={theme.bg}
+              />
             </YStack>
           </XStack>
 
@@ -158,6 +160,8 @@ export const GoalCard = ({
             opacity={0.9}
             textShadowColor="rgba(0,0,0,0.2)"
             textShadowRadius={5}
+            flexShrink={0} 
+            marginLeft="$2"
           >
             {progressPercent.toFixed(0)}%
           </Text>

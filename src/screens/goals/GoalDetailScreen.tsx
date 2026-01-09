@@ -14,6 +14,7 @@ import { GoalDetailHeader } from "../../components/goals/GoalDetailHeader";
 import { SavingsDetailView } from "../../components/goals/SavingsDetailView";
 import { InvestmentDetailView } from "../../components/goals/InvestmentDetailView";
 import { DebtDetailView } from "../../components/goals/DebtDetailView";
+import { GoalParticipantsSection } from "../../components/goals/GoalParticipantsSection";
 
 const THEME_BY_TYPE = {
   [GoalType.SAVING]: {
@@ -171,6 +172,8 @@ export const GoalDetailScreen = () => {
               </YStack>
             </YStack>
           </Card>
+
+          <GoalParticipantsSection goal={goal} />
 
           <YStack space="$4">
             <XStack alignItems="center" space="$2">

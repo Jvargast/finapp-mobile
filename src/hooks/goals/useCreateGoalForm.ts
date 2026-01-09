@@ -50,7 +50,10 @@ export const useCreateGoalForm = () => {
         deadline: data.deadline.toISOString(),
       });
 
-      if (navigation.canGoBack()) navigation.goBack();
+      if (navigation.canGoBack()) {
+        navigation.goBack();
+        // Opcional: navigation.navigate('GoalDetail', { goalId: newGoal.id });
+      }
     } catch (error) {
       console.error("Error creando meta:", error);
       alert("No se pudo crear la meta.");

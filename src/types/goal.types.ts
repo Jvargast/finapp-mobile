@@ -1,3 +1,32 @@
+export enum GoalRole {
+  OWNER = "OWNER",
+  EDITOR = "EDITOR",
+  VIEWER = "VIEWER",
+}
+
+export enum InvitationStatus {
+  PENDING = "PENDING",
+  ACCEPTED = "ACCEPTED",
+  REJECTED = "REJECTED",
+}
+
+export interface GoalParticipant {
+  id: string;
+  role: GoalRole;
+  status: InvitationStatus;
+  userId: string;
+  joinedAt: string;
+  user: {
+    id: string;
+    email: string;
+    profile?: {
+      firstName?: string;
+      lastName?: string;
+      avatarUrl?: string; 
+    };
+  };
+}
+
 export enum GoalType {
   SAVING = "SAVING",
   DEBT = "DEBT",
@@ -70,11 +99,13 @@ export interface FinancialGoal {
   estimatedYield?: number;
   targetAmount: number;
   currentAmount: number;
+  shareToken?: string;
   deadline: string;
   interestRate?: number;
   isCompleted: boolean;
-
+  userId: string;
   analysis: GoalAnalysis;
+  participants: GoalParticipant[];
 }
 
 export interface CreateGoalPayload {
