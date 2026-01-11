@@ -2,14 +2,14 @@ import React from "react";
 import { YStack, ScrollView, Button, Separator, Spinner } from "tamagui";
 import { Controller } from "react-hook-form";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useCreateGoalForm } from "../../hooks/goals/useCreateGoalForm";
 import { CreateGoalHeader } from "../../components/goals/CreateGoalHeader";
 import { GoalTypeSelector } from "../../components/goals/GoalTypeSelector";
 import { GoalFormFields } from "../../components/goals/GoalFormFields";
 import { GoalType } from "../../types/goal.types";
+import { useGoalForm } from "../../hooks/goals/useCreateGoalForm";
 
 export const CreateGoalScreen = () => {
-  const { form, submit, isSubmitting, watch } = useCreateGoalForm();
+  const { form, submit, isSubmitting, watch } = useGoalForm();
 
   const selectedType = watch("type");
   const showInterestField =

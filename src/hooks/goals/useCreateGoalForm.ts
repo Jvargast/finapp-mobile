@@ -1,19 +1,22 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigation } from "@react-navigation/native";
 import { GoalService } from "../../services/goalService";
 import { useUserStore } from "../../stores/useUserStore";
-import { GoalType } from "../../types/goal.types";
+import { GoalType, FinancialGoal } from "../../types/goal.types";
+import { useToastStore } from "../../stores/useToastStore";
 import {
   createGoalSchema,
   CreateGoalFormOutput,
   CreateGoalFormInputs,
 } from "../../screens/goals/createGoal.schema";
 
-export const useCreateGoalForm = () => {
+export const useGoalForm = (goalToEdit?: FinancialGoal) => {
   const navigation = useNavigation();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const showToast = useToastStore((s) => s.showToast);
+
   const userPreference = useUserStore(
     (state) => state.user?.preferences?.mainGoal
   );
@@ -26,10 +29,24 @@ export const useCreateGoalForm = () => {
     return GoalType.SAVING;
   };
 
-  const form = useForm<CreateGoalFormInputs>({
-    resolver: zodResolver(createGoalSchema) as any,
-    mode: "onBlur",
-    defaultValues: {
+  const defaultValues = useMemo(() => {
+    if (goalToEdit) {
+      return {
+        type: goalToEdit.type,
+        currency: goalToEdit.currency,
+        name: goalToEdit.name,
+        targetAmount: String(goalToEdit.targetAmount),
+        currentAmount: String(goalToEdit.currentAmount || 0),
+        monthlyQuota: String(goalToEdit.monthlyQuota || 0),
+        estimatedYield: String(goalToEdit.estimatedYield || 0),
+        interestRate: String(goalToEdit.interestRate || 0),
+        deadline: goalToEdit.deadline
+          ? new Date(goalToEdit.deadline)
+          : undefined,
+      };
+    }
+
+    return {
       type: getDefaultType(),
       currency: "CLP",
       name: "",
@@ -38,25 +55,41 @@ export const useCreateGoalForm = () => {
       deadline: undefined,
       monthlyQuota: "",
       estimatedYield: "",
-    },
+    };
+  }, [goalToEdit, userPreference]);
+
+  const form = useForm<CreateGoalFormInputs>({
+    resolver: zodResolver(createGoalSchema) as any,
+    mode: "onBlur",
+    defaultValues: defaultValues as any,
   });
 
   const onSubmit = async (data: CreateGoalFormOutput) => {
     try {
       setIsSubmitting(true);
 
-      await GoalService.create({
+      const payload = {
         ...data,
         deadline: data.deadline.toISOString(),
-      });
+      };
+
+      if (goalToEdit) {
+        await GoalService.update(goalToEdit.id, payload);
+        showToast("Meta actualizada correctamente", "success");
+      } else {
+        await GoalService.create(payload);
+        showToast("Meta creada con éxito", "success");
+      }
 
       if (navigation.canGoBack()) {
         navigation.goBack();
-        // Opcional: navigation.navigate('GoalDetail', { goalId: newGoal.id });
       }
     } catch (error) {
-      console.error("Error creando meta:", error);
-      alert("No se pudo crear la meta.");
+      console.error("Error submit meta:", error);
+      showToast(
+        goalToEdit ? "Error al actualizar" : "No se pudo crear la meta",
+        "error"
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -67,5 +100,6 @@ export const useCreateGoalForm = () => {
     isSubmitting,
     submit: form.handleSubmit(onSubmit as any),
     watch: form.watch,
+    isEditing: !!goalToEdit,
   };
 };

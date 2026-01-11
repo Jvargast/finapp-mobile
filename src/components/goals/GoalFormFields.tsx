@@ -18,6 +18,7 @@ interface GoalFormFieldsProps {
   errors: FieldErrors<CreateGoalFormInputs>;
   showInterestField: boolean;
   goalType: GoalType;
+  isEditing?: boolean;
 }
 
 const formatInputByCurrency = (value: string, currency: string) => {
@@ -34,6 +35,7 @@ export const GoalFormFields = ({
   errors,
   showInterestField,
   goalType,
+  isEditing = false,
 }: GoalFormFieldsProps) => {
   const [showDatePicker, setShowDatePicker] = useState(false);
 
@@ -119,13 +121,15 @@ export const GoalFormFields = ({
         <ErrorMsg name="name" />
       </YStack>
 
-      <Controller
-        control={control}
-        name="currency"
-        render={({ field: { onChange, value } }) => (
-          <GoalCurrencySelector value={value} onChange={onChange} />
-        )}
-      />
+      {!isEditing && (
+        <Controller
+          control={control}
+          name="currency"
+          render={({ field: { onChange, value } }) => (
+            <GoalCurrencySelector value={value} onChange={onChange} />
+          )}
+        />
+      )}
       <YStack>
         <Label fontSize="$3" color="$gray11" fontWeight="600" marginBottom="$2">
           Monto objetivo
@@ -229,53 +233,55 @@ export const GoalFormFields = ({
           <ErrorMsg name="estimatedYield" />
         </YStack>
       )}
-
-      <YStack>
-        <XStack justifyContent="space-between">
-          <Label
-            fontSize="$3"
-            color="$gray11"
-            fontWeight="600"
-            marginBottom="$2"
-          >
-            ¿Ya tienes algo ahorrado?
-          </Label>
-          <Stack
-            backgroundColor="$green2"
-            paddingHorizontal="$2"
-            borderRadius="$4"
-            height={20}
-            justifyContent="center"
-          >
-            <Text fontSize={10} color="$green11" fontWeight="700">
-              OPCIONAL
-            </Text>
-          </Stack>
-        </XStack>
-
-        <Controller
-          control={control}
-          name="currentAmount"
-          render={({ field: { onChange, onBlur, value } }) => (
-            <Input
-              placeholder="0"
-              placeholderTextColor="$gray8"
-              keyboardType={
-                selectedCurrency === "CLP" ? "number-pad" : "decimal-pad"
-              }
-              onBlur={onBlur}
-              onChangeText={(text: string) =>
-                onChange(formatInputByCurrency(text, selectedCurrency))
-              }
-              value={value}
-              backgroundColor="$gray2"
-              borderColor="$borderColor"
-              borderWidth={1}
+      {!isEditing && (
+        <YStack>
+          <XStack justifyContent="space-between">
+            <Label
+              fontSize="$3"
+              color="$gray11"
+              fontWeight="600"
+              marginBottom="$2"
+            >
+              ¿Ya tienes algo ahorrado?
+            </Label>
+            <Stack
+              backgroundColor="$green2"
+              paddingHorizontal="$2"
               borderRadius="$4"
-            />
-          )}
-        />
-      </YStack>
+              height={20}
+              justifyContent="center"
+            >
+              <Text fontSize={10} color="$green11" fontWeight="700">
+                OPCIONAL
+              </Text>
+            </Stack>
+          </XStack>
+
+          <Controller
+            control={control}
+            name="currentAmount"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <Input
+                placeholder="0"
+                placeholderTextColor="$gray8"
+                keyboardType={
+                  selectedCurrency === "CLP" ? "number-pad" : "decimal-pad"
+                }
+                onBlur={onBlur}
+                onChangeText={(text: string) =>
+                  onChange(formatInputByCurrency(text, selectedCurrency))
+                }
+                value={value}
+                backgroundColor="$gray2"
+                borderColor="$borderColor"
+                borderWidth={1}
+                borderRadius="$4"
+              />
+            )}
+          />
+        </YStack>
+      )}
+
       <YStack>
         <Label fontSize="$3" color="$gray11" fontWeight="600" marginBottom="$2">
           Fecha objetivo

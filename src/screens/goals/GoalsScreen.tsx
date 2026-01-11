@@ -12,26 +12,23 @@ import { useNavigation } from "@react-navigation/native";
 import { useMyGoals } from "../../hooks/useMyGoals";
 import { GoalCard } from "../../components/goals/GoalCard";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Alert, RefreshControl, Vibration } from "react-native";
+import { RefreshControl, Vibration } from "react-native";
 import { useState, useCallback } from "react";
-import { useGoalMutations } from "../../hooks/goals/useGoalMutations";
 import { GoalOptionsSheet } from "../../components/goals/GoalOptionsSheet";
 import { FinancialGoal } from "../../types/goal.types";
 import { GoBackButton } from "../../components/ui/GoBackButton";
-import { useUserStore } from "../../stores/useUserStore";
+import { GoalEntrySheet } from "../../components/goals/GoalEntrySheet";
 
 export const GoalsScreen = () => {
-  const myUserId = useUserStore((state) => state.user?.id);
   const navigation = useNavigation<any>();
   const [selectedGoal, setSelectedGoal] = useState<FinancialGoal | null>(null);
   const { goals, isLoading, refetch } = useMyGoals();
 
-  const { deleteGoal, isMutating } = useGoalMutations();
-  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [openSheet, setOpenSheet] = useState(false);
+  const [entrySheetOpen, setEntrySheetOpen] = useState(false);
 
   const handleCreateGoal = () => {
-    navigation.navigate("CreateGoal");
+    setEntrySheetOpen(true);
   };
 
   const handleLongPress = useCallback((goal: FinancialGoal) => {
@@ -41,37 +38,6 @@ export const GoalsScreen = () => {
       setOpenSheet(true);
     }, 100);
   }, []);
-
-  const handleDelete = () => {
-    if (!selectedGoal) return;
-
-    const isOwner = selectedGoal.userId === myUserId;
-
-    const title = isOwner ? "¿Eliminar meta?" : "¿Salir de la meta?";
-    const message = isOwner
-      ? `Estás a punto de borrar "${selectedGoal.name}". Esta acción es irreversible.`
-      : `¿Seguro que quieres dejar de participar en "${selectedGoal.name}"?`;
-    const actionButton = isOwner ? "Eliminar" : "Salir";
-
-    Alert.alert(title, message, [
-      { text: "Cancelar", style: "cancel" },
-      {
-        text: actionButton,
-        style: "destructive",
-        onPress: () => {
-          const idToDelete = selectedGoal.id;
-          setDeletingId(idToDelete);
-          setOpenSheet(false);
-          // NOTA: Si eres invitado, idealmente aquí llamarías a un 'leaveGoal'
-          deleteGoal(idToDelete, async () => {
-            await refetch();
-            setDeletingId(null);
-            setSelectedGoal(null);
-          });
-        },
-      },
-    ]);
-  };
 
   return (
     <YStack flex={1} backgroundColor="$background">
@@ -168,9 +134,8 @@ export const GoalsScreen = () => {
               ) : (
                 <YStack paddingTop="$2">
                   {goals.map((goal, index) => {
-                    const isFocused = selectedGoal?.id === goal.id;
-                    const shouldStayLifted =
-                      (isFocused && openSheet) || deletingId === goal.id;
+                    const isSelected =
+                      selectedGoal?.id === goal.id && openSheet;
 
                     return (
                       <GoalCard
@@ -178,7 +143,7 @@ export const GoalsScreen = () => {
                         goal={goal}
                         index={index}
                         total={goals.length}
-                        isSelected={shouldStayLifted}
+                        isSelected={isSelected}
                         onPress={() => {
                           navigation.navigate("GoalDetail", {
                             goalId: goal.id,
@@ -197,15 +162,20 @@ export const GoalsScreen = () => {
           )}
         </ScrollView>
       </SafeAreaView>
+      <GoalEntrySheet
+        open={entrySheetOpen}
+        onOpenChange={setEntrySheetOpen}
+        onGoalCreated={refetch}
+      />
       <GoalOptionsSheet
         open={openSheet}
         onOpenChange={(isOpen) => {
           setOpenSheet(isOpen);
-          if (!isOpen && !isMutating && !deletingId) {
+          if (!isOpen) {
             setTimeout(() => setSelectedGoal(null), 300);
           }
         }}
-        onDelete={handleDelete}
+        onGoalUpdate={refetch}
         goal={selectedGoal}
       />
     </YStack>

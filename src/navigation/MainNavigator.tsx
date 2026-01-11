@@ -11,6 +11,7 @@ import { useTheme } from "tamagui";
 import { GoalsScreen } from "../screens/goals/GoalsScreen";
 import { CreateGoalScreen } from "../screens/goals/CreateGoalScreen";
 import { GoalDetailScreen } from "../screens/goals/GoalDetailScreen";
+import { EditGoalScreen } from "../screens/goals/EditGoalScreen";
 
 const Drawer = createDrawerNavigator();
 const Stack = createNativeStackNavigator();
@@ -104,6 +105,11 @@ export default function MainNavigator() {
       <Stack.Screen
         name="CreateGoal"
         component={CreateGoalScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="EditGoal"
+        component={EditGoalScreen}
         options={{ headerShown: false }}
       />
       <Stack.Screen

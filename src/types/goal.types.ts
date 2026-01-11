@@ -22,7 +22,7 @@ export interface GoalParticipant {
     profile?: {
       firstName?: string;
       lastName?: string;
-      avatarUrl?: string; 
+      avatarUrl?: string;
     };
   };
 }
@@ -104,8 +104,10 @@ export interface FinancialGoal {
   interestRate?: number;
   isCompleted: boolean;
   userId: string;
-  analysis: GoalAnalysis;
-  participants: GoalParticipant[];
+  createdAt: string;
+  updatedAt: string;
+  analysis?: GoalAnalysis;
+  participants?: GoalParticipant[];
 }
 
 export interface CreateGoalPayload {
@@ -118,4 +120,10 @@ export interface CreateGoalPayload {
   currentAmount?: number;
   deadline: string;
   interestRate?: number;
+}
+
+export interface JoinResponse {
+  message: string;
+  goalId: string;
+  goalName?: string;
 }
