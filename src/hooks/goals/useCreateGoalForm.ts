@@ -40,6 +40,9 @@ export const useGoalForm = (goalToEdit?: FinancialGoal) => {
         monthlyQuota: String(goalToEdit.monthlyQuota || 0),
         estimatedYield: String(goalToEdit.estimatedYield || 0),
         interestRate: String(goalToEdit.interestRate || 0),
+        monthlyDueDay: goalToEdit.monthlyDueDay
+          ? String(goalToEdit.monthlyDueDay)
+          : "",
         deadline: goalToEdit.deadline
           ? new Date(goalToEdit.deadline)
           : undefined,
@@ -55,6 +58,7 @@ export const useGoalForm = (goalToEdit?: FinancialGoal) => {
       deadline: undefined,
       monthlyQuota: "",
       estimatedYield: "",
+      monthlyDueDay: "",
     };
   }, [goalToEdit, userPreference]);
 

@@ -25,6 +25,9 @@ import {
   ShieldCheck,
   Briefcase,
   TrendingUp,
+  CreditCard,
+  Home,
+  PiggyBank,
 } from "@tamagui/lucide-icons";
 import { Alert, Linking } from "react-native";
 import { CommonActions, useNavigation } from "@react-navigation/native";
@@ -49,12 +52,36 @@ const GOAL_LABELS: Record<string, string> = {
 
 const GOAL_CONFIG: Record<string, { label: string; icon: any; color: string }> =
   {
-    save: { label: "Ahorrar Dinero", icon: Target, color: "#EC4899" },
-    debt: { label: "Salir de Deudas", icon: TrendingDown, color: "#EF4444" },
-    house: { label: "Comprar Vivienda", icon: Building, color: "#059669" },
-    control: { label: "Controlar Gastos", icon: ShieldCheck, color: "#F59E0B" },
-    invest: { label: "Invertir", icon: TrendingUp, color: "#8B5CF6" },
-    retire: { label: "Jubilación", icon: Briefcase, color: "#64748B" },
+    save: {
+      label: "Ahorrar Dinero",
+      icon: PiggyBank,
+      color: "#10B981",
+    },
+    debt: {
+      label: "Salir de Deudas",
+      icon: CreditCard,
+      color: "#EF4444",
+    },
+    house: {
+      label: "Comprar Vivienda",
+      icon: Home,
+      color: "#3B82F6",
+    },
+    control: {
+      label: "Controlar Gastos",
+      icon: ShieldCheck,
+      color: "#F97316",
+    },
+    invest: {
+      label: "Invertir",
+      icon: TrendingUp,
+      color: "#8B5CF6",
+    },
+    retire: {
+      label: "Jubilación",
+      icon: Briefcase,
+      color: "#64748B",
+    },
   };
 
 export default function SettingsScreen() {
@@ -271,7 +298,7 @@ export default function SettingsScreen() {
               Eliminar mi cuenta
             </Text>
             <Text marginTop="$4" fontSize={11} color="$color">
-              Nova App v1.0.0 (Build 2025)
+              WOU Finance v1.0.0 (Build 2025)
             </Text>
           </YStack>
         </YStack>

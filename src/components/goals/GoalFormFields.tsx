@@ -203,6 +203,41 @@ export const GoalFormFields = ({
         </YStack>
       )}
 
+      {(isDebt || isHousing) && (
+        <YStack space="$2">
+          <Label fontSize="$3" color="$gray11" fontWeight="600">
+            Día de Vencimiento de Cuota (1-31)
+          </Label>
+          <Controller
+            control={control}
+            name="monthlyDueDay"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <Input
+                placeholder="Ej: 5 (Día 5 de cada mes)"
+                placeholderTextColor="$gray8"
+                keyboardType="number-pad"
+                onBlur={onBlur}
+                maxLength={2}
+                onChangeText={(text) => {
+                  const num = text.replace(/[^0-9]/g, "");
+                  if (Number(num) > 31) return; 
+                  onChange(num);
+                }}
+                value={value?.toString()}
+                backgroundColor="$gray2"
+                borderColor={errors.monthlyDueDay ? "$red8" : "$borderColor"}
+                borderWidth={1}
+                borderRadius="$4"
+              />
+            )}
+          />
+          <Text fontSize={11} color="$gray9" marginLeft="$1">
+            Te avisaremos si te atrasas en tu pago mensual.
+          </Text>
+          <ErrorMsg name="monthlyDueDay" />
+        </YStack>
+      )}
+
       {showYield && (
         <YStack space="$2">
           <Label fontSize="$3" color="$gray11" fontWeight="600">

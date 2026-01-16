@@ -21,6 +21,8 @@ import {
   ShieldCheck,
   TrendingDown,
   TrendingUp,
+  CreditCard,
+  PiggyBank,
 } from "@tamagui/lucide-icons";
 import { DrawerContentScrollView } from "@react-navigation/drawer";
 import { useNavigation } from "@react-navigation/native";
@@ -43,7 +45,7 @@ export const Sidebar = (props: any) => {
         return { label: "Inversiones", icon: TrendingUp, route: "Goals" };
 
       case "debt":
-        return { label: "Plan de Deudas", icon: TrendingDown, route: "Goals" };
+        return { label: "Plan de Deudas", icon: CreditCard, route: "Goals" };
 
       case "control":
         return {
@@ -53,14 +55,14 @@ export const Sidebar = (props: any) => {
         };
 
       case "house":
-        return { label: "Mi Casa Propia", icon: Building, route: "Goals" };
+        return { label: "Mi Casa Propia", icon: Home, route: "Goals" };
 
       case "retire":
         return { label: "Fondo de Retiro", icon: Briefcase, route: "Goals" };
 
       case "save":
       default:
-        return { label: "Metas de Ahorro", icon: Target, route: "Goals" };
+        return { label: "Metas de Ahorro", icon: PiggyBank, route: "Goals" };
     }
   };
 
@@ -268,7 +270,7 @@ export const Sidebar = (props: any) => {
                     fontSize={12}
                     letterSpacing={1}
                   >
-                    NOVA PRO
+                    WOU+
                   </Text>
                 </XStack>
 

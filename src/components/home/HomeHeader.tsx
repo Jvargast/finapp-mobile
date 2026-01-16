@@ -18,7 +18,7 @@ export const HomeHeader = () => {
 
   const firstName = user?.firstName;
   const initials = firstName ? firstName[0].toUpperCase() : "N";
-  const mainTitle = firstName || "Nova";
+  const mainTitle = firstName || "WOU";
   const subTitle = firstName ? "Hola de nuevo," : "¡Bienvenido a";
   const isPro = user?.plan === "PRO" || user?.plan === "PREMIUM";
 

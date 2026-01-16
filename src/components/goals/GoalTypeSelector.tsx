@@ -21,48 +21,48 @@ const GOAL_OPTIONS = [
     label: "Ahorro",
     description: "Fondo de emergencia",
     icon: Target,
-    color: "#059669",
-    bg: "#ECFDF5",
+    color: "$green10",
+    bg: "$green3",
   },
   {
     id: GoalType.DEBT,
     label: "Salir de Deudas",
     description: "Eliminar cargas",
     icon: TrendingDown,
-    color: "#DC2626",
-    bg: "#FEF2F2",
+    color: "$red10",
+    bg: "$red3",
   },
   {
     id: GoalType.HOUSING,
     label: "Casa Propia",
     description: "El sueño del hogar",
     icon: Building,
-    color: "#2563EB",
-    bg: "#EFF6FF",
+    color: "$blue10",
+    bg: "$blue3",
   },
   {
     id: GoalType.CONTROL,
     label: "Control Gastos",
     description: "Optimizar dinero",
     icon: ShieldCheck,
-    color: "#D97706",
-    bg: "#FFFBEB",
+    color: "$orange10",
+    bg: "$orange3",
   },
   {
     id: GoalType.INVESTMENT,
     label: "Inversiones",
     description: "Crecer patrimonio",
     icon: TrendingUp,
-    color: "#7C3AED",
-    bg: "#F5F3FF",
+    color: "$purple10",
+    bg: "$purple3",
   },
   {
     id: GoalType.RETIREMENT,
     label: "Jubilación",
     description: "Futuro asegurado",
     icon: Briefcase,
-    color: "#475569",
-    bg: "#F8FAFC",
+    color: "$gray10",
+    bg: "$gray3",
   },
 ];
 
@@ -73,7 +73,7 @@ export const GoalTypeSelector = ({
   return (
     <YStack space="$4">
       <YStack>
-        <Text fontSize="$5" fontWeight="800" color="$gray12">
+        <Text fontSize="$5" fontWeight="800" color="$color">
           ¿Qué quieres lograr?
         </Text>
         <Text fontSize="$3" color="$gray10" marginTop="$1">
@@ -91,8 +91,8 @@ export const GoalTypeSelector = ({
               key={option.id}
               width="48%"
               onPress={() => onChange(option.id)}
-              backgroundColor={isSelected ? option.color : "white"}
-              borderColor={isSelected ? option.color : "$gray4"}
+              backgroundColor={isSelected ? option.color : "$color2"}
+              borderColor={isSelected ? option.color : "$borderColor"}
               borderWidth={1.5}
               borderRadius="$6"
               padding="$3"
@@ -119,22 +119,20 @@ export const GoalTypeSelector = ({
                   />
                 </Stack>
 
-                {isSelected && (
-                  <Stack
-                    width={8}
-                    height={8}
-                    borderRadius={4}
-                    backgroundColor="white"
-                    opacity={0.9}
-                  />
-                )}
+                <Stack
+                  width={8}
+                  height={8}
+                  borderRadius={4}
+                  backgroundColor="white"
+                  opacity={isSelected ? 0.9 : 0}
+                />
               </XStack>
 
               <YStack>
                 <Text
                   fontSize="$3"
                   fontWeight="800"
-                  color={isSelected ? "white" : "$gray12"}
+                  color={isSelected ? "white" : "$color"}
                   numberOfLines={1}
                 >
                   {option.label}
@@ -142,7 +140,7 @@ export const GoalTypeSelector = ({
                 <Text
                   fontSize={11}
                   fontWeight="500"
-                  color={isSelected ? "rgba(255,255,255,0.85)" : "$gray9"}
+                  color={isSelected ? "rgba(255,255,255,0.85)" : "$gray10"}
                   numberOfLines={1}
                   marginTop={2}
                 >

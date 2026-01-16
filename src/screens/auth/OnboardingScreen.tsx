@@ -47,7 +47,7 @@ const SLIDES = [
     id: "3",
     title: "Cumple tus\nMetas",
     description:
-      "Define objetivos de ahorro inteligentes. Nova te ayuda a llegar a la meta más rápido.",
+      "Define objetivos de ahorro inteligentes. WOU Finance te ayuda a llegar a la meta más rápido.",
     icon: TrendingUp,
     color: "#8B5CF6",
     accent: "#F3E8FF",

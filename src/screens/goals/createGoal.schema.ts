@@ -47,6 +47,11 @@ export const createGoalSchema = z.object({
     .string()
     .optional()
     .transform((val) => (val ? parseNumber(val) : 0)),
+
+  monthlyDueDay: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val, 10) : undefined)),
 });
 
 export type CreateGoalFormInputs = z.input<typeof createGoalSchema>;

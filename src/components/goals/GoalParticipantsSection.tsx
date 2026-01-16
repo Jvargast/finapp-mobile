@@ -61,7 +61,7 @@ export const GoalParticipantsSection = ({
       <YStack space="$3">
         <XStack justifyContent="space-between" alignItems="center">
           <XStack alignItems="center" space="$2">
-            <UserPlus size={16} color="$gray9" />
+            <UserPlus size={16} color="$brand" />
             <Text fontSize="$5" fontWeight="800" color="$gray10">
               Equipo
             </Text>

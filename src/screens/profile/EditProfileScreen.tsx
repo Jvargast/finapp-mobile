@@ -168,7 +168,7 @@ export default function EditProfileScreen() {
             autoCapitalize="none"
             placeholder="nombre_usuario"
             error={errors.username}
-            helperText="Tu identificador único en Nova."
+            helperText="Tu identificador único en WOU Finance."
           />
         </FormGroup>
 

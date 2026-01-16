@@ -35,7 +35,9 @@ export const AuthActions = {
       await SecureStore.setItemAsync("access_token", data.access_token);
       await SecureStore.setItemAsync("refresh_token", data.refresh_token);
 
-      useUserStore.getState().setUser(data.user);
+      useUserStore
+        .getState()
+        .setUser({ ...data.user, email: data.user.email || userData.email });
       useAuthStore.getState().setAuthenticated(true);
     } catch (error) {
       console.error("Registro falló", error);

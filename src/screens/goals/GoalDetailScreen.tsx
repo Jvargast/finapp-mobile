@@ -9,7 +9,7 @@ import {
   Progress,
   useTheme,
 } from "tamagui";
-import { useRoute, useNavigation } from "@react-navigation/native";
+import { useRoute } from "@react-navigation/native";
 import { useFocusEffect } from "@react-navigation/native";
 import {
   SafeAreaView,
@@ -24,6 +24,10 @@ import { SavingsDetailView } from "../../components/goals/SavingsDetailView";
 import { InvestmentDetailView } from "../../components/goals/InvestmentDetailView";
 import { DebtDetailView } from "../../components/goals/DebtDetailView";
 import { GoalParticipantsSection } from "../../components/goals/GoalParticipantsSection";
+import { GoalTransactionSheet } from "../../components/goals/GoalTransactionSheet";
+import { GoalActivitySection } from "../../components/goals/GoalActivitySection";
+import { ControlDetailView } from "../../components/goals/ControlDetailView";
+import { RetirementDetailView } from "../../components/goals/RetirementDetailView";
 
 const THEME_BY_TYPE = {
   [GoalType.SAVING]: {
@@ -68,7 +72,7 @@ export const GoalDetailScreen = () => {
   const appTheme = useTheme();
   const insets = useSafeAreaInsets();
   const route = useRoute<any>();
-  const navigation = useNavigation();
+  const [isTransactionOpen, setTransactionOpen] = useState(false);
   const { goalId, goal: initialGoal } = route.params;
 
   const [goal, setGoal] = useState<FinancialGoal>(initialGoal);
@@ -96,7 +100,7 @@ export const GoalDetailScreen = () => {
   );
 
   const handleAddMoney = () => {
-    navigation.navigate("AddGoalFunds", { goal });
+    setTransactionOpen(true);
   };
 
   return (
@@ -209,6 +213,8 @@ export const GoalDetailScreen = () => {
               onGoalUpdate={fetchGoalDetails}
             />
 
+            <GoalActivitySection goal={goal} />
+
             <YStack space="$4">
               <XStack alignItems="center" space="$2">
                 <Sparkles size={16} color="$brand" />
@@ -221,21 +227,43 @@ export const GoalDetailScreen = () => {
                   <DebtDetailView
                     analysis={goal.analysis as any}
                     currency={goal.currency}
+                    transactions={goal.goalTransactions}
+                    deadline={goal.deadline}
                   />
                 )}
 
                 {(goal.type === GoalType.SAVING ||
                   goal.type === GoalType.HOUSING) && (
                   <SavingsDetailView
+                    goalId={goalId}
                     analysis={goal.analysis as any}
                     currency={goal.currency}
                     isHousing={goal.type === GoalType.HOUSING}
+                    transactions={goal.goalTransactions}
+                    onGoalUpdate={fetchGoalDetails}
+                    deadline={goal.deadline}
                   />
                 )}
 
-                {(goal.type === GoalType.INVESTMENT ||
-                  goal.type === GoalType.RETIREMENT) && (
+                {goal.type === GoalType.INVESTMENT  && (
                   <InvestmentDetailView
+                    analysis={goal.analysis as any}
+                    currency={goal.currency}
+                    transactions={goal.goalTransactions}
+                  />
+                )}
+
+                {goal.type === GoalType.RETIREMENT && (
+                  <RetirementDetailView
+                    analysis={goal.analysis as any}
+                    currency={goal.currency}
+                    transactions={goal.goalTransactions}
+                    deadline={goal.deadline}
+                  />
+                )}
+
+                {goal.type === GoalType.CONTROL && (
+                  <ControlDetailView
                     analysis={goal.analysis as any}
                     currency={goal.currency}
                   />
@@ -264,7 +292,7 @@ export const GoalDetailScreen = () => {
           color="white"
           icon={goal.type === GoalType.DEBT ? undefined : <Plus />}
           fontWeight="bold"
-          onPress={handleAddMoney}
+          onPressIn={handleAddMoney}
           borderRadius="$10"
           pressStyle={{
             backgroundColor: theme.primary,
@@ -283,6 +311,12 @@ export const GoalDetailScreen = () => {
             : "Abonar Dinero"}
         </Button>
       </YStack>
+      <GoalTransactionSheet
+        open={isTransactionOpen}
+        onOpenChange={setTransactionOpen}
+        goal={goal}
+        onSuccess={fetchGoalDetails}
+      />
     </SafeAreaView>
   );
 };

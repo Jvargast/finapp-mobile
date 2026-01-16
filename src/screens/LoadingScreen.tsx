@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { YStack, Text, Spinner, Stack, Circle, XStack } from "tamagui";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Wallet } from "@tamagui/lucide-icons";
-import { StatusBar } from "react-native";
+import { Image, StatusBar } from "react-native";
 
 const COLORS = {
   primary: "#4F46E5",
@@ -23,7 +22,7 @@ export default function LoadingScreen() {
   }, []);
 
   return (
-    <YStack flex={1} backgroundColor={COLORS.white} position="relative">
+    <YStack flex={1} backgroundColor="white" position="relative">
       <StatusBar barStyle="dark-content" />
 
       <Stack position="absolute" width="100%" height="100%" overflow="hidden">
@@ -50,31 +49,40 @@ export default function LoadingScreen() {
           <Stack
             justifyContent="center"
             alignItems="center"
-            width={120}
-            height={120}
+            width={140}
+            height={140}
           >
             <Circle
-              size={pulse ? 140 : 100}
+              size={pulse ? 160 : 120}
               backgroundColor={COLORS.primary}
-              opacity={pulse ? 0 : 0.2}
+              opacity={pulse ? 0 : 0.15}
               position="absolute"
               animation="lazy"
             />
 
             <Stack
-              backgroundColor={COLORS.primary}
-              padding="$4"
-              borderRadius="$12"
-              transform={[{ rotate: "-8deg" }]}
+              width={120}
+              height={120}
+              borderRadius={60}
+              backgroundColor="white"
               shadowColor={COLORS.primary}
-              shadowRadius={25}
+              shadowRadius={pulse ? 30 : 15}
               shadowOffset={{ width: 0, height: 10 }}
-              shadowOpacity={0.4}
-              elevation={10}
-              scale={pulse ? 1.05 : 1} 
+              shadowOpacity={0.3}
+              scale={pulse ? 1.02 : 1}
               animation="bouncy"
+              justifyContent="center"
+              alignItems="center"
+              overflow="hidden"
             >
-              <Wallet size={48} color="white" />
+              <Image
+                source={require("../../assets/wou-finance.jpg")}
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  resizeMode: "cover",
+                }}
+              />
             </Stack>
           </Stack>
 
@@ -84,16 +92,17 @@ export default function LoadingScreen() {
               fontWeight="900"
               color={COLORS.textMain}
               letterSpacing={-1.5}
+              opacity={pulse ? 1 : 0.8}
+              animation="lazy"
             >
-              Nova
+              Wou Finance
             </Text>
           </YStack>
-
           <Stack position="absolute" bottom={60}>
             <XStack
               backgroundColor="white"
-              paddingHorizontal="$4"
-              paddingVertical="$2"
+              paddingHorizontal="$5"
+              paddingVertical="$3"
               borderRadius="$10"
               space="$3"
               alignItems="center"
@@ -107,7 +116,7 @@ export default function LoadingScreen() {
             >
               <Spinner size="small" color={COLORS.primary} />
               <Text fontSize="$3" color={COLORS.textMuted} fontWeight="600">
-                Sincronizando...
+                Iniciando ecosistema...
               </Text>
             </XStack>
           </Stack>

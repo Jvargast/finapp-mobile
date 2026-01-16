@@ -76,7 +76,7 @@ export default function ProfileScreen() {
   const initials = user?.firstName?.[0]?.toUpperCase() || "N";
   const fullName = user?.firstName
     ? `${user.firstName} ${user.lastName}`
-    : "Usuario Nova";
+    : "Usuario WOU Finance";
   const isPro = user?.plan === "PRO" || user?.plan === "PREMIUM";
   const planName = user?.plan || "FREE";
 

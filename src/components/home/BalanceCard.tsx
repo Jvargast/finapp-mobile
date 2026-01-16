@@ -1,9 +1,8 @@
-import { YStack, Text, XStack, Button, Stack } from "tamagui";
-import { Eye, EyeOff, TrendingUp } from "@tamagui/lucide-icons";
+import { YStack, Text, XStack, Button, Stack, Separator } from "tamagui";
+import { Eye, EyeOff, CreditCard, Wallet } from "@tamagui/lucide-icons";
 import { useState, useMemo } from "react";
 import { useUserStore } from "../../stores/useUserStore";
-
-const BASE_BALANCE_CLP = 3500000;
+import { useAccountStore } from "../../stores/useAccountStore";
 
 const REF_RATES: Record<string, number> = {
   CLP: 1,
@@ -17,33 +16,34 @@ const REF_RATES: Record<string, number> = {
 export const BalanceCard = () => {
   const [showBalance, setShowBalance] = useState(true);
   const user = useUserStore((state) => state.user);
+  const accounts = useAccountStore((state) => state.accounts);
 
   const targetCurrency = user?.preferences?.currency || "CLP";
+  const rate = REF_RATES[targetCurrency] || 1;
 
-  const displayAmount = useMemo(() => {
-    const rate = REF_RATES[targetCurrency] || 1;
-    return BASE_BALANCE_CLP * rate;
-  }, [targetCurrency]);
+  const { liquidTotal, creditTotal } = useMemo(() => {
+    return accounts.reduce(
+      (acc, account) => {
+        const val = Number(account.balance || 0);
+        if (account.isCredit) {
+          acc.creditTotal += val;
+        } else {
+          acc.liquidTotal += val;
+        }
+        return acc;
+      },
+      { liquidTotal: 0, creditTotal: 0 }
+    );
+  }, [accounts]);
 
-  const formattedBalance = useMemo(() => {
-    if (targetCurrency === "BTC") return displayAmount.toFixed(8);
+  const formatMoney = (amount: number) => {
+    const value = amount * rate;
+    if (targetCurrency === "BTC") return value.toFixed(8);
 
     return new Intl.NumberFormat("es-CL", {
       minimumFractionDigits: targetCurrency === "CLP" ? 0 : 2,
       maximumFractionDigits: targetCurrency === "CLP" ? 0 : 2,
-    }).format(displayAmount);
-  }, [displayAmount, targetCurrency]);
-
-  const getCurrencySymbol = (code: string) => {
-    const symbols: Record<string, string> = {
-      CLP: "$",
-      USD: "US$",
-      EUR: "€",
-      CAD: "C$",
-      UF: "UF",
-      BTC: "₿",
-    };
-    return symbols[code] || code;
+    }).format(value);
   };
 
   const symbol = getCurrencySymbol(targetCurrency);
@@ -53,7 +53,6 @@ export const BalanceCard = () => {
       backgroundColor="#4F46E5"
       borderRadius="$8"
       padding="$5"
-      elevation={10}
       shadowColor="#4F46E5"
       shadowOpacity={0.4}
       shadowRadius={15}
@@ -74,9 +73,22 @@ export const BalanceCard = () => {
 
       <YStack space="$1">
         <XStack justifyContent="space-between" alignItems="center">
-          <Text color="#C7D2FE" fontWeight="600" fontSize="$3">
-            Balance Total
-          </Text>
+          <XStack space="$2" alignItems="center">
+            <Text color="#C7D2FE" fontWeight="600" fontSize="$3">
+              Liquidez Total
+            </Text>
+            {/* Tooltip o badge opcional */}
+            <Stack
+              backgroundColor="rgba(255,255,255,0.15)"
+              paddingHorizontal="$1.5"
+              borderRadius="$2"
+            >
+              <Text fontSize={10} color="#C7D2FE">
+                Real
+              </Text>
+            </Stack>
+          </XStack>
+
           <Button
             size="$2"
             circular
@@ -93,6 +105,7 @@ export const BalanceCard = () => {
           </Button>
         </XStack>
 
+        {/* NÚMERO PRINCIPAL (SOLO ACTIVOS) */}
         <XStack
           alignItems="baseline"
           space="$1.5"
@@ -115,7 +128,7 @@ export const BalanceCard = () => {
             minimumFontScale={0.6}
             flexShrink={1}
           >
-            {showBalance ? formattedBalance : "••••••••"}
+            {showBalance ? formatMoney(liquidTotal) : "••••••••"}
           </Text>
 
           {showBalance && (
@@ -125,22 +138,58 @@ export const BalanceCard = () => {
           )}
         </XStack>
 
+        {/* SECCIÓN DESGLOSADA ABAJO */}
         <XStack
-          backgroundColor="rgba(255,255,255,0.2)"
-          alignSelf="flex-start"
-          paddingHorizontal="$2"
-          paddingVertical="$1"
+          marginTop="$4"
+          backgroundColor="rgba(0,0,0,0.2)"
           borderRadius="$4"
-          marginTop="$3"
-          space="$1"
+          padding="$2.5"
+          space="$3"
           alignItems="center"
         >
-          <TrendingUp size={14} color="#A5F3FC" />
-          <Text color="#A5F3FC" fontSize="$2" fontWeight="bold">
-            Tu algoritmo va bien (+15%)
-          </Text>
+          <YStack flex={1}>
+            <XStack space="$1.5" alignItems="center" marginBottom={2}>
+              <Wallet size={12} color="#A5F3FC" />
+              <Text fontSize={10} color="#C7D2FE" fontWeight="600">
+                TU DINERO
+              </Text>
+            </XStack>
+            <Text fontSize="$4" fontWeight="700" color="white">
+              {showBalance ? formatMoney(liquidTotal) : "••••"}
+            </Text>
+          </YStack>
+
+          <Separator
+            vertical
+            minHeight={25}
+            borderColor="rgba(255,255,255,0.2)"
+          />
+
+          <YStack flex={1}>
+            <XStack space="$1.5" alignItems="center" marginBottom={2}>
+              <CreditCard size={12} color="#FDBA74" />{" "}
+              <Text fontSize={10} color="#FDBA74" fontWeight="600">
+                EN TARJETAS
+              </Text>
+            </XStack>
+            <Text fontSize="$4" fontWeight="700" color="white">
+              {showBalance ? formatMoney(creditTotal) : "••••"}
+            </Text>
+          </YStack>
         </XStack>
       </YStack>
     </Stack>
   );
+};
+
+const getCurrencySymbol = (code: string) => {
+  const symbols: Record<string, string> = {
+    CLP: "$",
+    USD: "US$",
+    EUR: "€",
+    CAD: "C$",
+    UF: "UF",
+    BTC: "₿",
+  };
+  return symbols[code] || code;
 };

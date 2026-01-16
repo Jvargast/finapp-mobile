@@ -12,6 +12,8 @@ import { GoalsScreen } from "../screens/goals/GoalsScreen";
 import { CreateGoalScreen } from "../screens/goals/CreateGoalScreen";
 import { GoalDetailScreen } from "../screens/goals/GoalDetailScreen";
 import { EditGoalScreen } from "../screens/goals/EditGoalScreen";
+import AddAccountScreen from "../screens/accounts/AddAccountScreen";
+import AccountsScreen from "../screens/main/AccountsScreen";
 
 const Drawer = createDrawerNavigator();
 const Stack = createNativeStackNavigator();
@@ -100,22 +102,46 @@ export default function MainNavigator() {
       <Stack.Screen
         name="Goals"
         component={GoalsScreen}
-        options={{ headerShown: false }}
+        options={{ headerShown: false, animation: "slide_from_right" }}
       />
       <Stack.Screen
         name="CreateGoal"
         component={CreateGoalScreen}
-        options={{ headerShown: false }}
+        options={{
+          headerShown: false,
+          animation: "slide_from_bottom",
+          presentation: "modal",
+        }}
       />
       <Stack.Screen
         name="EditGoal"
         component={EditGoalScreen}
-        options={{ headerShown: false }}
+        options={{
+          headerShown: false,
+          animation: "slide_from_bottom",
+          presentation: "modal",
+        }}
       />
       <Stack.Screen
         name="GoalDetail"
         component={GoalDetailScreen}
-        options={{ headerShown: false }}
+        options={{ headerShown: false, animation: "slide_from_right" }}
+      />
+      <Stack.Screen
+        name="AddAccount"
+        component={AddAccountScreen}
+        options={{
+          headerShown: false,
+          animation: "slide_from_right",
+        }}
+      />
+      <Stack.Screen
+        name="Accounts"
+        component={AccountsScreen}
+        options={{
+          headerShown: false,
+          animation: "slide_from_right",
+        }}
       />
     </Stack.Navigator>
   );

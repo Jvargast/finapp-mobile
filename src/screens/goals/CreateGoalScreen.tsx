@@ -16,47 +16,48 @@ export const CreateGoalScreen = () => {
     selectedType === GoalType.DEBT || selectedType === GoalType.INVESTMENT;
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "white" }}>
-      <YStack flex={1} paddingHorizontal="$4" paddingTop="$2">
-        <CreateGoalHeader />
+    <YStack flex={1} backgroundColor="$background">
+      <SafeAreaView style={{ flex: 1 }}>
+        <YStack flex={1} paddingHorizontal="$4" paddingTop="$2">
+          <CreateGoalHeader />
 
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
-          <YStack space="$5" paddingBottom="$10">
-            <Controller
-              control={form.control}
-              name="type"
-              render={({ field: { onChange, value } }) => (
-                <GoalTypeSelector value={value} onChange={onChange} />
-              )}
-            />
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
+            <YStack space="$5" paddingBottom="$10">
+              <Controller
+                control={form.control}
+                name="type"
+                render={({ field: { onChange, value } }) => (
+                  <GoalTypeSelector value={value} onChange={onChange} />
+                )}
+              />
 
-            <Separator />
+              <Separator />
 
-            <GoalFormFields
-              control={form.control}
-              errors={form.formState.errors}
-              showInterestField={showInterestField}
-              goalType={selectedType}
-            />
-
-            <Button
-              size="$5"
-              backgroundColor="$brand"
-              color="white"
-              fontWeight="bold"
-              marginTop="$4"
-              onPress={submit}
-              disabled={isSubmitting}
-              icon={isSubmitting ? <Spinner color="white" /> : undefined}
-            >
-              {isSubmitting ? "Creando..." : "Crear Meta"}
-            </Button>
-          </YStack>
-        </ScrollView>
-      </YStack>
-    </SafeAreaView>
+              <GoalFormFields
+                control={form.control}
+                errors={form.formState.errors}
+                showInterestField={showInterestField}
+                goalType={selectedType}
+              />
+              <Button
+                size="$5"
+                backgroundColor="$brand"
+                color="white"
+                fontWeight="bold"
+                marginTop="$4"
+                onPress={submit}
+                disabled={isSubmitting}
+                icon={isSubmitting ? <Spinner color="white" /> : undefined}
+              >
+                {isSubmitting ? "Creando..." : "Crear Meta"}
+              </Button>
+            </YStack>
+          </ScrollView>
+        </YStack>
+      </SafeAreaView>
+    </YStack>
   );
 };

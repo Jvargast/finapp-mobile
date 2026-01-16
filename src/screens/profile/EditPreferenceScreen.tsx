@@ -14,6 +14,9 @@ import {
   TrendingDown,
   Briefcase,
   TrendingUp,
+  CreditCard,
+  Home,
+  PiggyBank,
 } from "@tamagui/lucide-icons";
 import { useUserStore } from "../../stores/useUserStore";
 import { UserActions } from "../../actions/userActions";
@@ -69,8 +72,8 @@ const IconUF = ({
     strokeLinejoin="round"
   >
     <Path d="M3 10 L12 2 L21 10 V20 C21 21.1 20.1 22 19 22 H5 C3.9 22 3 21.1 3 20 V10 Z" />
-    <Path d="M9 16 L12 13 L15 16 L19 11" /> 
-    <Path d="M15 11 H19 V15" /> 
+    <Path d="M9 16 L12 13 L15 16 L19 11" />
+    <Path d="M15 11 H19 V15" />
   </Svg>
 );
 
@@ -129,29 +132,29 @@ const OPTIONS: Record<PreferenceType, OptionItem[]> = {
     {
       id: "save",
       label: "Ahorrar Dinero",
-      icon: Target,
-      color: "#EC4899",
+      icon: PiggyBank,
+      color: "#10B981",
       desc: "Crear fondo de emergencia o metas.",
     },
     {
       id: "debt",
       label: "Salir de Deudas",
-      icon: TrendingDown,
+      icon: CreditCard,
       color: "#EF4444",
       desc: "Eliminar créditos y cargas financieras.",
     },
     {
       id: "house",
       label: "Comprar Vivienda",
-      icon: Building,
-      color: "#059669",
+      icon: Home,
+      color: "#3B82F6",
       desc: "Ahorro para el pie o casa propia.",
     },
     {
       id: "control",
       label: "Controlar Gastos",
       icon: ShieldCheck,
-      color: "#F59E0B",
+      color: "#F97316",
       desc: "Ordenar mis finanzas día a día.",
     },
     {

@@ -20,14 +20,10 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
-  TextInput,
   TouchableWithoutFeedback,
 } from "react-native";
 import {
   Mail,
-  Lock,
-  Eye,
-  EyeOff,
   User,
   ChevronLeft,
   CheckCircle2,

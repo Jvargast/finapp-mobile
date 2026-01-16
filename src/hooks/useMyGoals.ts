@@ -48,12 +48,19 @@ const getPriority = (preference: string): GoalType[] => {
   switch (preference) {
     case "debt":
       return [GoalType.DEBT];
+
     case "invest":
-    case "retire":
       return [GoalType.INVESTMENT];
+
+    case "retire":
+      return [GoalType.RETIREMENT];
+
     case "house":
       return [GoalType.HOUSING];
+
     case "control":
+      return [GoalType.CONTROL];
+
     case "save":
     default:
       return [GoalType.SAVING];

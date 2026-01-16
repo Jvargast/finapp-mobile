@@ -30,7 +30,10 @@ export const GoalCard = ({
   onLongPress,
   isSelected = false,
 }: GoalCardProps) => {
-  const { analysis } = goal;
+  const analysis = goal.analysis || {
+    type: "UNKNOWN",
+    advice: "Procesando análisis...",
+  };
 
   const getTheme = () => {
     switch (goal.type) {
@@ -41,7 +44,7 @@ export const GoalCard = ({
       case GoalType.RETIREMENT:
         return { bg: "$slate9", iconBg: "$slate5", shadow: "$slate9" };
       case GoalType.CONTROL:
-        return { bg: "$amber9", iconBg: "$amber5", shadow: "$amber9" };
+        return { bg: "$orange9", iconBg: "$orange5", shadow: "$orange9" };
       case GoalType.DEBT:
         return { bg: "$red9", iconBg: "$red5", shadow: "$red9" };
       case GoalType.SAVING:
@@ -70,7 +73,7 @@ export const GoalCard = ({
       case GoalType.DEBT:
         return <CreditCard {...props} />;
       case GoalType.SAVING:
-        return analysis.type === "EMERGENCY_FUND_ANALYSIS" ? (
+        return analysis?.type === "EMERGENCY_FUND_ANALYSIS" ? (
           <ShieldCheck {...props} />
         ) : (
           <PiggyBank {...props} />
@@ -147,7 +150,7 @@ export const GoalCard = ({
                 {goal.type} • {goalCurrency}
               </Text>
               <ParticipantAvatars
-                participants={goal.participants}
+                participants={goal.participants || []}
                 borderColor={theme.bg}
               />
             </YStack>
@@ -160,7 +163,7 @@ export const GoalCard = ({
             opacity={0.9}
             textShadowColor="rgba(0,0,0,0.2)"
             textShadowRadius={5}
-            flexShrink={0} 
+            flexShrink={0}
             marginLeft="$2"
           >
             {progressPercent.toFixed(0)}%

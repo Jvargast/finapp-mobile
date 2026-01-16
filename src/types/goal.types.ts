@@ -10,6 +10,24 @@ export enum InvitationStatus {
   REJECTED = "REJECTED",
 }
 
+export type GoalTransactionType = "DEPOSIT" | "WITHDRAW";
+
+export interface GoalTransaction {
+  id: string;
+  amount: string | number;
+  type: GoalTransactionType;
+  date: string;
+  userId: string;
+  user: {
+    id: string;
+    profile?: {
+      firstName?: string;
+      lastName?: string;
+      avatarUrl?: string;
+    };
+  };
+}
+
 export interface GoalParticipant {
   id: string;
   role: GoalRole;
@@ -62,17 +80,12 @@ export interface SavingsAnalysis extends BaseAnalysis {
   monthsLeft: number;
   requiredMonthly: number;
   yourCapacity: number;
+  committedMonthly?: number;
 }
 
 export interface EmergencyFundAnalysis extends BaseAnalysis {
   type: "EMERGENCY_FUND_ANALYSIS";
   monthsCovered: number;
-}
-
-export interface DebtAnalysis extends BaseAnalysis {
-  type: "DEBT_ANALYSIS";
-  monthsToFree?: number;
-  monthlyPayment?: number;
 }
 
 export interface InvestmentAnalysis extends BaseAnalysis {
@@ -81,6 +94,29 @@ export interface InvestmentAnalysis extends BaseAnalysis {
   interestEarned: number;
   isGoalMet: boolean;
   monthlyContribution: number;
+  monthsProjection?: number;
+  currentAmount?: number;
+  recommendedMonthly?: number;
+  monthsLeft?: number;
+  targetAmount?: number;
+}
+
+export interface DebtAnalysis extends BaseAnalysis {
+  type: "DEBT_ANALYSIS";
+  monthsToFree?: number;
+  monthlyPayment?: number;
+  minimumPayment?: number;
+  nextPaymentDate?: string;
+  isOverdue?: boolean;
+  daysUntilDue?: number;
+}
+
+export interface ControlAnalysis extends BaseAnalysis {
+  type: "CONTROL_ANALYSIS";
+  spent: number;
+  limit: number;
+  remaining: number;
+  percentage: number;
 }
 
 export type GoalAnalysis =
@@ -88,6 +124,7 @@ export type GoalAnalysis =
   | EmergencyFundAnalysis
   | DebtAnalysis
   | InvestmentAnalysis
+  | ControlAnalysis
   | UnknownAnalysis;
 
 export interface FinancialGoal {
@@ -103,11 +140,13 @@ export interface FinancialGoal {
   deadline: string;
   interestRate?: number;
   isCompleted: boolean;
+  monthlyDueDay?: number;
   userId: string;
   createdAt: string;
   updatedAt: string;
   analysis?: GoalAnalysis;
   participants?: GoalParticipant[];
+  goalTransactions?: GoalTransaction[];
 }
 
 export interface CreateGoalPayload {
@@ -120,6 +159,7 @@ export interface CreateGoalPayload {
   currentAmount?: number;
   deadline: string;
   interestRate?: number;
+  monthlyDueDay?: number;
 }
 
 export interface JoinResponse {

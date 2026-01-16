@@ -11,8 +11,8 @@ import {
   ScrollView,
 } from "tamagui";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useAuthStore } from "../../stores/useAuthStore";
 import {
+  Image,
   Keyboard,
   KeyboardAvoidingView,
   Platform,
@@ -83,24 +83,48 @@ export default function LoginScreen() {
             <YStack flex={1} justifyContent="center" padding="$5" space="$5">
               <YStack alignItems="center" space="$2" marginBottom="$4">
                 <Stack
-                  backgroundColor={COLORS.primary}
-                  padding="$3.5"
-                  borderRadius="$10"
-                  marginBottom="$3"
-                  transform={[{ rotate: "-5deg" }]}
+                  width={100}
+                  height={100}
+                  borderRadius={50}
+                  backgroundColor="white"
+                  marginBottom="$4"
+                  shadowColor={COLORS.primary}
+                  shadowRadius={20}
+                  shadowOffset={{ width: 0, height: 8 }}
+                  shadowOpacity={0.2}
+                  justifyContent="center"
+                  alignItems="center"
+                  overflow="hidden"
                 >
-                  <Wallet size={36} color="white" />
+                  <Image
+                    source={require("../../../assets/wou-finance.jpg")}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      resizeMode: "cover",
+                    }}
+                  />
                 </Stack>
+
                 <Text
-                  fontSize={40}
+                  fontSize={36}
                   fontWeight="900"
                   color={COLORS.textMain}
                   letterSpacing={-1}
+                  textAlign="center"
                 >
-                  Nova
+                  Wou Finance
                 </Text>
-                <Text fontSize="$4" color={COLORS.textMuted} textAlign="center">
-                  Tu futuro financiero, hoy.
+                <Text
+                  fontSize="$4"
+                  color={COLORS.textMuted}
+                  textAlign="center"
+                  marginTop="$2"
+                >
+                  Tu dinero,{" "}
+                  <Text fontWeight="700" color={COLORS.primary}>
+                    en el siguiente nivel.
+                  </Text>
                 </Text>
               </YStack>
 
@@ -145,7 +169,7 @@ export default function LoginScreen() {
                     <Input
                       flex={1}
                       unstyled
-                      placeholder="hola@nova.app"
+                      placeholder="hola@woufinance.cl"
                       placeholderTextColor="#94A3B8"
                       value={email}
                       onChangeText={(text: string) => setEmail(text)}

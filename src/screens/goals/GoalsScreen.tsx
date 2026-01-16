@@ -122,11 +122,16 @@ export const GoalsScreen = () => {
                   </YStack>
                   <Button
                     backgroundColor="$brand"
-                    color="white"
+                    color="$white"
                     fontWeight="bold"
                     paddingHorizontal="$6"
                     onPress={handleCreateGoal}
                     marginTop="$4"
+                    pressStyle={{
+                      opacity: 0.8, 
+                      backgroundColor: "$brand",
+                      borderColor: "transparent",
+                    }}
                   >
                     Crear Meta
                   </Button>

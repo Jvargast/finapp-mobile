@@ -6,10 +6,11 @@ import {
   Separator,
   XStack,
   Circle,
+  ZStack,
 } from "tamagui";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
-import { Mail, Wallet } from "@tamagui/lucide-icons";
+import { Mail, Sparkles, TrendingUp, Wallet } from "@tamagui/lucide-icons";
 import { Image, Pressable, StatusBar } from "react-native";
 
 const COLORS = {
@@ -51,44 +52,58 @@ export default function WelcomeScreen() {
             flex={1}
             justifyContent="center"
             alignItems="center"
-            space="$4"
+            space="$5"
           >
             <Stack
-              backgroundColor={COLORS.primary}
-              padding="$5"
-              borderRadius="$12"
-              transform={[{ rotate: "-8deg" }]}
+              width={160}
+              height={160}
+              borderRadius={80}
+              backgroundColor="white"
               shadowColor={COLORS.primary}
-              shadowRadius={20}
+              shadowRadius={40}
               shadowOffset={{ width: 0, height: 10 }}
-              shadowOpacity={0.3}
-              elevation={10}
+              shadowOpacity={0.25}
               animation="bouncy"
-              enterStyle={{ scale: 0.5, opacity: 0, rotate: "0deg" }}
+              enterStyle={{ opacity: 0, y: 30 }}
+              justifyContent="center"
+              alignItems="center"
+              overflow="hidden"
             >
-              <Wallet size={64} color="white" />
+              <Image
+                source={require("../../../assets/wou-finance.jpg")}
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  resizeMode: "cover",
+                }}
+              />
             </Stack>
 
             <YStack alignItems="center" space="$1">
               <Text
-                fontSize={48}
+                fontSize={42}
                 fontWeight="900"
                 color={COLORS.textMain}
                 letterSpacing={-1.5}
+                textAlign="center"
                 animation="quick"
                 enterStyle={{ opacity: 0, y: 10 }}
               >
-                Nova
+                Wou Finance
               </Text>
+
               <Text
-                fontSize="$5"
+                fontSize="$4"
                 color={COLORS.textMuted}
                 textAlign="center"
                 animation="quick"
                 enterStyle={{ opacity: 0, y: 10 }}
-                delay={100}
+                marginBottom="$4"
               >
-                El control de tu dinero,{"\n"}reimaginado.
+                No solo cuides tu dinero,{"\n"}
+                <Text fontWeight="700" color={COLORS.primary}>
+                  hazlo crecer con inteligencia.
+                </Text>
               </Text>
             </YStack>
           </YStack>
@@ -182,7 +197,7 @@ export default function WelcomeScreen() {
           </YStack>
           <YStack alignItems="center" marginTop="$4">
             <Text fontSize="$3" color="#94A3B8">
-              ¿Eres nuevo en Nova?
+              ¿Eres nuevo en Wou Finance?
             </Text>
             <Pressable
               onPress={() => navigation.navigate("Register")}
@@ -220,6 +235,25 @@ export default function WelcomeScreen() {
             </Text>
             .
           </Text>
+          <YStack marginTop="$2" opacity={0.7} alignItems="center">
+            <Text
+              fontSize={8}
+              color="#CBD5E1"
+              textTransform="uppercase"
+              letterSpacing={2}
+              fontWeight="600"
+            >
+              Power by
+            </Text>
+            <Text
+              fontSize={12}
+              color="#94A3B8"
+              fontWeight="800"
+              letterSpacing={1}
+            >
+              WOULAB
+            </Text>
+          </YStack>
         </YStack>
       </SafeAreaView>
     </YStack>

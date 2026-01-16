@@ -1,5 +1,5 @@
 import { YStack, Text, XStack, Button } from "tamagui";
-import { Send, Plus, Target, MoreHorizontal } from "@tamagui/lucide-icons";
+import { Target, PieChart, Receipt, Banknote } from "@tamagui/lucide-icons";
 import { useNavigation } from "@react-navigation/native";
 
 export const QuickActions = () => {
@@ -8,43 +8,43 @@ export const QuickActions = () => {
   const ACTIONS = [
     {
       id: 1,
-      label: "Enviar",
-      icon: Send,
-      color: "#E0E7FF", // Azul muy suave
-      iconColor: "#4F46E5", // Indigo fuerte
-      route: "Transfer", // (A futuro)
+      label: "Gasto",
+      icon: Receipt,
+      color: "#EF4444",
+      bg: "rgba(239, 68, 68, 0.1)",
+      route: "AddExpense",
     },
     {
       id: 2,
-      label: "Ingresar",
-      icon: Plus,
-      color: "#DCFCE7", // Verde muy suave
-      iconColor: "#16A34A", // Verde fuerte
-      route: "AddMoney", // (A futuro)
+      label: "Ingreso",
+      icon: Banknote,
+      color: "#10B981",
+      bg: "rgba(16, 185, 129, 0.1)",
+      route: "AddIncome",
     },
     {
       id: 3,
-      label: "Metas", // <--- CAMBIO AQUÍ: Reemplazamos Tarjetas por Metas
+      label: "Metas",
       icon: Target,
-      color: "#F0FDFA", // Teal/Cyan muy suave (inspira crecimiento)
-      iconColor: "#0D9488", // Teal fuerte
-      route: "Goals", // <--- Esta es la ruta que ya registramos
+      color: "#A78BFA",
+      bg: "rgba(16, 185, 129, 0.1)",
+      route: "Goals",
     },
     {
       id: 4,
-      label: "Más",
-      icon: MoreHorizontal,
-      color: "#F1F5F9", // Gris muy suave
-      iconColor: "#64748B", // Slate
-      route: null, 
+      label: "Análisis",
+      icon: PieChart,
+      color: "#60A5FA",
+      bg: "rgba(16, 185, 129, 0.1)",
+      route: "Analytics",
     },
   ];
 
   return (
     <XStack
       justifyContent="space-between"
-      paddingHorizontal="$4" 
-      marginBottom="$6"
+      paddingHorizontal="$4"
+      marginBottom="$4"
     >
       {ACTIONS.map((action) => (
         <YStack key={action.id} alignItems="center" space="$2">
@@ -52,8 +52,8 @@ export const QuickActions = () => {
             size="$5"
             width={60}
             height={60}
-            borderRadius={30} 
-            backgroundColor={action.color}
+            borderRadius={30}
+            backgroundColor={action.bg}
             onPress={() => {
               if (action.route) {
                 navigation.navigate(action.route);
@@ -64,19 +64,17 @@ export const QuickActions = () => {
             pressStyle={{
               scale: 0.92,
               opacity: 0.8,
-              backgroundColor: action.color, 
+              backgroundColor: action.color,
             }}
             animation="bouncy"
-            elevation={2} 
-            shadowColor={action.iconColor}
+            elevation={2}
             shadowOpacity={0.1}
             shadowRadius={5}
             shadowOffset={{ width: 0, height: 4 }}
-            borderWidth={0} 
+            borderWidth={0}
           >
-            <action.icon size={26} color={action.iconColor} strokeWidth={2.5} />
+            <action.icon size={26} color={action.color} strokeWidth={2.5} />
           </Button>
-
           <Text
             fontSize="$2"
             color="$gray11"

@@ -24,8 +24,8 @@ export const GoalInviteSheet = ({
   goal,
 }: GoalInviteSheetProps) => {
   const [copied, setCopied] = useState(false);
-  const inviteLink = `https://nova.app/invite/${goal.shareToken}`;
-  const message = `¡Únete a mi meta "${goal.name}" en Nova y alcancémosla juntos! 🚀 ${inviteLink}`;
+  const inviteLink = `https://woulab.finance.cl/invite/${goal.shareToken}`;
+  const message = `¡Únete a mi meta "${goal.name}" en WOU Finance y alcancémosla juntos! 🚀 ${inviteLink}`;
 
   const handleCopy = async () => {
     await Clipboard.setStringAsync(inviteLink);
@@ -70,7 +70,7 @@ export const GoalInviteSheet = ({
     try {
       await Share.share({
         message: message,
-        title: "Invitar a Nova",
+        title: "Invitar a WOU Finance",
         url: inviteLink,
       });
       onOpenChange(false);

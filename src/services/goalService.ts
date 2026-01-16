@@ -54,6 +54,17 @@ export const GoalService = {
     return response;
   },
 
+  addTransaction: async (
+    goalId: string,
+    data: { amount: number; type: "DEPOSIT" | "WITHDRAW" }
+  ): Promise<FinancialGoal> => {
+    const response = await finappApi.post(
+      `/goals/${goalId}/transactions`,
+      data
+    );
+    return response.data;
+  },
+
   delete: async (id: string): Promise<void> => {
     await finappApi.delete(`/goals/${id}`);
   },
