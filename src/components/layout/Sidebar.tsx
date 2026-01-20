@@ -10,19 +10,19 @@ import {
 } from "tamagui";
 import {
   Home,
-  Target,
   Settings,
   LogOut,
   Star,
   Landmark,
   ChevronRight,
-  Building,
   Briefcase,
   ShieldCheck,
-  TrendingDown,
   TrendingUp,
   CreditCard,
   PiggyBank,
+  Crown,
+  Users,
+  HeartHandshake,
 } from "@tamagui/lucide-icons";
 import { DrawerContentScrollView } from "@react-navigation/drawer";
 import { useNavigation } from "@react-navigation/native";
@@ -32,12 +32,167 @@ import { AuthActions } from "../../actions/authActions";
 
 export const Sidebar = (props: any) => {
   const navigation = useNavigation<any>();
+  const isPro = useUserStore((state) => state.isPro());
   const user = useUserStore((state) => state.user);
+
+  const userPlan = user?.plan || "FREE";
   const state = props.state;
   const currentRoute = state.routes[state.index].name;
 
   const mainGoal = user?.preferences?.mainGoal || "save";
-  const isPro = user?.plan === "PRO" || user?.plan === "PREMIUM";
+
+  const handleSubscriptionPress = () => {
+    switch (userPlan) {
+      case "FREE":
+        navigation.navigate("Subscription");
+        break;
+      case "FAMILY_ADMIN":
+        navigation.navigate("FamilyGroup");
+        break;
+      case "FAMILY_MEMBER":
+      case "PRO":
+      default:
+        navigation.navigate("Settings");
+        break;
+    }
+  };
+
+  const renderSubscriptionCard = () => {
+    if (userPlan === "FREE") {
+      return (
+        <YStack
+          borderRadius="$6"
+          overflow="hidden"
+          backgroundColor="#1E293B"
+          padding="$4"
+          position="relative"
+          shadowColor="#000"
+          shadowRadius={10}
+          shadowOffset={{ width: 0, height: 5 }}
+          shadowOpacity={0.2}
+          borderWidth={1}
+          borderColor="$gray3"
+        >
+          <View
+            position="absolute"
+            top={-20}
+            right={-20}
+            width={80}
+            height={80}
+            borderRadius={40}
+            backgroundColor="#F59E0B"
+            opacity={0.15}
+          />
+          <XStack alignItems="center" space="$2" marginBottom="$2">
+            <Star size={18} color="#F59E0B" fill="#F59E0B" />
+            <Text
+              color="#F59E0B"
+              fontWeight="bold"
+              fontSize={12}
+              letterSpacing={1}
+            >
+              WOU+
+            </Text>
+          </XStack>
+          <Text
+            color="white"
+            fontSize={14}
+            fontWeight="600"
+            marginBottom="$1"
+            lineHeight={20}
+          >
+            Desbloquea todo el potencial.
+          </Text>
+          <Text color="#94A3B8" fontSize={12}>
+            Automatización, IA y control total.
+          </Text>
+        </YStack>
+      );
+    }
+
+    if (userPlan === "FAMILY_ADMIN") {
+      return (
+        <YStack
+          borderRadius="$6"
+          backgroundColor="rgba(245, 158, 11, 0.1)"
+          padding="$4"
+          borderWidth={1}
+          borderColor="#F59E0B"
+        >
+          <XStack
+            justifyContent="space-between"
+            alignItems="center"
+            marginBottom="$2"
+          >
+            <XStack space="$2" alignItems="center">
+              <Users size={18} color="#F59E0B" />
+              <Text color="#F59E0B" fontWeight="800" fontSize={13}>
+                FAMILIA WOU+
+              </Text>
+            </XStack>
+            <View
+              backgroundColor="#F59E0B"
+              borderRadius="$4"
+              paddingHorizontal={6}
+              paddingVertical={2}
+            >
+              <Text color="black" fontSize={9} fontWeight="bold">
+                ADMIN
+              </Text>
+            </View>
+          </XStack>
+          <Text color="$color" fontSize={13} fontWeight="600">
+            Gestionar Grupo Familiar
+          </Text>
+          <Text color="$gray10" fontSize={11} marginTop={2}>
+            Toca para invitar o editar miembros.
+          </Text>
+        </YStack>
+      );
+    }
+
+    return (
+      <YStack
+        borderRadius="$6"
+        backgroundColor="#1E293B"
+        padding="$4"
+        borderWidth={1}
+        borderColor="rgba(245, 158, 11, 0.3)"
+      >
+        <XStack
+          justifyContent="space-between"
+          alignItems="center"
+          marginBottom="$1"
+        >
+          <XStack space="$2" alignItems="center">
+            {userPlan === "FAMILY_MEMBER" ? (
+              <HeartHandshake size={16} color="#F59E0B" />
+            ) : (
+              <Crown size={16} color="#F59E0B" fill="#F59E0B" />
+            )}
+            <Text color="white" fontWeight="800" fontSize={13}>
+              PLAN ACTIVO
+            </Text>
+          </XStack>
+          <View
+            backgroundColor="rgba(245, 158, 11, 0.2)"
+            borderRadius="$4"
+            paddingHorizontal={6}
+            paddingVertical={2}
+          >
+            <Text color="#F59E0B" fontSize={9} fontWeight="bold">
+              {userPlan === "FAMILY_MEMBER" ? "MIEMBRO" : "VIP"}
+            </Text>
+          </View>
+        </XStack>
+        <Text color="$gray9" fontSize={11} marginTop="$1">
+          {userPlan === "FAMILY_MEMBER"
+            ? "Disfrutando beneficios del plan familiar."
+            : "Tu suscripción WOU+ está activa."}
+        </Text>
+      </YStack>
+    );
+  };
 
   const getGoalMenuItem = () => {
     switch (mainGoal) {
@@ -110,15 +265,24 @@ export const Sidebar = (props: any) => {
         <YStack paddingTop="$8" paddingHorizontal="$5" paddingBottom="$4">
           <XStack space="$3" alignItems="center">
             <View
-              padding={4}
+              padding={3}
               borderRadius={100}
-              borderWidth={1}
-              borderColor={isPro ? "#F59E0B" : "$brand"}
-              borderStyle={isPro ? "solid" : "dashed"}
+              backgroundColor={isPro ? "#F59E0B" : "transparent"}
+              borderWidth={isPro ? 0 : 1}
+              borderColor={isPro ? undefined : "$brand"}
+              borderStyle={isPro ? undefined : "dashed"}
+              shadowColor={isPro ? "#F59E0B" : undefined}
+              shadowRadius={isPro ? 8 : 0}
+              shadowOpacity={0.5}
             >
-              <Avatar circular size="$5">
+              <Avatar
+                circular
+                size="$5"
+                borderWidth={2}
+                borderColor="$background"
+              >
                 <Avatar.Image
-                  src={user?.avatar || user?.avatarUrl}
+                  src={user?.avatar || undefined}
                   width="100%"
                   height="100%"
                 />
@@ -135,15 +299,35 @@ export const Sidebar = (props: any) => {
             </View>
 
             <YStack flex={1}>
-              <Text
-                fontWeight="800"
-                fontSize={16}
-                color="$color"
-                numberOfLines={1}
-                ellipsizeMode="tail"
-              >
-                {user?.firstName} {user?.lastName}
-              </Text>
+              <XStack alignItems="center" space="$2">
+                <Text
+                  fontWeight="800"
+                  fontSize={16}
+                  color="$color"
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                  flexShrink={1}
+                >
+                  {user?.firstName} {user?.lastName}
+                </Text>
+
+                {isPro && (
+                  <View
+                    backgroundColor="rgba(245, 158, 11, 0.15)"
+                    paddingHorizontal={6}
+                    paddingVertical={2}
+                    borderRadius={4}
+                    borderWidth={1}
+                    borderColor="#F59E0B"
+                    alignSelf="flex-start"
+                  >
+                    <Text fontSize={9} fontWeight="900" color="#F59E0B">
+                      WOU+
+                    </Text>
+                  </View>
+                )}
+              </XStack>
+
               <Text
                 fontSize={12}
                 color="$gray11"
@@ -239,55 +423,8 @@ export const Sidebar = (props: any) => {
           <Spacer size="$6" />
 
           <YStack paddingHorizontal="$2">
-            <Pressable onPress={() => handleNavigate("Subscription")}>
-              <YStack
-                borderRadius="$6"
-                overflow="hidden"
-                backgroundColor="#1E293B"
-                padding="$4"
-                position="relative"
-                shadowColor="#000"
-                shadowRadius={10}
-                shadowOffset={{ width: 0, height: 5 }}
-                shadowOpacity={0.2}
-              >
-                <View
-                  position="absolute"
-                  top={-20}
-                  right={-20}
-                  width={80}
-                  height={80}
-                  borderRadius={40}
-                  backgroundColor="#F59E0B"
-                  opacity={0.15}
-                />
-
-                <XStack alignItems="center" space="$2" marginBottom="$2">
-                  <Star size={18} color="#F59E0B" fill="#F59E0B" />
-                  <Text
-                    color="#F59E0B"
-                    fontWeight="bold"
-                    fontSize={12}
-                    letterSpacing={1}
-                  >
-                    WOU+
-                  </Text>
-                </XStack>
-
-                <Text
-                  color="white"
-                  fontSize={14}
-                  fontWeight="600"
-                  marginBottom="$1"
-                  lineHeight={20}
-                >
-                  Conecta tus bancos automáticamente.
-                </Text>
-
-                <Text color="#94A3B8" fontSize={12}>
-                  Deja de ingresar gastos a mano y toma el control real.
-                </Text>
-              </YStack>
+            <Pressable onPress={handleSubscriptionPress}>
+              {renderSubscriptionCard()}
             </Pressable>
           </YStack>
         </YStack>

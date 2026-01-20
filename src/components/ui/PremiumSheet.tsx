@@ -6,16 +6,18 @@ import {
   Button,
   XStack,
   Circle,
+  Separator,
 } from "tamagui";
 import {
   Crown,
   Check,
   X,
-  TrendingUp,
-  Download,
-  Palette,
-  Infinity as InfinityIcon,
+  Users,
+  Zap,
+  Shield,
+  LayoutDashboard,
 } from "@tamagui/lucide-icons";
+import { useNavigation } from "@react-navigation/native";
 
 interface PremiumSheetProps {
   open: boolean;
@@ -27,20 +29,18 @@ interface PremiumSheetProps {
 export const PremiumSheet = ({
   open,
   onOpenChange,
-  title = "Sube de Nivel con WOU+",
-  description = "Elimina los límites y toma el control total de tus finanzas.",
+  title = "Mejora tu experiencia",
+  description = "Esa función y muchas más están disponibles exclusivamente en Wou+.",
 }: PremiumSheetProps) => {
-  const BG_COLOR = "#1E293B"; 
-  const ACCENT_COLOR = "#F59E0B"; 
-  const TEXT_PRIMARY = "white";
-  const TEXT_SECONDARY = "#94A3B8"; 
+  const ACCENT_COLOR = "#F59E0B";
+  const navigation = useNavigation<any>();
 
   return (
     <Sheet
       modal
       open={open}
       onOpenChange={onOpenChange}
-      snapPoints={[70]} 
+      snapPoints={[73]}
       dismissOnSnapToBottom
       zIndex={200_000}
       animation="medium"
@@ -49,25 +49,27 @@ export const PremiumSheet = ({
         animation="lazy"
         enterStyle={{ opacity: 0 }}
         exitStyle={{ opacity: 0 }}
-        backgroundColor="rgba(0,0,0,0.8)" 
+        backgroundColor="rgba(0,0,0,0.85)"
       />
-      <Sheet.Handle backgroundColor="#334155" opacity={1} />
+      <Sheet.Handle backgroundColor="$gray8" opacity={0.5} />
 
       <Sheet.Frame
         padding="$5"
-        backgroundColor={BG_COLOR} 
+        backgroundColor="$background"
         borderTopLeftRadius="$9"
         borderTopRightRadius="$9"
+        borderWidth={1}
+        borderColor="$borderColor"
         space="$4"
       >
         <Button
           position="absolute"
-          top={10}
-          right={10}
+          top={15}
+          right={15}
           size="$2"
           circular
           chromeless
-          icon={<X color={TEXT_SECONDARY} />}
+          icon={<X color="$gray10" />}
           onPress={() => onOpenChange(false)}
           zIndex={10}
         />
@@ -75,25 +77,28 @@ export const PremiumSheet = ({
         <YStack alignItems="center" space="$2" marginTop="$2">
           <Circle
             size={70}
-            backgroundColor="rgba(245, 158, 11, 0.15)" 
+            backgroundColor="rgba(245, 158, 11, 0.1)"
             borderWidth={1}
             borderColor={ACCENT_COLOR}
+            shadowColor={ACCENT_COLOR}
+            shadowRadius={10}
+            shadowOpacity={0.2}
           >
-            <Crown size={36} color={ACCENT_COLOR} />
+            <Crown size={32} color={ACCENT_COLOR} />
           </Circle>
 
           <Text
-            fontSize="$7"
+            fontSize="$8"
             fontWeight="900"
             textAlign="center"
-            color={TEXT_PRIMARY}
+            color="$color"
             marginTop="$2"
           >
-            WOU<Text color={ACCENT_COLOR}>+</Text>
+            Desbloquea <Text color={ACCENT_COLOR}>Wou+</Text>
           </Text>
           <Text
-            fontSize="$3"
-            color={TEXT_SECONDARY}
+            fontSize="$2"
+            color="$gray10"
             textAlign="center"
             paddingHorizontal="$4"
             lineHeight={20}
@@ -103,67 +108,57 @@ export const PremiumSheet = ({
         </YStack>
 
         <YStack
-          space="$3"
-          backgroundColor="rgba(255,255,255,0.05)" 
-          padding="$4"
+          backgroundColor="$gray2"
+          padding="$3"
           borderRadius="$6"
           borderWidth={1}
-          borderColor="rgba(255,255,255,0.05)"
-          marginBottom="$2"
+          borderColor="$gray4"
+          space="$3"
         >
           <FeatureRow
-            icon={InfinityIcon}
-            label="Cuentas Ilimitadas"
-            sublabel="Agrega todos tus bancos y tarjetas."
+            icon={LayoutDashboard}
+            label="Sin Límites"
+            sublabel="Cuentas ilimitadas, categorías custom y exportación."
             color={ACCENT_COLOR}
-            textColor={TEXT_PRIMARY}
-            subTextColor={TEXT_SECONDARY}
           />
           <FeatureRow
-            icon={TrendingUp}
-            label="Proyecciones con IA"
-            sublabel="Anticípate a tus gastos futuros."
+            icon={Users}
+            label="Modo Familia & Pareja"
+            sublabel="Invita hasta 5 personas con el nuevo Plan Familiar."
             color={ACCENT_COLOR}
-            textColor={TEXT_PRIMARY}
-            subTextColor={TEXT_SECONDARY}
           />
           <FeatureRow
-            icon={Palette}
-            label="Skins Premium"
-            sublabel="Personaliza con Gold, Neón y Dark."
+            icon={Zap}
+            label="Inteligencia Artificial"
+            sublabel="Proyección de saldo, Wou Score y alertas."
             color={ACCENT_COLOR}
-            textColor={TEXT_PRIMARY}
-            subTextColor={TEXT_SECONDARY}
           />
           <FeatureRow
-            icon={Download}
-            label="Exportar Datos"
-            sublabel="Descarga en Excel para tu control."
+            icon={Shield}
+            label="Privacidad Total"
+            sublabel="Modo Discreto (Shake-to-hide) y Sin Anuncios."
             color={ACCENT_COLOR}
-            textColor={TEXT_PRIMARY}
-            subTextColor={TEXT_SECONDARY}
           />
         </YStack>
 
-        <YStack space="$2">
+        <YStack space="$3" marginTop="$4" marginBottom="$4">
           <Button
             size="$5"
             backgroundColor={ACCENT_COLOR}
-            pressStyle={{ opacity: 0.9, scale: 0.98 }}
-            animation="quick"
-            color="#1E293B" 
-            fontWeight="900"
+            pressStyle={{ opacity: 0.9 }}
             borderRadius="$10"
-            icon={<Crown size={18} color="#1E293B" />}
-            onPress={() => {
+            onPressIn={() => {
               onOpenChange(false);
-              console.log("Iniciar checkout");
+              navigation.navigate("Subscription");
             }}
           >
-            Mejorar a PRO
+            <Text color="$gray1" fontWeight="900" fontSize="$4">
+              Ver Planes y Ofertas
+            </Text>
           </Button>
-          <Text fontSize={10} color={TEXT_SECONDARY} textAlign="center">
-            Cancela cuando quieras. Sin compromisos.
+
+          <Text fontSize={11} color="$gray9" textAlign="center">
+            Desde $2.990/mes. Cancela cuando quieras.
           </Text>
         </YStack>
       </Sheet.Frame>
@@ -176,9 +171,12 @@ const FeatureRow = ({
   label,
   sublabel,
   color,
-  textColor,
-  subTextColor,
-}: any) => (
+}: {
+  icon: any;
+  label: string;
+  sublabel: string;
+  color: string;
+}) => (
   <XStack space="$3" alignItems="center">
     <YStack
       backgroundColor="rgba(245, 158, 11, 0.1)"
@@ -188,13 +186,13 @@ const FeatureRow = ({
       <Icon size={18} color={color} />
     </YStack>
     <YStack flex={1}>
-      <Text fontSize={13} fontWeight="700" color={textColor}>
+      <Text fontSize={13} fontWeight="700" color="$color">
         {label}
       </Text>
-      <Text fontSize={11} color={subTextColor}>
+      <Text fontSize={11} color="$gray10" numberOfLines={1}>
         {sublabel}
       </Text>
     </YStack>
-    <Check size={14} color={color} opacity={0.8} />
+    <Check size={16} color={color} />
   </XStack>
 );

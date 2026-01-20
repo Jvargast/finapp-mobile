@@ -5,7 +5,9 @@ export const useSubscription = () => {
   const user = useUserStore((state) => state.user);
   const accounts = useAccountStore((state) => state.accounts);
 
-  const isPro = user?.isPro || false; 
+  const isPro = user?.plan && user.plan !== "FREE";
+
+  console.log(user?.plan)
 
   return {
     isPro,

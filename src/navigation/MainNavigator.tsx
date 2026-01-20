@@ -14,6 +14,9 @@ import { GoalDetailScreen } from "../screens/goals/GoalDetailScreen";
 import { EditGoalScreen } from "../screens/goals/EditGoalScreen";
 import AddAccountScreen from "../screens/accounts/AddAccountScreen";
 import AccountsScreen from "../screens/main/AccountsScreen";
+import SubscriptionScreen from "../screens/subscription/SubscriptionScreen";
+import SubscriptionDetailsScreen from "../screens/settings/SubscriptionDetailsScreen";
+import FamilyGroupScreen from "../screens/settings/FamilyGroupScreen";
 
 const Drawer = createDrawerNavigator();
 const Stack = createNativeStackNavigator();
@@ -76,6 +79,11 @@ export default function MainNavigator() {
           headerTintColor: "$color",
           headerStyle: { backgroundColor: theme.brand.val },
         }}
+      />
+      <Stack.Screen
+        name="FamilyGroup"
+        component={FamilyGroupScreen}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="ChangePassword"
@@ -142,6 +150,20 @@ export default function MainNavigator() {
           headerShown: false,
           animation: "slide_from_right",
         }}
+      />
+      <Stack.Screen
+        name="Subscription"
+        component={SubscriptionScreen}
+        options={{
+          headerShown: false,
+          animation: "slide_from_bottom",
+          presentation: "modal",
+        }}
+      />
+      <Stack.Screen
+        name="SubscriptionDetails"
+        component={SubscriptionDetailsScreen}
+        options={{ headerShown: false }}
       />
     </Stack.Navigator>
   );

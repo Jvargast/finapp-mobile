@@ -6,6 +6,7 @@ import { AccountCard } from "./accounts/AccountCard";
 import { AddAccountButton } from "./accounts/AddAccountButton";
 import { useAccountStore } from "../../stores/useAccountStore";
 import { PremiumSheet } from "../ui/PremiumSheet";
+import { useSubscription } from "../../hooks/useSubscription";
 
 const getIconByType = (type?: string) => {
   if (!type) return Landmark;
@@ -37,13 +38,13 @@ export const AccountsCarousel = () => {
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
   const [showPremiumSheet, setShowPremiumSheet] = useState(false);
 
+  const { isPro, canCreateAccount } = useSubscription();
+
   const accounts = useAccountStore((state) => state.accounts);
   const MAX_ACCOUNTS = 3;
   const currentCount = accounts.length;
-  const isLimitReached = currentCount >= MAX_ACCOUNTS;
+  const isLimitReached = !isPro && currentCount >= MAX_ACCOUNTS;
   const isLoading = useAccountStore((state) => state.isLoading);
-
-  console.log(accounts);
 
   const USE_STACKED_VIEW = true;
 
@@ -62,21 +63,43 @@ export const AccountsCarousel = () => {
           <Text fontSize="$5" fontWeight="800" color="$color">
             Mis Cuentas
           </Text>
+
           <XStack alignItems="center" space="$1.5">
-            <YStack
-              width={6}
-              height={6}
-              borderRadius={3}
-              backgroundColor={isLimitReached ? "$red10" : "$green10"}
-            />
-            <Text
-              fontSize={11}
-              color="$gray10"
-              fontWeight="600"
-              letterSpacing={0.5}
-            >
-              {currentCount} de {MAX_ACCOUNTS} disponibles
-            </Text>
+            {isPro ? (
+              <XStack space="$1.5" alignItems="center">
+                <YStack
+                  width={6}
+                  height={6}
+                  borderRadius={3}
+                  backgroundColor="#F59E0B"
+                />
+                <Text
+                  fontSize={11}
+                  color="#F59E0B"
+                  fontWeight="700"
+                  letterSpacing={0.5}
+                >
+                  Ilimitadas (Wou+)
+                </Text>
+              </XStack>
+            ) : (
+              <XStack space="$1.5" alignItems="center">
+                <YStack
+                  width={6}
+                  height={6}
+                  borderRadius={3}
+                  backgroundColor={isLimitReached ? "$red10" : "$green10"}
+                />
+                <Text
+                  fontSize={11}
+                  color="$gray10"
+                  fontWeight="600"
+                  letterSpacing={0.5}
+                >
+                  {currentCount} de {MAX_ACCOUNTS} disponibles
+                </Text>
+              </XStack>
+            )}
           </XStack>
         </YStack>
         <Button
@@ -112,14 +135,14 @@ export const AccountsCarousel = () => {
           <XStack alignItems="center">
             <AddAccountButton
               onPress={() => {
-                if (isLimitReached) {
-                  setShowPremiumSheet(true);
-                } else {
+                if (canCreateAccount) {
                   navigation.navigate("AddAccount");
+                } else {
+                  setShowPremiumSheet(true);
                 }
               }}
               isStacked={USE_STACKED_VIEW}
-              isLocked={isLimitReached}
+              isLocked={!canCreateAccount}
             />
             {accounts.map((account, index) => {
               const isLastItem = index === accounts.length - 1;
@@ -151,7 +174,7 @@ export const AccountsCarousel = () => {
         open={showPremiumSheet}
         onOpenChange={setShowPremiumSheet}
         title="Límite de Cuentas Alcanzado"
-        description="El plan gratuito permite hasta 3 cuentas. Pásate a WOU+ para agregar todas las que quieras."
+        description="El plan gratuito permite hasta 2 cuentas. Pásate a WOU+ para agregar todas las que quieras."
       />
     </YStack>
   );

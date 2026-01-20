@@ -6,6 +6,7 @@ import { useUserStore } from "../../stores/useUserStore";
 
 export const HomeHeader = () => {
   const user = useUserStore((state) => state.user);
+  const isPro = useUserStore((state) => state.isPro());
   const navigation = useNavigation<any>();
 
   const goToProfile = () => {
@@ -20,7 +21,6 @@ export const HomeHeader = () => {
   const initials = firstName ? firstName[0].toUpperCase() : "N";
   const mainTitle = firstName || "WOU";
   const subTitle = firstName ? "Hola de nuevo," : "¡Bienvenido a";
-  const isPro = user?.plan === "PRO" || user?.plan === "PREMIUM";
 
   return (
     <XStack
@@ -33,8 +33,8 @@ export const HomeHeader = () => {
         <Button
           size="$3.5"
           circular
-          backgroundColor="$color2" 
-          icon={<Menu size={24} color="$color" />} 
+          backgroundColor="$color2"
+          icon={<Menu size={24} color="$color" />}
           onPress={openDrawer}
           shadowColor="$shadowColor"
           shadowRadius={5}
@@ -67,23 +67,28 @@ export const HomeHeader = () => {
           backgroundColor="transparent"
           icon={<Bell size={22} color="$color" />}
           pressStyle={{ opacity: 0.5 }}
-          onPress={() => console.log("Notificaciones")} 
+          onPress={() => console.log("Notificaciones")}
         />
 
         <Pressable onPress={goToProfile}>
           <View
-            padding={1}
+            padding={3}
             borderRadius={100}
-            borderWidth={1}
-            borderColor={isPro ? "#F59E0B" : "$brand"}
-            borderStyle={isPro ? "solid" : "dashed"}
+            backgroundColor={isPro ? "#F59E0B" : "transparent"}
+            borderWidth={isPro ? 0 : 1}
+            borderColor={isPro ? undefined : "$brand"}
+            borderStyle={isPro ? undefined : "dashed"}
+            shadowColor={isPro ? "#F59E0B" : undefined}
+            shadowRadius={isPro ? 8 : 0}
+            shadowOpacity={0.5}
           >
-            <Avatar circular size="$4.5">
-              <Avatar.Image
-                src={user?.avatar || user?.avatarUrl}
-                width="100%"
-                height="100%"
-              />
+            <Avatar
+              circular
+              size="$4.5"
+              borderWidth={2}
+              borderColor="$background"
+            >
+              <Avatar.Image src={user?.avatar || undefined} width="100%" height="100%" />
               <Avatar.Fallback
                 backgroundColor="$brand"
                 alignItems="center"

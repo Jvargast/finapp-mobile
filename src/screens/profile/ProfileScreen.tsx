@@ -77,10 +77,10 @@ export default function ProfileScreen() {
   const fullName = user?.firstName
     ? `${user.firstName} ${user.lastName}`
     : "Usuario WOU Finance";
-  const isPro = user?.plan === "PRO" || user?.plan === "PREMIUM";
+  const isPro = useUserStore((state) => state.isPro());
   const planName = user?.plan || "FREE";
 
-  const avatarSource = user?.avatar || user?.avatarUrl;
+  const avatarSource = user?.avatar;
 
   const goToEdit = () => navigation.navigate("EditProfile");
 
@@ -99,14 +99,23 @@ export default function ProfileScreen() {
         <YStack alignItems="center" marginTop="$2" marginBottom="$6">
           <YStack position="relative" marginBottom="$4">
             <View
-              padding={4}
+              padding={3}
               borderRadius={100}
-              borderWidth={1}
-              borderColor={isPro ? "#F59E0B" : "$brand"}
-              borderStyle={isPro ? "solid" : "dashed"}
+              backgroundColor={isPro ? "#F59E0B" : "transparent"}
+              borderWidth={isPro ? 0 : 1}
+              borderColor={isPro ? undefined : "$brand"}
+              borderStyle={isPro ? undefined : "dashed"}
+              shadowColor={isPro ? "#F59E0B" : undefined}
+              shadowRadius={isPro ? 8 : 0}
+              shadowOpacity={0.5}
             >
-              <Avatar circular size="$10">
-                <Avatar.Image source={{ uri: avatarSource }} />
+              <Avatar
+                circular
+                size="$10"
+                borderWidth={2}
+                borderColor="$background"
+              >
+                <Avatar.Image source={{ uri: avatarSource || undefined }} />
                 <Avatar.Fallback
                   backgroundColor={isPro ? "#1E293B" : "$brand"}
                   alignItems="center"
@@ -158,25 +167,24 @@ export default function ProfileScreen() {
             <Text fontSize={14} color="$gray11" fontWeight="500">
               @{user?.username || "usuario"}
             </Text>
-            <View
-              backgroundColor={isPro ? "#FFFBEB" : "$background"}
-              paddingHorizontal={8}
-              paddingVertical={2}
-              borderRadius={6}
-              borderWidth={1}
-              borderColor={isPro ? "#FCD34D" : "$borderColor"}
-            >
-              <XStack alignItems="center" space="$1">
-                {isPro && <Crown size={10} color="#D97706" />}
-                <Text
-                  fontSize={10}
-                  fontWeight="800"
-                  color={isPro ? "#D97706" : "$brand"}
+            <XStack alignItems="center" space="$1">
+              {isPro && (
+                <View
+                  backgroundColor="rgba(245, 158, 11, 0.15)"
+                  paddingHorizontal={6}
+                  paddingVertical={2}
+                  borderRadius={4}
+                  borderWidth={1}
+                  borderColor="#F59E0B"
+                  alignSelf="flex-start"
                 >
-                  {planName}
-                </Text>
-              </XStack>
-            </View>
+                  <Text fontSize={9} fontWeight="900" color="#F59E0B">
+                    WOU+
+                  </Text>
+                </View>
+              )}
+            </XStack>
+            {/* </View> */}
           </XStack>
           <Button
             marginTop="$4"

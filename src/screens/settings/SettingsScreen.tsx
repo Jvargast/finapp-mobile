@@ -28,6 +28,11 @@ import {
   CreditCard,
   Home,
   PiggyBank,
+  UserMinus,
+  HeartHandshake,
+  Star,
+  Crown,
+  Users,
 } from "@tamagui/lucide-icons";
 import { Alert, Linking } from "react-native";
 import { CommonActions, useNavigation } from "@react-navigation/native";
@@ -107,10 +112,24 @@ export default function SettingsScreen() {
   const goalKey = user?.preferences?.mainGoal || "save";
   const currentGoal = GOAL_CONFIG[goalKey] || GOAL_CONFIG["save"];
 
-  const currentGoalLabel = user?.preferences?.mainGoal
-    ? GOAL_LABELS[user.preferences.mainGoal] || "Sin definir"
-    : "Seleccionar";
+  const userPlan = user?.plan || "FREE";
+  const [leaveFamilyModalVisible, setLeaveFamilyModalVisible] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
+  const executeLeaveFamily = async () => {
+    setIsProcessing(true);
+    try {
+      //await UserActions.leaveFamilyGroup();
+      setLeaveFamilyModalVisible(false);
+      showToast("Has salido del grupo familiar", "success");
+      AuthActions.logout();
+    } catch (error) {
+      console.error("Error saliendo del grupo:", error);
+      showToast("No se pudo salir del grupo.", "error");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
   const handleTogglePreference = async (
     key: string,
     value: boolean,
@@ -184,6 +203,61 @@ export default function SettingsScreen() {
     <YStack flex={1} backgroundColor="$background">
       <ScrollView>
         <YStack paddingBottom="$8">
+          <SectionTitle title="Tu Plan Wou+" />
+          <YStack
+            borderTopWidth={1}
+            borderBottomWidth={1}
+            borderColor="$borderColor"
+          >
+            {userPlan === "FREE" && (
+              <SettingItem
+                icon={Star}
+                color="#F59E0B"
+                label="Obtener Premium"
+                value="Ver Planes"
+                onPress={() => navigation.navigate("Subscription")}
+              />
+            )}
+
+            {userPlan === "PRO" && (
+              <SettingItem
+                icon={Crown}
+                color="#F59E0B"
+                label="Suscripción Pro"
+                value="Gestionar"
+                onPress={() => navigation.navigate("SubscriptionDetails")}
+              />
+            )}
+
+            {userPlan === "FAMILY_ADMIN" && (
+              <SettingItem
+                icon={Users}
+                color="#F59E0B"
+                label="Grupo Familiar"
+                value="Gestionar Miembros"
+                onPress={() => navigation.navigate("FamilyGroup")}
+              />
+            )}
+
+            {userPlan === "FAMILY_MEMBER" && (
+              <>
+                <SettingItem
+                  icon={HeartHandshake}
+                  color="#F59E0B"
+                  label="Plan Familiar"
+                  value="Ver Miembros"
+                  onPress={() => navigation.navigate("FamilyGroup")}
+                />
+                <SettingItem
+                  icon={UserMinus}
+                  color="#EF4444"
+                  label="Salir del Grupo Familiar"
+                  isDestructive
+                  onPress={() => setLeaveFamilyModalVisible(true)}
+                />
+              </>
+            )}
+          </YStack>
           <SectionTitle title="Preferencias de la App" />
           <YStack
             borderTopWidth={1}
@@ -322,6 +396,28 @@ export default function SettingsScreen() {
               permanente e irreversible
             </Text>
             .{"\n"}Se borrarán todos tus datos, transacciones y configuraciones.
+          </Text>
+        }
+      />
+      <DangerModal
+        visible={leaveFamilyModalVisible}
+        onClose={() => !isProcessing && setLeaveFamilyModalVisible(false)}
+        onConfirm={executeLeaveFamily}
+        isLoading={isProcessing}
+        title="¿Salir del grupo?"
+        confirmText="Sí, salir"
+        message={
+          <Text
+            fontSize={14}
+            color="$colorQwerty"
+            textAlign="center"
+            lineHeight={20}
+          >
+            Perderás acceso inmediato a los beneficios{" "}
+            <Text fontWeight="700" color="#F59E0B">
+              Premium
+            </Text>{" "}
+            compartidos por el administrador.
           </Text>
         }
       />

@@ -1,4 +1,5 @@
 import { AuthService } from "../services/authService";
+import { SubscriptionService } from "../services/subscriptionService";
 import { UserService } from "../services/userService";
 import { useUserStore } from "../stores/useUserStore";
 
@@ -144,6 +145,21 @@ export const UserActions = {
       console.log("✅ Push Token registrado exitosamente via Action");
     } catch (error) {
       console.error("Error registrando Push Token:", error);
+      throw error;
+    }
+  },
+
+  subscribe: async (productId: string) => {
+    const store = useUserStore.getState();
+
+    try {
+      const result = await SubscriptionService.purchaseSubscription(productId);
+      store.updateSubscriptionStatus(result.plan, result.expiresAt);
+
+      console.log(`✅ Suscripción activada para: ${productId}`);
+      return true;
+    } catch (error) {
+      console.error("❌ Error en suscripción:", error);
       throw error;
     }
   },

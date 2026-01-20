@@ -167,7 +167,7 @@ export const BalanceCard = () => {
 
           <YStack flex={1}>
             <XStack space="$1.5" alignItems="center" marginBottom={2}>
-              <CreditCard size={12} color="#FDBA74" />{" "}
+              <CreditCard size={12} color="#FDBA74" />
               <Text fontSize={10} color="#FDBA74" fontWeight="600">
                 EN TARJETAS
               </Text>

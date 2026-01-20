@@ -6,26 +6,26 @@ import {
   MoreHorizontal,
   Mail,
   MessageCircle,
-  Instagram,
+  Smartphone,
 } from "@tamagui/lucide-icons";
 import * as Clipboard from "expo-clipboard";
 import { Linking, Alert, Share } from "react-native";
-import { FinancialGoal } from "../../types/goal.types";
 
-interface GoalInviteSheetProps {
+interface InviteSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  goal: FinancialGoal;
+  inviteCode: string;
 }
 
-export const GoalInviteSheet = ({
+export const InviteSheet = ({
   open,
   onOpenChange,
-  goal,
-}: GoalInviteSheetProps) => {
+  inviteCode,
+}: InviteSheetProps) => {
   const [copied, setCopied] = useState(false);
-  const inviteLink = `https://woulab.finance.cl/invite/${goal.shareToken}`;
-  const message = `¡Únete a mi meta "${goal.name}" en WOU Finance y alcancémosla juntos! 🚀 ${inviteLink}`;
+
+  const inviteLink = `https://wou.cl/invite/${inviteCode}`;
+  const message = `¡Únete a mi Plan Familiar Wou+! Tendrás acceso Premium para controlar tus finanzas. Entra aquí: ${inviteLink}`;
 
   const handleCopy = async () => {
     await Clipboard.setStringAsync(inviteLink);
@@ -40,7 +40,11 @@ export const GoalInviteSheet = ({
         await Linking.openURL(url);
         onOpenChange(false);
       } else {
-        Alert.alert("No disponible", `${appName} no está instalado.`);
+        await Clipboard.setStringAsync(inviteLink);
+        Alert.alert(
+          `${appName} no detectado`,
+          "Hemos copiado el enlace para que puedas pegarlo manualmente."
+        );
       }
     } catch (err) {
       console.error(err);
@@ -53,24 +57,22 @@ export const GoalInviteSheet = ({
   };
 
   const handleGmail = () => {
-    const subject = encodeURIComponent(`Invitación a Meta: ${goal.name}`);
+    const subject = encodeURIComponent("Te invito a mi Plan Familiar Wou+");
     const body = encodeURIComponent(message);
     const url = `mailto:?subject=${subject}&body=${body}`;
     openUrl(url, "Correo");
   };
 
-  const handleInstagram = async () => {
-    await Clipboard.setStringAsync(inviteLink);
-    const url = "instagram://";
-    openUrl(url, "Instagram");
-    Alert.alert("Enlace copiado", "Pégalo en tu historia o DM de Instagram.");
+  const handleSMS = () => {
+    const url = `sms:&body=${encodeURIComponent(message)}`;
+    openUrl(url, "Mensajes");
   };
 
   const handleSystemShare = async () => {
     try {
       await Share.share({
         message: message,
-        title: "Invitar a WOU Finance",
+        title: "Invitación Familia Wou+",
         url: inviteLink,
       });
       onOpenChange(false);
@@ -98,8 +100,8 @@ export const GoalInviteSheet = ({
         color="white"
         icon={icon}
         onPressIn={onPress}
-        elevation={2}
-        pressStyle={{ scale: 0.95, opacity: 0.8 }}
+        elevation="$2"
+        pressStyle={{ opacity: 0.9 }}
         borderWidth={0}
       />
       <Text fontSize={11} color="$gray11" fontWeight="600" textAlign="center">
@@ -113,7 +115,7 @@ export const GoalInviteSheet = ({
       modal
       open={open}
       onOpenChange={onOpenChange}
-      snapPoints={[45]}
+      snapPoints={[40]}
       dismissOnSnapToBottom
       zIndex={100_000}
       animation="medium"
@@ -122,13 +124,14 @@ export const GoalInviteSheet = ({
         animation="lazy"
         enterStyle={{ opacity: 0 }}
         exitStyle={{ opacity: 0 }}
+        backgroundColor="rgba(0,0,0,0.5)"
       />
-      <Sheet.Handle />
+      <Sheet.Handle backgroundColor="$gray8" opacity={0.3} />
 
       <Sheet.Frame padding="$4" space="$5" backgroundColor="$background">
         <YStack space="$1" alignItems="center" marginBottom="$2">
-          <Text fontSize="$6" fontWeight="800" color="$gray12">
-            Invitar Colaboradores
+          <Text fontSize="$6" fontWeight="900" color="$color">
+            Invitar a tu Familia
           </Text>
           <Text
             fontSize="$3"
@@ -136,11 +139,14 @@ export const GoalInviteSheet = ({
             textAlign="center"
             marginBottom="$2"
           >
-            Suma amigos a "{goal.name}"
+            Comparte los beneficios Premium
           </Text>
         </YStack>
-
-        <XStack justifyContent="space-between" paddingHorizontal="$2" mt={2}>
+        <XStack
+          justifyContent="space-between"
+          paddingHorizontal="$2"
+          marginTop="$2"
+        >
           <ShareOption
             label="WhatsApp"
             color="#25D366"
@@ -148,16 +154,16 @@ export const GoalInviteSheet = ({
             onPress={handleWhatsApp}
           />
           <ShareOption
-            label="Gmail"
+            label="Correo"
             color="#EA4335"
             icon={<Mail size={24} />}
             onPress={handleGmail}
           />
           <ShareOption
-            label="Instagram"
-            color="#E1306C"
-            icon={<Instagram size={24} />}
-            onPress={handleInstagram}
+            label="Mensaje"
+            color="#3B82F6"
+            icon={<Smartphone size={24} />}
+            onPress={handleSMS}
           />
           <ShareOption
             label="Más"
@@ -167,11 +173,11 @@ export const GoalInviteSheet = ({
           />
         </XStack>
 
-        <XStack height={1} backgroundColor="$gray4" marginVertical="$2" />
+        <XStack height={1} backgroundColor="$borderColor" marginVertical="$2" />
 
         <YStack space="$2">
           <Text fontSize="$3" fontWeight="600" color="$gray11" marginLeft="$1">
-            Enlace de invitación
+            Enlace directo
           </Text>
           <XStack
             backgroundColor="$gray3"
@@ -179,6 +185,8 @@ export const GoalInviteSheet = ({
             padding="$1.5"
             alignItems="center"
             paddingLeft="$3"
+            borderWidth={1}
+            borderColor="$borderColor"
           >
             <Text
               flex={1}
@@ -186,18 +194,21 @@ export const GoalInviteSheet = ({
               color="$gray11"
               fontSize="$3"
               ellipsizeMode="middle"
+              fontFamily="$mono"
             >
               {inviteLink}
             </Text>
             <Button
               size="$3"
-              backgroundColor={copied ? "$green9" : "$gray12"}
-              color="$gray1"
+              backgroundColor={copied ? "$green9" : "$color"}
+              color="$background"
               icon={copied ? <Check size={16} /> : <Copy size={16} />}
               onPressIn={handleCopy}
               borderRadius="$4"
+              fontWeight="700"
+              animation="quick"
             >
-              {copied ? "Copiado" : "Copiar"}
+              {copied ? "Listo" : "Copiar"}
             </Button>
           </XStack>
         </YStack>
