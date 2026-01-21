@@ -4,7 +4,13 @@ import * as SecureStore from "expo-secure-store";
 //const API_URL = "http://192.168.1.83:3000/api/v1";
 //const API_URL = "http://172.20.10.2:3000/api/v1";
 //const API_URL = "http://10.56.30.20:3000/api/v1";
-const API_URL = "http://192.168.1.83:3000/api/v1";
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
+
+if (!API_URL) {
+  console.error(
+    "¡ERROR CRÍTICO! Falta la variable EXPO_PUBLIC_API_URL en el archivo .env"
+  );
+}
 
 const finappApi = axios.create({
   baseURL: API_URL,

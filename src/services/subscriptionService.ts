@@ -1,4 +1,4 @@
-import finappApi from "../api/finappApi"; // O como se llame tu instancia de Axios
+import finappApi from "../api/finappApi";
 import { SubscriptionPlan } from "../types/user.types";
 
 export const SubscriptionService = {
