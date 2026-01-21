@@ -5,9 +5,14 @@ import {
   TouchableWithoutFeedback,
 } from "react-native";
 import { YStack, Text, Button, Circle } from "tamagui";
-import { Sparkles, TrendingUp, Info } from "@tamagui/lucide-icons";
+import {
+  Sparkles,
+  TrendingUp,
+  Info,
+  AlertTriangle,
+} from "@tamagui/lucide-icons";
 
-type ActionVariant = "success" | "warning" | "info";
+type ActionVariant = "success" | "warning" | "info" | "error";
 
 interface ActionModalProps {
   visible: boolean;
@@ -19,6 +24,7 @@ interface ActionModalProps {
   confirmText?: string;
   cancelText?: string;
   variant?: ActionVariant;
+  singleButton?: boolean;
 }
 
 export const ActionModal = ({
@@ -31,6 +37,7 @@ export const ActionModal = ({
   confirmText = "Confirmar",
   cancelText = "Cancelar",
   variant = "info",
+  singleButton = false,
 }: ActionModalProps) => {
   const THEME = {
     success: {
@@ -53,6 +60,13 @@ export const ActionModal = ({
       buttonBg: "$blue9",
       borderColor: "$blue5",
       Icon: Info,
+    },
+    error: {
+      bg: "$red2",
+      iconColor: "$red10",
+      buttonBg: "$red9",
+      borderColor: "$red5",
+      Icon: AlertTriangle,
     },
   };
 
@@ -127,16 +141,18 @@ export const ActionModal = ({
                   {isLoading ? "Actualizando..." : confirmText}
                 </Button>
 
-                <Button
-                  chromeless
-                  color="$gray10"
-                  fontWeight="600"
-                  size="$3"
-                  onPress={onClose}
-                  disabled={isLoading}
-                >
-                  {cancelText}
-                </Button>
+                {!singleButton && (
+                  <Button
+                    chromeless
+                    color="$gray10"
+                    fontWeight="600"
+                    size="$3"
+                    onPress={onClose}
+                    disabled={isLoading}
+                  >
+                    {cancelText}
+                  </Button>
+                )}
               </YStack>
             </YStack>
           </TouchableWithoutFeedback>

@@ -15,6 +15,8 @@ import { DangerModal } from "../../ui/DangerModal";
 import { Account } from "../../../types/account.types";
 import { useSubscription } from "../../../hooks/useSubscription";
 import { PremiumSheet } from "../../ui/PremiumSheet";
+import { AccountActions } from "../../../actions/accountActions";
+import { ActionModal } from "../../ui/ActionModal";
 
 interface AccountOptionsSheetProps {
   open: boolean;
@@ -29,9 +31,10 @@ export const AccountOptionsSheet = ({
 }: AccountOptionsSheetProps) => {
   const { isPro, canEditCash } = useSubscription();
   const navigation = useNavigation<any>();
-  const removeAccount = useAccountStore((state) => state.removeAccount);
+
   const [showDangerModal, setShowDangerModal] = useState(false);
   const [showPremiumSheet, setShowPremiumSheet] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const isCashAccount = account?.type?.toUpperCase() === "CASH";
@@ -67,13 +70,19 @@ export const AccountOptionsSheet = ({
   };
 
   const handleDelete = async () => {
+    if (!account) return;
+
     setIsLoading(true);
-    setTimeout(() => {
-      removeAccount(account.id);
-      setIsLoading(false);
+    try {
+      await AccountActions.deleteAccount(account.id);
       setShowDangerModal(false);
       onOpenChange(false);
-    }, 500);
+    } catch (error) {
+      setShowErrorModal(true);
+      setShowDangerModal(false);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -213,6 +222,16 @@ export const AccountOptionsSheet = ({
         onOpenChange={setShowPremiumSheet}
         title="Control de Efectivo Pro"
         description="La edición manual avanzada de cuentas de efectivo es una característica exclusiva de WOU+."
+      />
+      <ActionModal
+        visible={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        onConfirm={() => setShowErrorModal(false)}
+        title="Error de Eliminación"
+        message="No pudimos eliminar la cuenta. Por favor verifica tu conexión a internet e inténtalo nuevamente."
+        variant="error"
+        confirmText="Entendido"
+        singleButton={true}
       />
     </>
   );

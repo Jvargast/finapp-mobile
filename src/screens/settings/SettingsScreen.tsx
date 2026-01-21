@@ -33,6 +33,7 @@ import {
   Star,
   Crown,
   Users,
+  Gift,
 } from "@tamagui/lucide-icons";
 import { Alert, Linking } from "react-native";
 import { CommonActions, useNavigation } from "@react-navigation/native";
@@ -45,6 +46,7 @@ import { UserService } from "../../services/userService";
 import { DangerModal } from "../../components/ui/DangerModal";
 import { SectionTitle } from "../../components/ui/SectionTitle";
 import { SettingItem } from "../../components/settings/SettingItem";
+import { JoinFamilySheet } from "../../components/family/JoinFamilySheet";
 
 const GOAL_LABELS: Record<string, string> = {
   save: "Ahorrar Dinero",
@@ -94,6 +96,7 @@ export default function SettingsScreen() {
   const navigation = useNavigation<any>();
   const { showToast } = useToastStore();
 
+  const [showJoinSheet, setShowJoinSheet] = useState(false);
   const [notifications, setNotifications] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [biometrics, setBiometrics] = useState(false);
@@ -210,13 +213,23 @@ export default function SettingsScreen() {
             borderColor="$borderColor"
           >
             {userPlan === "FREE" && (
-              <SettingItem
-                icon={Star}
-                color="#F59E0B"
-                label="Obtener Premium"
-                value="Ver Planes"
-                onPress={() => navigation.navigate("Subscription")}
-              />
+              <>
+                <SettingItem
+                  icon={Star}
+                  color="#F59E0B"
+                  label="Obtener Premium"
+                  value="Ver Planes"
+                  onPress={() => navigation.navigate("Subscription")}
+                />
+
+                <SettingItem
+                  icon={Gift}
+                  color="#8B5CF6"
+                  label="Tengo código familiar"
+                  value="Unirse"
+                  onPress={() => setShowJoinSheet(true)}
+                />
+              </>
             )}
 
             {userPlan === "PRO" && (
@@ -421,6 +434,7 @@ export default function SettingsScreen() {
           </Text>
         }
       />
+      <JoinFamilySheet open={showJoinSheet} onOpenChange={setShowJoinSheet} />
     </YStack>
   );
 }

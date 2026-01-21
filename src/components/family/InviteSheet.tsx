@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Sheet, YStack, XStack, Text, Button } from "tamagui";
+import { Sheet, YStack, XStack, Text, Button, Spinner } from "tamagui";
 import {
   Copy,
   Check,
@@ -7,9 +7,12 @@ import {
   Mail,
   MessageCircle,
   Smartphone,
+  RefreshCw,
 } from "@tamagui/lucide-icons";
 import * as Clipboard from "expo-clipboard";
-import { Linking, Alert, Share } from "react-native";
+import { Linking, Share } from "react-native";
+import { FamilyActions } from "../../actions/familyActions";
+import { ActionModal } from "../ui/ActionModal";
 
 interface InviteSheetProps {
   open: boolean;
@@ -23,6 +26,18 @@ export const InviteSheet = ({
   inviteCode,
 }: InviteSheetProps) => {
   const [copied, setCopied] = useState(false);
+  const [isRegenerating, setIsRegenerating] = useState(false);
+  const [modalConfig, setModalConfig] = useState({
+    visible: false,
+    title: "",
+    message: "",
+    variant: "info" as "info" | "success" | "warning" | "error",
+    onConfirm: () => {},
+    confirmText: "Confirmar",
+    singleButton: false,
+  });
+  const closeModal = () =>
+    setModalConfig((prev) => ({ ...prev, visible: false }));
 
   const inviteLink = `https://wou.cl/invite/${inviteCode}`;
   const message = `¡Únete a mi Plan Familiar Wou+! Tendrás acceso Premium para controlar tus finanzas. Entra aquí: ${inviteLink}`;
@@ -41,10 +56,17 @@ export const InviteSheet = ({
         onOpenChange(false);
       } else {
         await Clipboard.setStringAsync(inviteLink);
-        Alert.alert(
-          `${appName} no detectado`,
-          "Hemos copiado el enlace para que puedas pegarlo manualmente."
-        );
+
+        setModalConfig({
+          visible: true,
+          title: `${appName} no detectado`,
+          message:
+            "Hemos copiado el enlace para que puedas pegarlo manualmente.",
+          variant: "info",
+          singleButton: true,
+          confirmText: "Entendido",
+          onConfirm: closeModal,
+        });
       }
     } catch (err) {
       console.error(err);
@@ -110,12 +132,57 @@ export const InviteSheet = ({
     </YStack>
   );
 
+  const executeRegenerate = async () => {
+    closeModal();
+    setIsRegenerating(true);
+
+    try {
+      await FamilyActions.rotateCode();
+
+      setModalConfig({
+        visible: true,
+        title: "Código actualizado",
+        message:
+          "Ahora tienes un nuevo enlace de invitación listo para compartir.",
+        variant: "success",
+        singleButton: true,
+        confirmText: "Genial",
+        onConfirm: closeModal,
+      });
+    } catch (error) {
+      setModalConfig({
+        visible: true,
+        title: "Error",
+        message: "No se pudo regenerar el código. Verifica tu conexión.",
+        variant: "error",
+        singleButton: true,
+        confirmText: "Cerrar",
+        onConfirm: closeModal,
+      });
+    } finally {
+      setIsRegenerating(false);
+    }
+  };
+
+  const handleRegenerateClick = () => {
+    setModalConfig({
+      visible: true,
+      title: "¿Revocar código actual?",
+      message:
+        "El enlace anterior dejará de funcionar inmediatamente. Útil si expulsaste a alguien recientemente.",
+      variant: "warning",
+      confirmText: "Sí, cambiar código",
+      singleButton: false,
+      onConfirm: executeRegenerate,
+    });
+  };
+
   return (
     <Sheet
       modal
       open={open}
       onOpenChange={onOpenChange}
-      snapPoints={[40]}
+      snapPoints={[55]}
       dismissOnSnapToBottom
       zIndex={100_000}
       animation="medium"
@@ -212,6 +279,35 @@ export const InviteSheet = ({
             </Button>
           </XStack>
         </YStack>
+        <Button
+          size="$3"
+          variant="outlined"
+          borderColor="$red5"
+          color="$red10"
+          icon={
+            isRegenerating ? (
+              <Spinner color="$red10" />
+            ) : (
+              <RefreshCw size={14} />
+            )
+          }
+          onPressIn={handleRegenerateClick}
+          marginTop="$2"
+          opacity={isRegenerating ? 0.5 : 1}
+          disabled={isRegenerating}
+        >
+          {isRegenerating ? "Generando..." : "Revocar y generar nuevo enlace"}
+        </Button>
+        <ActionModal
+          visible={modalConfig.visible}
+          onClose={closeModal}
+          onConfirm={modalConfig.onConfirm}
+          title={modalConfig.title}
+          message={modalConfig.message}
+          variant={modalConfig.variant}
+          confirmText={modalConfig.confirmText}
+          singleButton={modalConfig.singleButton}
+        />
       </Sheet.Frame>
     </Sheet>
   );
