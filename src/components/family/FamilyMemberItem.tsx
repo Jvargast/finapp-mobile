@@ -96,7 +96,6 @@ export const FamilyMemberItem = ({
             {member.name}
             {isCurrentUser && (
               <Text color="$gray9" fontWeight="400">
-                {" "}
                 (Tú)
               </Text>
             )}

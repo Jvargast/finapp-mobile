@@ -23,6 +23,7 @@ import {
   Crown,
   Users,
   HeartHandshake,
+  Banknote,
 } from "@tamagui/lucide-icons";
 import { DrawerContentScrollView } from "@react-navigation/drawer";
 import { useNavigation } from "@react-navigation/native";
@@ -236,6 +237,12 @@ export const Sidebar = (props: any) => {
       icon: Landmark,
       route: "Accounts",
       badge: "PRO",
+    },
+    {
+      id: "Budgets",
+      label: "Presupuestos",
+      icon: Banknote,
+      route: "Budgets",
     },
     {
       id: "Goal",

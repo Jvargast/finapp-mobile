@@ -22,8 +22,8 @@ export const BudgetService = {
     try {
       const response = await finappApi.post<Budget>("/budgets", data);
       return response.data;
-    } catch (error) {
-      console.error("❌ Error creando presupuesto:", error);
+    } catch (error: any) {
+      console.error("❌ Backend Error Response:", error.response?.data);
       throw error;
     }
   },
@@ -36,6 +36,30 @@ export const BudgetService = {
       console.error(`❌ Error obteniendo presupuesto ${id}:`, error);
       throw error;
     }
+  },
+
+  join: async (token: string): Promise<void> => {
+    await finappApi.post("/budgets/join", { token });
+  },
+
+  removeParticipant: async (
+    budgetId: string,
+    userId: string
+  ): Promise<void> => {
+    await finappApi.delete(`/budgets/${budgetId}/participants/${userId}`);
+  },
+
+  leave: async (budgetId: string): Promise<void> => {
+    await finappApi.post(`/budgets/${budgetId}/leave`);
+  },
+
+  regenerateToken: async (
+    budgetId: string
+  ): Promise<{ shareToken: string }> => {
+    const { data } = await finappApi.post<{ shareToken: string }>(
+      `/budgets/${budgetId}/regenerate-token`
+    );
+    return data;
   },
 
   updateBudget: async (

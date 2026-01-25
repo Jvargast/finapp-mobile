@@ -34,6 +34,7 @@ import {
   Crown,
   Users,
   Gift,
+  Tags,
 } from "@tamagui/lucide-icons";
 import { Alert, Linking } from "react-native";
 import { CommonActions, useNavigation } from "@react-navigation/native";
@@ -294,6 +295,13 @@ export default function SettingsScreen() {
               onPress={() =>
                 navigation.navigate("EditPreference", { type: "goal" })
               }
+            />
+            <SettingItem
+              icon={Tags}
+              color="#3B82F6"
+              label="Categorías"
+              value="Personalizar"
+              onPress={() => navigation.navigate("ManageCategories")}
             />
             <SettingItem
               icon={Moon}

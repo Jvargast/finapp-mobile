@@ -1,6 +1,6 @@
 import React from "react";
-import { XStack, Button, Text, YStack } from "tamagui";
-import { ChevronLeft, ChevronRight, Calendar } from "@tamagui/lucide-icons";
+import { YStack, Text, Button, XStack } from "tamagui";
+import { ChevronLeft, ChevronRight } from "@tamagui/lucide-icons";
 
 interface MonthSelectorProps {
   currentMonth: number;
@@ -15,9 +15,6 @@ export const MonthSelector = ({
   onChange,
   loading,
 }: MonthSelectorProps) => {
-  const date = new Date(currentYear, currentMonth - 1);
-  const monthName = date.toLocaleString("es-CL", { month: "long" });
-
   const handlePrev = () => {
     if (currentMonth === 1) onChange(12, currentYear - 1);
     else onChange(currentMonth - 1, currentYear);
@@ -28,59 +25,47 @@ export const MonthSelector = ({
     else onChange(currentMonth + 1, currentYear);
   };
 
+  const monthName = new Date(currentYear, currentMonth - 1)
+    .toLocaleString("es-CL", { month: "short" })
+    .toUpperCase()
+    .replace(".", "");
+
   return (
     <XStack
-      justifyContent="space-between"
+      backgroundColor="$gray3"
+      borderRadius="$10"
+      paddingVertical="$1.5"
+      paddingHorizontal="$1.5"
       alignItems="center"
-      paddingHorizontal="$4"
-      paddingVertical="$2"
-      backgroundColor="$background"
+      space="$1"
     >
       <Button
-        size="$3"
+        size="$2"
         circular
         chromeless
-        icon={ChevronLeft}
+        icon={<ChevronLeft size={16} color="$gray10" />}
         onPress={handlePrev}
         disabled={loading}
+        pressStyle={{ backgroundColor: "$gray5" }}
       />
 
-      <YStack alignItems="center">
-        <XStack space="$2" alignItems="center">
-          <Text
-            textTransform="capitalize"
-            fontSize="$6"
-            fontWeight="900"
-            color="$color"
-          >
-            {monthName}
-          </Text>
-          <Text fontSize="$6" fontWeight="300" color="$gray10">
-            {currentYear}
-          </Text>
-        </XStack>
-        {new Date().getMonth() + 1 === currentMonth &&
-          new Date().getFullYear() === currentYear && (
-            <XStack
-              backgroundColor="$blue3"
-              paddingHorizontal="$2"
-              borderRadius="$4"
-              marginTop="$1"
-            >
-              <Text fontSize={10} color="$blue10" fontWeight="700">
-                ACTUAL
-              </Text>
-            </XStack>
-          )}
+      <YStack alignItems="center" width={50}>
+        <Text fontSize={11} fontWeight="800" color="$color">
+          {monthName}
+        </Text>
+        <Text fontSize={9} color="$gray10" fontWeight="600">
+          {currentYear}
+        </Text>
       </YStack>
 
       <Button
-        size="$3"
+        size="$2"
         circular
         chromeless
-        icon={ChevronRight}
+        icon={<ChevronRight size={16} color="$gray10" />}
         onPress={handleNext}
         disabled={loading}
+        pressStyle={{ backgroundColor: "$gray5" }}
       />
     </XStack>
   );

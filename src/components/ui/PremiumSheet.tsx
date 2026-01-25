@@ -123,8 +123,8 @@ export const PremiumSheet = ({
           />
           <FeatureRow
             icon={Users}
-            label="Modo Familia & Pareja"
-            sublabel="Invita hasta 5 personas con el nuevo Plan Familiar."
+            label="Modo Pareja o Familia"
+            sublabel="Comparte con tu pareja o crea un grupo familiar."
             color={ACCENT_COLOR}
           />
           <FeatureRow

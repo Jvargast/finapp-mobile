@@ -16,11 +16,9 @@ import {
   Camera,
   CreditCard,
   AtSign,
-  Crown,
   Calendar,
   Settings,
 } from "@tamagui/lucide-icons";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { Alert, RefreshControl } from "react-native";
 import { useUserStore } from "../../stores/useUserStore";
 import { UserActions } from "../../actions/userActions";

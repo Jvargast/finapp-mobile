@@ -17,6 +17,10 @@ import AccountsScreen from "../screens/main/AccountsScreen";
 import SubscriptionScreen from "../screens/subscription/SubscriptionScreen";
 import SubscriptionDetailsScreen from "../screens/settings/SubscriptionDetailsScreen";
 import FamilyGroupScreen from "../screens/settings/FamilyGroupScreen";
+import BudgetScreen from "../screens/budget/BudgetScreen";
+import CreateBudgetScreen from "../screens/budget/CreateBudgetScreen";
+import ManageCategoriesScreen from "../screens/profile/ManageCategoriesScreen";
+import BudgetDetailScreen from "../screens/budget/BudgetDetailScreen";
 
 const Drawer = createDrawerNavigator();
 const Stack = createNativeStackNavigator();
@@ -78,6 +82,14 @@ export default function MainNavigator() {
           headerShown: true,
           headerTintColor: "$color",
           headerStyle: { backgroundColor: theme.brand.val },
+        }}
+      />
+      <Stack.Screen
+        name="ManageCategories"
+        component={ManageCategoriesScreen}
+        options={{
+          headerShown: false,
+          animation: "slide_from_right",
         }}
       />
       <Stack.Screen
@@ -164,6 +176,31 @@ export default function MainNavigator() {
         name="SubscriptionDetails"
         component={SubscriptionDetailsScreen}
         options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="CreateBudget"
+        component={CreateBudgetScreen}
+        options={{
+          headerShown: false,
+          presentation: "modal",
+          animation: "slide_from_bottom",
+        }}
+      />
+      <Stack.Screen
+        name="BudgetDetail"
+        component={BudgetDetailScreen}
+        options={{
+          headerShown: false,
+          animation: "slide_from_right", 
+        }}
+      />
+      <Stack.Screen
+        name="Budgets"
+        component={BudgetScreen}
+        options={{
+          headerShown: false,
+          animation: "slide_from_right",
+        }}
       />
     </Stack.Navigator>
   );

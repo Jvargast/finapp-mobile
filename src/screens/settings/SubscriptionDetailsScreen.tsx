@@ -48,7 +48,6 @@ export default function SubscriptionDetailsScreen() {
     }
     return isYearly ? "$29.990 / año" : "$2.990 / mes";
   };
-  console.log(planType);
 
   const expiresAt = user?.subscriptionExpiresAt
     ? new Date(user.subscriptionExpiresAt).toLocaleDateString("es-CL", {
@@ -92,7 +91,7 @@ export default function SubscriptionDetailsScreen() {
       </YStack>
 
       <ScrollView showsVerticalScrollIndicator={false}>
-        <YStack paddingHorizontal="$4" paddingBottom="$8" space="$6">
+        <YStack paddingHorizontal="$4" paddingBottom="$9" space="$6">
           <PlanStatusCard
             planType={planType}
             status="ACTIVE"
@@ -173,7 +172,7 @@ export default function SubscriptionDetailsScreen() {
               {planType !== "FAMILY_MEMBER" && (
                 <BillingRow
                   label="Plan Actual"
-                  value={cycleLabel} // Aquí mostramos explícitamente el ciclo
+                  value={cycleLabel} 
                   onPress={() => navigation.navigate("Subscription")}
                 />
               )}
