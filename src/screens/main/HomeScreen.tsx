@@ -7,13 +7,15 @@ import { QuickActions } from "../../components/home/QuickActions";
 import { AccountsCarousel } from "../../components/home/AccountsCarousel";
 import { RecentTransactions } from "../../components/home/RecentTransactions";
 import { AccountActions } from "../../actions/accountActions";
+import { TransactionActions } from "../../actions/transactionActions";
 
 export default function HomeScreen() {
   useEffect(() => {
     const initData = async () => {
-      await AccountActions.loadAccounts();
-      // await TransactionActions.loadRecent();
-      // await GoalActions.loadSummary();
+      await Promise.all([
+        AccountActions.loadAccounts(),
+        TransactionActions.loadRecent(),
+      ]);
     };
     initData();
   }, []);

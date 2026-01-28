@@ -182,7 +182,6 @@ export default function ProfileScreen() {
                 </View>
               )}
             </XStack>
-            {/* </View> */}
           </XStack>
           <Button
             marginTop="$4"

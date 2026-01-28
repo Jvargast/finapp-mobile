@@ -77,7 +77,6 @@ export const BalanceCard = () => {
             <Text color="#C7D2FE" fontWeight="600" fontSize="$3">
               Liquidez Total
             </Text>
-            {/* Tooltip o badge opcional */}
             <Stack
               backgroundColor="rgba(255,255,255,0.15)"
               paddingHorizontal="$1.5"
@@ -105,7 +104,6 @@ export const BalanceCard = () => {
           </Button>
         </XStack>
 
-        {/* NÚMERO PRINCIPAL (SOLO ACTIVOS) */}
         <XStack
           alignItems="baseline"
           space="$1.5"
@@ -138,7 +136,6 @@ export const BalanceCard = () => {
           )}
         </XStack>
 
-        {/* SECCIÓN DESGLOSADA ABAJO */}
         <XStack
           marginTop="$4"
           backgroundColor="rgba(0,0,0,0.2)"

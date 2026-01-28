@@ -115,7 +115,6 @@ export const GoalActivitySection = ({ goal }: GoalActivitySectionProps) => {
         ) : tab === "HISTORY" ? (
           <YStack space="$3">
             {visibleItems.map((item: any, index) => {
-              // RENDERIZADO CONDICIONAL SEGÚN TAB
               if (tab === "HISTORY") {
                 const tx = item;
                 const isDeposit = tx.type === "DEPOSIT";
@@ -125,7 +124,6 @@ export const GoalActivitySection = ({ goal }: GoalActivitySectionProps) => {
                     alignItems="center"
                     justifyContent="space-between"
                   >
-                    {/* ... TU CÓDIGO DE FILA HISTORIAL ... */}
                     <XStack alignItems="center" space="$3">
                       <YStack
                         backgroundColor={isDeposit ? "$green3" : "$red3"}
@@ -160,7 +158,6 @@ export const GoalActivitySection = ({ goal }: GoalActivitySectionProps) => {
                   </XStack>
                 );
               } else {
-                // RENDERIZADO RANKING
                 const rankUser = item;
                 const isFirst = index === 0;
                 return (
@@ -174,7 +171,6 @@ export const GoalActivitySection = ({ goal }: GoalActivitySectionProps) => {
                     borderWidth={isFirst ? 1 : 0}
                     borderColor="$yellow5"
                   >
-                    {/* ... TU CÓDIGO DE FILA RANKING ... */}
                     <XStack alignItems="center" space="$3">
                       <Text
                         fontWeight="900"

@@ -9,6 +9,7 @@ export interface Account {
   color: string;
 
   institution?: string | null;
+  skinId?: string | null;
   isCredit?: boolean;
 
   last4?: string | null;

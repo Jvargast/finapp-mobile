@@ -138,7 +138,7 @@ export const ShareBudgetSheet = ({
           <XStack
             backgroundColor="$gray2"
             paddingHorizontal="$3"
-            paddingVertical="$3.5" // 👈 Caja más alta y cómoda
+            paddingVertical="$3.5" 
             borderRadius="$4"
             alignItems="center"
             borderWidth={1}
@@ -158,7 +158,7 @@ export const ShareBudgetSheet = ({
               {inviteLink}
             </Text>
             <Button
-              size="$2.5" // 👈 Botón de copiar un pelín más grande
+              size="$2.5" 
               chromeless
               backgroundColor={hasCopied ? "$green2" : "transparent"}
               onPress={handleCopy}

@@ -21,6 +21,7 @@ import BudgetScreen from "../screens/budget/BudgetScreen";
 import CreateBudgetScreen from "../screens/budget/CreateBudgetScreen";
 import ManageCategoriesScreen from "../screens/profile/ManageCategoriesScreen";
 import BudgetDetailScreen from "../screens/budget/BudgetDetailScreen";
+import AddExpenseScreen from "../screens/transactions/AddExpenseScreen";
 
 const Drawer = createDrawerNavigator();
 const Stack = createNativeStackNavigator();
@@ -191,7 +192,7 @@ export default function MainNavigator() {
         component={BudgetDetailScreen}
         options={{
           headerShown: false,
-          animation: "slide_from_right", 
+          animation: "slide_from_right",
         }}
       />
       <Stack.Screen
@@ -200,6 +201,15 @@ export default function MainNavigator() {
         options={{
           headerShown: false,
           animation: "slide_from_right",
+        }}
+      />
+      <Stack.Screen
+        name="AddExpense"
+        component={AddExpenseScreen}
+        options={{
+          headerShown: false,
+          presentation: "modal",
+          animation: "slide_from_bottom",
         }}
       />
     </Stack.Navigator>

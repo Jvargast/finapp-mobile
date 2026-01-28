@@ -61,7 +61,7 @@ export const AccountCard = ({
       justifyContent="space-between"
       onPress={onPress}
       animation="bouncy"
-      y={isActive ? -15 : 0}
+      y={isActive ? 1 : 0}
       scale={isActive ? 1.05 : 1}
       rotate={isActive ? "0deg" : "0deg"}
       shadowColor={fallbackBg}
@@ -104,7 +104,6 @@ export const AccountCard = ({
 
       <YStack padding="$4" flex={1} justifyContent="space-between" zIndex={2}>
         <XStack justifyContent="space-between" alignItems="flex-start">
-          {/* Lado Izquierdo: Icono o Chip */}
           {account.type === "CASH" || account.type === "WALLET" ? (
             <Stack
               backgroundColor="rgba(255,255,255,0.2)"
