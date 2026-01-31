@@ -47,6 +47,8 @@ export default function BudgetDetailScreen() {
     setIsRefreshing(false);
   };
 
+  console.log(initialBudget)
+
   return (
     <YStack flex={1} backgroundColor="$background" paddingTop={insets.top}>
       <BudgetDetailHeader

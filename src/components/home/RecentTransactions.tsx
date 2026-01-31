@@ -22,7 +22,7 @@ export const RecentTransactions = () => {
           chromeless
           color="$brand"
           fontWeight="700"
-          onPress={() => navigation.navigate("AllTransactionsScreen")}
+          onPress={() => navigation.navigate("AllTransactions")}
         >
           Ver todo
         </Button>
@@ -59,7 +59,11 @@ export const RecentTransactions = () => {
               key={tx.id}
               transaction={tx}
               isLast={index === transactions.length - 1}
-              onPress={(id) => console.log("Detalle", id)}
+              onPress={(id) =>
+                navigation.navigate("TransactionDetailScreen", {
+                  transactionId: id,
+                })
+              }
             />
           ))}
         </YStack>

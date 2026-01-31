@@ -1,5 +1,11 @@
 import { YStack, Text, XStack, Button } from "tamagui";
-import { Target, PieChart, Receipt, Banknote } from "@tamagui/lucide-icons";
+import {
+  Target,
+  PieChart,
+  Receipt,
+  Banknote,
+  ArrowRightLeft,
+} from "@tamagui/lucide-icons";
 import { useNavigation } from "@react-navigation/native";
 
 export const QuickActions = () => {
@@ -24,19 +30,19 @@ export const QuickActions = () => {
     },
     {
       id: 3,
-      label: "Metas",
-      icon: Target,
-      color: "#A78BFA",
-      bg: "rgba(16, 185, 129, 0.1)",
-      route: "Goals",
+      label: "Transferir",
+      icon: ArrowRightLeft,
+      color: "#3B82F6",
+      bg: "rgba(59, 130, 246, 0.1)",
+      route: "AddTransfer",
     },
     {
       id: 4,
-      label: "Análisis",
-      icon: PieChart,
-      color: "#60A5FA",
-      bg: "rgba(16, 185, 129, 0.1)",
-      route: "Analytics",
+      label: "Metas",
+      icon: Target,
+      color: "#A78BFA",
+      bg: "rgba(167, 139, 250, 0.1)",
+      route: "Goals",
     },
   ];
 
@@ -56,9 +62,9 @@ export const QuickActions = () => {
             backgroundColor={action.bg}
             onPress={() => {
               if (action.route) {
-                navigation.navigate(action.route);
-              } else {
-                console.log("Acción sin ruta definida aún:", action.label);
+                requestAnimationFrame(() => {
+                  navigation.navigate(action.route);
+                });
               }
             }}
             pressStyle={{

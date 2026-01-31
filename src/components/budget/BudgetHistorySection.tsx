@@ -1,8 +1,7 @@
 import React, { useState, useMemo } from "react";
-import { YStack, XStack, Text, Avatar, Button, Separator } from "tamagui";
+import { YStack, XStack, Text, Avatar, Button } from "tamagui";
 import {
   Activity,
-  ArrowUpRight,
   ChevronDown,
   ChevronUp,
   Crown,

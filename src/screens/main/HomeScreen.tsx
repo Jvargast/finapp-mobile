@@ -8,6 +8,7 @@ import { AccountsCarousel } from "../../components/home/AccountsCarousel";
 import { RecentTransactions } from "../../components/home/RecentTransactions";
 import { AccountActions } from "../../actions/accountActions";
 import { TransactionActions } from "../../actions/transactionActions";
+import { AnalyticsPreview } from "../../components/home/AnalyticsPreview";
 
 export default function HomeScreen() {
   useEffect(() => {
@@ -27,6 +28,7 @@ export default function HomeScreen() {
         <BalanceCard />
         <QuickActions />
         <AccountsCarousel />
+        <AnalyticsPreview />
         <RecentTransactions />
       </ScrollView>
     </MainLayout>

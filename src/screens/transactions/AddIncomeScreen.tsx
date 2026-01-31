@@ -1,66 +1,33 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { YStack, XStack, Text, Input, Button } from "tamagui";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import {
-  ChevronLeft,
-  Calendar,
-  Users,
-  Banknote,
-  AlertCircle,
-} from "@tamagui/lucide-icons";
+import { ChevronLeft, Calendar } from "@tamagui/lucide-icons";
 import { useNavigation } from "@react-navigation/native";
 import { NumericKeypad } from "../../components/transactions/NumericKeypad";
 import { CategorySelector } from "../../components/transactions/CategorySelector";
 import { useToastStore } from "../../stores/useToastStore";
-import { useBudgetStore } from "../../stores/useBudgetStore";
 import { TransactionActions } from "../../actions/transactionActions";
 import { AccountSelector } from "../../components/transactions/AccountSelector";
 import { useAccountStore } from "../../stores/useAccountStore";
 import { ScrollView } from "react-native-gesture-handler";
-import { BudgetActions } from "../../actions/budgetActions";
 import { TransactionDatePicker } from "../../components/transactions/TransactionDatePicker";
-import { InteractionManager } from "react-native";
 
-export default function AddExpenseScreen() {
+export default function AddIncomeScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
   const showToast = useToastStore((state) => state.showToast);
-  const budgets = useBudgetStore((state) => state.budgets);
   const accounts = useAccountStore((state) => state.accounts);
+
   const [isDatePickerOpen, setDatePickerOpen] = useState(false);
 
-  const [selectedAccountId, setSelectedAccountId] = useState(() => {
-    return accounts.length > 0 ? accounts[0].id : "";
-  });
-
-  useEffect(() => {
-    const task = InteractionManager.runAfterInteractions(() => {
-      BudgetActions.loadBudgets();
-    });
-
-    return () => task.cancel();
-  }, []);
+  const [selectedAccountId, setSelectedAccountId] = useState(() =>
+    accounts.length > 0 ? accounts[0].id : ""
+  );
 
   const [amount, setAmount] = useState("0");
   const [description, setDescription] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("1");
+  const [selectedCategory, setSelectedCategory] = useState("");
   const [date, setDate] = useState(new Date());
-
-  const selectedBudget = useMemo(() => {
-    if (!selectedCategory) return null;
-
-    const currentMonth = date.getMonth() + 1;
-    const currentYear = date.getFullYear();
-
-    return (
-      budgets.find(
-        (b) =>
-          b.category.id === selectedCategory &&
-          b.month === currentMonth &&
-          b.year === currentYear
-      ) || null
-    );
-  }, [selectedCategory, budgets, date]);
 
   const handleKeyPress = (val: string) => {
     if (val === "." && amount.includes(".")) return;
@@ -87,22 +54,25 @@ export default function AddExpenseScreen() {
       return;
     }
     if (!selectedAccountId) {
-      showToast("Selecciona una cuenta de pago", "error");
+      showToast("Selecciona dónde depositar", "error");
+      return;
+    }
+    if (!selectedCategory) {
+      showToast("Selecciona una categoría", "error");
       return;
     }
 
     try {
       await TransactionActions.createTransaction({
         amount: Number(amount),
-        type: "EXPENSE",
+        type: "INCOME",
         accountId: selectedAccountId,
         categoryId: selectedCategory,
-        budgetId: selectedBudget?.id,
         description: description,
         date: date.toISOString(),
       });
 
-      showToast("Gasto registrado exitosamente", "success");
+      showToast("Ingreso registrado correctamente", "success");
       navigation.goBack();
     } catch (error) {
       showToast("Error al guardar", "error");
@@ -117,11 +87,13 @@ export default function AddExpenseScreen() {
           size="$3"
           chromeless
           icon={<ChevronLeft size={28} color="$color" />}
-          onPress={() => navigation.goBack()}
+          onPressIn={() => navigation.goBack()}
         />
-        <Text fontSize="$4" fontWeight="800" color="$gray11">
-          Nuevo Gasto
-        </Text>
+        <XStack alignItems="center" space="$2">
+          <Text fontSize="$4" fontWeight="800" color="$gray11">
+            Nuevo Ingreso
+          </Text>
+        </XStack>
         <Button size="$3" chromeless width={40} />
       </XStack>
 
@@ -131,15 +103,20 @@ export default function AddExpenseScreen() {
         alignItems="center"
         space="$2"
       >
-        <Text fontSize="$9" fontWeight="900" color="$red10" textAlign="center">
-          -${amount}
+        <Text
+          fontSize="$9"
+          fontWeight="900"
+          color="$green10"
+          textAlign="center"
+        >
+          +${amount}
         </Text>
         <Button
           size="$2"
           chromeless
           icon={<Calendar size={14} color="$gray10" />}
           color="$gray10"
-          onPress={() => setDatePickerOpen(true)}
+          onPressIn={() => setDatePickerOpen(true)}
         >
           {date.toDateString() === new Date().toDateString()
             ? `Hoy, ${date.toLocaleDateString("es-ES", {
@@ -164,7 +141,6 @@ export default function AddExpenseScreen() {
         shadowRadius={10}
         shadowOpacity={0.1}
         elevation={5}
-        /* overflow="hidden" */
       >
         <ScrollView
           flex={1}
@@ -174,7 +150,7 @@ export default function AddExpenseScreen() {
         >
           <XStack paddingHorizontal="$4">
             <Input
-              placeholder="¿En qué gastaste? (Opcional)"
+              placeholder="Descripción (Ej: Sueldo, Regalo...)"
               value={description}
               onChangeText={setDescription}
               backgroundColor="$gray2"
@@ -182,7 +158,7 @@ export default function AddExpenseScreen() {
               borderRadius="$4"
               color="$color"
               fontWeight="500"
-              style={{ fontSize: 12 }}
+              style={{ fontSize: 14 }}
             />
           </XStack>
 
@@ -194,7 +170,7 @@ export default function AddExpenseScreen() {
                 fontWeight="700"
                 textTransform="uppercase"
               >
-                Pagar desde
+                Depositar en
               </Text>
             </XStack>
             <AccountSelector
@@ -209,84 +185,16 @@ export default function AddExpenseScreen() {
             onSelect={setSelectedCategory}
             navigation={navigation}
           />
-
-          {selectedBudget && (
-            <YStack
-              paddingHorizontal="$4"
-              animation="quick"
-              enterStyle={{ opacity: 0 }}
-            >
-              <Text
-                fontSize={10}
-                color="$gray9"
-                fontWeight="700"
-                marginBottom={4}
-                textTransform="uppercase"
-              >
-                Se descontará de:
-              </Text>
-              <Button
-                size="$3"
-                backgroundColor={
-                  selectedBudget.type === "SHARED" ? "$purple3" : "$blue3"
-                }
-                borderColor={
-                  selectedBudget.type === "SHARED" ? "$purple8" : "$blue8"
-                }
-                borderWidth={1}
-                borderRadius="$4"
-                justifyContent="flex-start"
-                icon={
-                  selectedBudget.type === "SHARED" ? (
-                    <Users size={16} color="$purple10" />
-                  ) : (
-                    <Banknote size={16} color="$blue10" />
-                  )
-                }
-              >
-                <XStack
-                  justifyContent="space-between"
-                  flex={1}
-                  alignItems="center"
-                >
-                  <Text
-                    color={
-                      selectedBudget.type === "SHARED" ? "$purple10" : "$blue10"
-                    }
-                    fontWeight="700"
-                    fontSize={12}
-                  >
-                    {selectedBudget.name}
-                  </Text>
-                  <Text fontSize={10} color="$gray10">
-                    Quedan $
-                    {(
-                      selectedBudget.amount -
-                      (selectedBudget.progress?.spent || 0)
-                    ).toLocaleString()}
-                  </Text>
-                </XStack>
-              </Button>
-            </YStack>
-          )}
-
-          {!selectedBudget && selectedCategory && (
-            <YStack paddingHorizontal="$4" opacity={0.5}>
-              <XStack space="$2" alignItems="center">
-                <AlertCircle size={12} color="$gray8" />
-                <Text fontSize={10} color="$gray8">
-                  Este gasto no afectará ningún presupuesto.
-                </Text>
-              </XStack>
-            </YStack>
-          )}
         </ScrollView>
+
         <NumericKeypad
           onPress={handleKeyPress}
           onDelete={handleDelete}
           onConfirm={handleSave}
+          confirmColor="$green10"
         />
       </YStack>
+
       <TransactionDatePicker
         open={isDatePickerOpen}
         onOpenChange={setDatePickerOpen}

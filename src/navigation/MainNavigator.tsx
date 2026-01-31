@@ -22,6 +22,10 @@ import CreateBudgetScreen from "../screens/budget/CreateBudgetScreen";
 import ManageCategoriesScreen from "../screens/profile/ManageCategoriesScreen";
 import BudgetDetailScreen from "../screens/budget/BudgetDetailScreen";
 import AddExpenseScreen from "../screens/transactions/AddExpenseScreen";
+import AddIncomeScreen from "../screens/transactions/AddIncomeScreen";
+import TransactionDetailScreen from "../screens/transactions/TransactionDetailScreen";
+import AllTransactionsScreen from "../screens/transactions/AllTransactionsScreen";
+import AddTransferScreen from "../screens/transactions/AddTransferScreen";
 
 const Drawer = createDrawerNavigator();
 const Stack = createNativeStackNavigator();
@@ -204,8 +208,42 @@ export default function MainNavigator() {
         }}
       />
       <Stack.Screen
+        name="AllTransactions"
+        component={AllTransactionsScreen}
+        options={{
+          headerShown: false,
+          animation: "slide_from_right",
+        }}
+      />
+      <Stack.Screen
         name="AddExpense"
         component={AddExpenseScreen}
+        options={{
+          headerShown: false,
+          presentation: "modal",
+          animation: "slide_from_bottom",
+        }}
+      />
+      <Stack.Screen
+        name="AddIncome"
+        component={AddIncomeScreen}
+        options={{
+          headerShown: false,
+          presentation: "modal",
+          animation: "slide_from_bottom",
+        }}
+      />
+      <Stack.Screen
+        name="AddTransfer"
+        component={AddTransferScreen}
+        options={{
+          presentation: "modal", 
+          animation: "slide_from_bottom",
+        }}
+      />
+      <Stack.Screen
+        name="TransactionDetailScreen"
+        component={TransactionDetailScreen}
         options={{
           headerShown: false,
           presentation: "modal",

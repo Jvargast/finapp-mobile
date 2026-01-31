@@ -1,8 +1,7 @@
-import React from "react";
+import React, { memo } from "react";
 import { YStack, XStack, Text, Button } from "tamagui";
 import { Delete, Check } from "@tamagui/lucide-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-// import * as Haptics from "expo-haptics";
 
 interface Props {
   onPress: (val: string) => void;
@@ -10,25 +9,37 @@ interface Props {
   onConfirm: () => void;
 }
 
-export const NumericKeypad = ({ onPress, onDelete, onConfirm }: Props) => {
+const KEYS = [
+  ["1", "2", "3"],
+  ["4", "5", "6"],
+  ["7", "8", "9"],
+  [".", "0", "DEL"],
+];
+
+const KeyButton = memo(
+  ({
+    children,
+    onPress,
+  }: {
+    children: React.ReactNode;
+    onPress: () => void;
+  }) => (
+    <Button
+      flex={1}
+      height={50} 
+      backgroundColor="transparent"
+      onPress={onPress}
+      pressStyle={{ backgroundColor: "$gray3" }}
+      borderRadius="$8"
+      chromeless
+    >
+      {children}
+    </Button>
+  )
+);
+
+export const NumericKeypad = memo(({ onPress, onDelete, onConfirm }: Props) => {
   const insets = useSafeAreaInsets();
-
-  const handlePress = (val: string) => {
-    // Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    onPress(val);
-  };
-
-  const handleDelete = () => {
-    // Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    onDelete();
-  };
-
-  const keys = [
-    ["1", "2", "3"],
-    ["4", "5", "6"],
-    ["7", "8", "9"],
-    [".", "0", "DEL"],
-  ];
 
   return (
     <YStack
@@ -37,18 +48,18 @@ export const NumericKeypad = ({ onPress, onDelete, onConfirm }: Props) => {
       space="$2"
     >
       <YStack space="$1.5">
-        {keys.map((row, i) => (
+        {KEYS.map((row, i) => (
           <XStack key={i} space="$2" justifyContent="space-between">
             {row.map((key) => {
               if (key === "DEL") {
                 return (
-                  <KeyButton key={key} onPress={handleDelete}>
+                  <KeyButton key={key} onPress={onDelete}>
                     <Delete size={24} color="$gray10" strokeWidth={2} />
                   </KeyButton>
                 );
               }
               return (
-                <KeyButton key={key} onPress={() => handlePress(key)}>
+                <KeyButton key={key} onPress={() => onPress(key)}>
                   <Text fontSize={28} fontWeight="400" color="$color">
                     {key}
                   </Text>
@@ -65,11 +76,11 @@ export const NumericKeypad = ({ onPress, onDelete, onConfirm }: Props) => {
         pressStyle={{ opacity: 0.9 }}
         onPress={onConfirm}
         borderRadius="$8"
-        animation="bouncy"
+        animation="quick"
         shadowColor="$red10"
-        shadowRadius={8}
-        shadowOffset={{ width: 0, height: 3 }}
-        shadowOpacity={0.4}
+        shadowRadius={4}
+        shadowOffset={{ width: 0, height: 2 }}
+        shadowOpacity={0.2}
         icon={<Check size={22} color="white" strokeWidth={3} />}
       >
         <Text color="white" fontWeight="800" fontSize="$5" letterSpacing={1}>
@@ -78,25 +89,4 @@ export const NumericKeypad = ({ onPress, onDelete, onConfirm }: Props) => {
       </Button>
     </YStack>
   );
-};
-
-const KeyButton = ({
-  children,
-  onPress,
-}: {
-  children: React.ReactNode;
-  onPress: () => void;
-}) => (
-  <Button
-    flex={1}
-    height={45}
-    backgroundColor="transparent"
-    onPress={onPress}
-    pressStyle={{ backgroundColor: "$gray3" }}
-    borderRadius="$8"
-    chromeless
-    animation="quick"
-  >
-    {children}
-  </Button>
-);
+});

@@ -1,3 +1,5 @@
+import { Budget } from "./budget.types";
+
 export type TransactionType = "INCOME" | "EXPENSE" | "TRANSFER";
 
 export interface TransactionFilters {
@@ -18,6 +20,7 @@ export interface CreateTransactionParams {
   date?: string;
   budgetId?: string;
   externalId?: string;
+  destinationAccountId?: string;
 }
 
 export interface UpdateTransactionParams
@@ -46,11 +49,8 @@ export interface Transaction {
     currency: string;
     type: string;
   };
-  budget?: {
-    id: string;
-    name: string;
-    type: string;
-  };
+
+  budget?: Budget | null;
 
   createdAt: string;
   updatedAt: string;

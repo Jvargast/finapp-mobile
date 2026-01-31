@@ -6,15 +6,19 @@ import { useCategoryStore } from "../../stores/useCategoryStore";
 import { CategoryActions } from "../../actions/categoryActions";
 import { getIcon } from "../../utils/iconMap";
 import { useNavigation } from "@react-navigation/native";
+import { NavigationProp } from "@react-navigation/native";
 
 interface Props {
   selectedId: string;
   onSelect: (id: string) => void;
+  navigation: NavigationProp<any>;
 }
 
-export const CategorySelector = ({ selectedId, onSelect }: Props) => {
-  const navigation = useNavigation<any>();
-
+export const CategorySelector = ({
+  selectedId,
+  onSelect,
+  navigation,
+}: Props) => {
   const categories = useCategoryStore((state) => state.categories);
   const isLoading = useCategoryStore((state) => state.isLoading);
 

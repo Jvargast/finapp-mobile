@@ -48,6 +48,11 @@ import {
   Book,
   GraduationCap,
   School,
+  ArrowRightLeft,
+  MoreHorizontal,
+  TrendingUp,
+  MonitorPlay,
+  Shirt,
 } from "@tamagui/lucide-icons";
 
 export const getIcon = (iconName: string) => {
@@ -101,6 +106,11 @@ export const getIcon = (iconName: string) => {
     Book,
     GraduationCap,
     School,
+    ArrowRightLeft,
+    MoreHorizontal,
+    TrendingUp,
+    MonitorPlay,
+    Shirt,
   };
 
   return icons[iconName] || HelpCircle;

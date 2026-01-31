@@ -7,6 +7,7 @@ import {
 import { useToastStore } from "../stores/useToastStore";
 import { BudgetActions } from "./budgetActions";
 import { AccountActions } from "./accountActions";
+import { useAccountStore } from "../stores/useAccountStore";
 
 export const TransactionActions = {
   loadTransactions: async () => {
@@ -45,25 +46,67 @@ export const TransactionActions = {
     }
   },
 
+  getFilteredTransactions: async (filters: any) => {
+    try {
+      const response = await TransactionService.getAll(filters);
+      return response.data;
+    } catch (error) {
+      console.error("Error filtrando transacciones", error);
+      throw error;
+    }
+  },
+
   changeDate: (month: number, year: number) => {
     const store = useTransactionStore.getState();
     store.setDateContext(month, year);
     TransactionActions.loadTransactions();
   },
 
+  getTransactionDetail: async (id: string) => {
+    const store = useTransactionStore.getState();
+    store.setLoading(true);
+
+    try {
+      const transaction = await TransactionService.getById(id);
+      store.updateTransaction(transaction);
+      return transaction;
+    } catch (error) {
+      console.error("Error cargando detalle de transacción", error);
+    } finally {
+      store.setLoading(false);
+    }
+  },
+
   createTransaction: async (data: CreateTransactionParams) => {
     const store = useTransactionStore.getState();
+    const accountStore = useAccountStore.getState();
     store.setLoading(true);
 
     try {
       const newTransaction = await TransactionService.create(data);
 
-      store.addTransaction(newTransaction);
+      const selectedAccount = accountStore.accounts.find(
+        (acc) => acc.id === data.accountId
+      );
+
+      const transactionWithFullData = {
+        ...newTransaction,
+        account: selectedAccount
+          ? {
+              id: selectedAccount.id,
+              name: selectedAccount.name,
+              currency: selectedAccount.currency,
+              type: selectedAccount.type,
+            }
+          : newTransaction.account,
+      };
+
+      store.addTransaction(transactionWithFullData);
 
       BudgetActions.loadBudgets();
       AccountActions.loadAccounts();
 
-      return newTransaction;
+      return transactionWithFullData;
     } catch (error) {
       console.error("Error creando transacción", error);
       throw error;
@@ -79,12 +122,14 @@ export const TransactionActions = {
     try {
       await TransactionService.delete(id);
       store.removeTransaction(id);
-
       BudgetActions.loadBudgets();
+      AccountActions.loadAccounts();
 
       useToastStore.getState().showToast("Movimiento eliminado", "success");
     } catch (error) {
+      console.error(error);
       useToastStore.getState().showToast("No se pudo eliminar", "error");
+      throw error;
     } finally {
       store.setLoading(false);
     }
@@ -98,9 +143,13 @@ export const TransactionActions = {
       store.updateTransaction(updated);
 
       BudgetActions.loadBudgets();
+      AccountActions.loadAccounts();
 
+      useToastStore.getState().showToast("Movimiento actualizado", "success");
       return updated;
     } catch (error) {
+      console.error(error);
+      useToastStore.getState().showToast("Error al editar", "error");
       throw error;
     } finally {
       store.setLoading(false);
