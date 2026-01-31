@@ -9,6 +9,7 @@
     "web": "expo start --web"
   },
   "dependencies": {
+    "@fintoc/fintoc-react-native": "^1.0.3",
     "@hookform/resolvers": "^5.2.2",
     "@react-native-community/datetimepicker": "8.4.4",
     "@react-navigation/drawer": "^7.7.10",

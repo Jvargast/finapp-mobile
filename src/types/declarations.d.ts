@@ -1,0 +1,1 @@
+declare module '@fintoc/fintoc-react-native';

@@ -1,6 +1,12 @@
 import React, { useState, useMemo } from "react";
 import { YStack, XStack, Text, ScrollView, Button, Circle } from "tamagui";
-import { PieChart, Landmark, Wallet, Banknote } from "@tamagui/lucide-icons";
+import {
+  PieChart,
+  Landmark,
+  Wallet,
+  Banknote,
+  Link as LinkIcon,
+} from "@tamagui/lucide-icons";
 import { useNavigation } from "@react-navigation/native";
 import { MainLayout } from "../../components/layout/MainLayout";
 import { AccountCard } from "../../components/home/accounts/AccountCard";
@@ -9,6 +15,8 @@ import { Account } from "../../types/account.types";
 import { AccountOptionsSheet } from "../../components/home/accounts/AccountOptionsSheet";
 import { GoBackButton } from "../../components/ui/GoBackButton";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useSubscription } from "../../hooks/useSubscription";
+import { PremiumSheet } from "../../components/ui/PremiumSheet";
 
 const CAT_COLORS: Record<string, string> = {
   BANK: "$blue10",
@@ -27,13 +35,13 @@ const formatShort = (amount: number) => {
 };
 
 export default function AccountsScreen() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const accounts = useAccountStore((state) => state.accounts);
-  const removeAccount = useAccountStore((state) => state.removeAccount);
   const insets = useSafeAreaInsets();
+  const { isPro } = useSubscription();
 
   const [activeFilter, setActiveFilter] = useState("ALL");
-
+  const [showPremiumSheet, setShowPremiumSheet] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
   const [isSheetOpen, setSheetOpen] = useState(false);
 
@@ -70,9 +78,22 @@ export default function AccountsScreen() {
     setSheetOpen(true);
   };
 
+  const handleConnectPress = () => {
+    if (!isPro) {
+      setShowPremiumSheet(true);
+      return;
+    }
+    navigation.navigate("ConnectBank");
+  };
+
   return (
     <MainLayout noPadding={true}>
-      <YStack space="$2" flex={1} paddingTop={insets.top + 10} paddingHorizontal="$4">
+      <YStack
+        space="$2"
+        flex={1}
+        paddingTop={insets.top + 10}
+        paddingHorizontal="$4"
+      >
         <XStack alignItems="center" justifyContent="space-between">
           <XStack alignItems="center" space="$3">
             <GoBackButton />
@@ -80,6 +101,24 @@ export default function AccountsScreen() {
               Mis Cuentas
             </Text>
           </XStack>
+          <Button
+            size="$3"
+            backgroundColor={isPro ? "$blue10" : "$gray4"}
+            borderRadius="$10"
+            icon={<LinkIcon size={18} color={isPro ? "white" : "$gray10"} />}
+            onPress={handleConnectPress}
+            pressStyle={{ opacity: 0.8 }}
+            borderWidth={isPro ? 0 : 1}
+            borderColor={isPro ? "transparent" : "$borderColor"}
+          >
+            <Text
+              color={isPro ? "white" : "$gray10"}
+              fontSize={12}
+              fontWeight="700"
+            >
+              Conectar
+            </Text>
+          </Button>
         </XStack>
         <YStack space="$2" marginTop="$2">
           <XStack
@@ -178,9 +217,25 @@ export default function AccountsScreen() {
           contentContainerStyle={{ paddingBottom: 100 }}
         >
           {filteredAccounts.length === 0 ? (
-            <YStack padding="$10" alignItems="center" opacity={0.5}>
-              <PieChart size={40} color="$gray10" marginBottom="$2" />
-              <Text color="$gray10">Sin cuentas aquí.</Text>
+            <YStack padding="$10" alignItems="center" opacity={0.8} space="$4">
+              <PieChart size={40} color="$gray8" />
+              <Text color="$gray10" textAlign="center">
+                {activeFilter === "BANK"
+                  ? "No has conectado ningún banco aún."
+                  : "Sin cuentas en esta categoría."}
+              </Text>
+
+              {activeFilter === "BANK" && (
+                <Button
+                  themeInverse
+                  icon={<Landmark size={16} />}
+                  onPress={handleConnectPress}
+                >
+                  {isPro
+                    ? "Conectar mi Banco"
+                    : "Desbloquear Conexión Bancaria"}
+                </Button>
+              )}
             </YStack>
           ) : (
             <YStack space="$4">
@@ -198,6 +253,12 @@ export default function AccountsScreen() {
           )}
         </ScrollView>
       </YStack>
+      <PremiumSheet
+        open={showPremiumSheet}
+        onOpenChange={setShowPremiumSheet}
+        title="Conecta tus Bancos"
+        description="Olvídate de ingresar gastos a mano. Sincroniza tus cuentas bancarias automáticamente con Wou+."
+      />
       <AccountOptionsSheet
         open={isSheetOpen}
         onOpenChange={setSheetOpen}

@@ -26,6 +26,7 @@ import AddIncomeScreen from "../screens/transactions/AddIncomeScreen";
 import TransactionDetailScreen from "../screens/transactions/TransactionDetailScreen";
 import AllTransactionsScreen from "../screens/transactions/AllTransactionsScreen";
 import AddTransferScreen from "../screens/transactions/AddTransferScreen";
+import ConnectBankScreen from "../screens/fintoc/ConnectBankScreen";
 
 const Drawer = createDrawerNavigator();
 const Stack = createNativeStackNavigator();
@@ -237,7 +238,7 @@ export default function MainNavigator() {
         name="AddTransfer"
         component={AddTransferScreen}
         options={{
-          presentation: "modal", 
+          presentation: "modal",
           animation: "slide_from_bottom",
         }}
       />
@@ -249,6 +250,11 @@ export default function MainNavigator() {
           presentation: "modal",
           animation: "slide_from_bottom",
         }}
+      />
+      <Stack.Screen
+        name="ConnectBank"
+        component={ConnectBankScreen}
+        options={{ headerShown: false }}
       />
     </Stack.Navigator>
   );
