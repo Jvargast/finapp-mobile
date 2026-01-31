@@ -1,10 +1,10 @@
-import "dotenv/config"; 
+import "dotenv/config";
 
 export default {
   expo: {
-    name: "Nova",
+    name: "WouFinance",
     slug: "nova-app",
-    scheme: "nova",
+    scheme: "woufinance",
     version: "1.0.0",
     orientation: "portrait",
     icon: "./assets/icon.png",
