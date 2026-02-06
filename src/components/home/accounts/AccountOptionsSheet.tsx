@@ -17,6 +17,8 @@ import { useSubscription } from "../../../hooks/useSubscription";
 import { PremiumSheet } from "../../ui/PremiumSheet";
 import { AccountActions } from "../../../actions/accountActions";
 import { ActionModal } from "../../ui/ActionModal";
+import { FintocActions } from "../../../actions/fintocActions";
+import { TransactionActions } from "../../../actions/transactionActions";
 
 interface AccountOptionsSheetProps {
   open: boolean;
@@ -30,6 +32,7 @@ export const AccountOptionsSheet = ({
   account,
 }: AccountOptionsSheetProps) => {
   const { isPro, canEditCash } = useSubscription();
+  const isLinkedToBank = !!account?.bankLinkId;
   const navigation = useNavigation<any>();
 
   const [showDangerModal, setShowDangerModal] = useState(false);
@@ -85,6 +88,28 @@ export const AccountOptionsSheet = ({
     }
   };
 
+  const handleDisconnectAndDelete = async () => {
+    if (!account?.bankLinkId) return;
+
+    setIsLoading(true);
+    try {
+      await FintocActions.disconnectLink(account.bankLinkId, true);
+
+      await Promise.all([
+        AccountActions.loadAccounts(),
+        TransactionActions.loadTransactions(),
+      ]);
+
+      setShowDangerModal(false);
+      onOpenChange(false);
+    } catch (e) {
+      setShowDangerModal(false);
+      setShowErrorModal(true);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <>
       <Sheet
@@ -92,7 +117,7 @@ export const AccountOptionsSheet = ({
         modal
         open={open}
         onOpenChange={onOpenChange}
-        snapPoints={[50]}
+        snapPoints={[45]}
         dismissOnSnapToBottom
         zIndex={100_000}
         animation="medium"
@@ -170,51 +195,98 @@ export const AccountOptionsSheet = ({
             </YStack>
           </XStack>
           <YStack space="$4">
-            <Button
-              size="$5"
-              variant="outlined"
-              borderColor={isEditLocked ? "$gray5" : "$blue4"}
-              backgroundColor={isEditLocked ? "$gray2" : "$blue2"}
-              icon={
-                isEditLocked ? (
-                  <Lock size={16} color="$gray8" />
-                ) : (
-                  <Pencil size={20} color="$blue10" />
-                )
-              }
-              onPressIn={handleEdit}
-              color={isEditLocked ? "$gray8" : "$blue10"}
-              fontWeight="700"
-              borderRadius="$10"
-              opacity={isEditLocked ? 0.7 : 1}
-            >
-              {isEditLocked ? "Editar (WOU+)" : "Editar Detalles"}
-            </Button>
+            {!isLinkedToBank ? (
+              <>
+                <YStack space="$2">
+                  <Button
+                    size="$5"
+                    variant="outlined"
+                    borderColor={isEditLocked ? "$gray5" : "$blue4"}
+                    backgroundColor={isEditLocked ? "$gray2" : "$blue2"}
+                    icon={
+                      isEditLocked ? (
+                        <Lock size={16} color="$gray8" />
+                      ) : (
+                        <Pencil size={20} color="$blue10" />
+                      )
+                    }
+                    onPressIn={handleEdit}
+                    color={isEditLocked ? "$gray8" : "$blue10"}
+                    fontWeight="700"
+                    borderRadius="$10"
+                    opacity={isEditLocked ? 0.7 : 1}
+                  >
+                    {isEditLocked ? "Editar (WOU+)" : "Editar detalles"}
+                  </Button>
+                </YStack>
 
-            <Button
-              size="$5"
-              backgroundColor="$red2"
-              borderColor="$red4"
-              borderWidth={1}
-              icon={<Trash2 size={20} color="$red10" />}
-              onPressIn={() => setShowDangerModal(true)}
-              color="$red10"
-              fontWeight="700"
-              borderRadius="$10"
-            >
-              Eliminar Cuenta
-            </Button>
+                <YStack space="$2" marginTop="$1">
+                  <Button
+                    size="$5"
+                    backgroundColor="$red2"
+                    borderColor="$red4"
+                    borderWidth={1}
+                    icon={<Trash2 size={20} color="$red10" />}
+                    onPressIn={() => setShowDangerModal(true)}
+                    color="$red10"
+                    fontWeight="700"
+                    borderRadius="$10"
+                  >
+                    Eliminar cuenta
+                  </Button>
+
+                  <Text fontSize="$2" color="$gray9">
+                    Esto eliminará la cuenta y su historial asociado.
+                  </Text>
+                </YStack>
+              </>
+            ) : (
+              <>
+                <YStack space="$3">
+                  <Text fontSize="$2" color="$gray10" fontWeight="700">
+                    Banco conectado
+                  </Text>
+
+                  <Button
+                    size="$5"
+                    backgroundColor="$red2"
+                    borderColor="$red4"
+                    borderWidth={1}
+                    icon={<Trash2 size={20} color="$red10" />}
+                    onPressIn={() => setShowDangerModal(true)}
+                    color="$red10"
+                    fontWeight="700"
+                    borderRadius="$10"
+                    disabled={isLoading}
+                    opacity={isLoading ? 0.7 : 1}
+                  >
+                    Desconectar y borrar cuentas importadas
+                  </Button>
+
+                  <Text fontSize="$2" color="$gray9">
+                    Esto eliminará las cuentas importadas de esta conexión.
+                  </Text>
+                </YStack>
+              </>
+            )}
           </YStack>
         </Sheet.Frame>
       </Sheet>
+
       <DangerModal
         visible={showDangerModal}
         onClose={() => setShowDangerModal(false)}
-        onConfirm={handleDelete}
+        onConfirm={isLinkedToBank ? handleDisconnectAndDelete : handleDelete}
         isLoading={isLoading}
-        title="¿Eliminar Cuenta?"
-        message={`Estás a punto de eliminar "${account.name}". Se perderá el historial de saldo asociado a esta cuenta.`}
-        confirmText="Sí, Eliminar"
+        title={isLinkedToBank ? "¿Desconectar y borrar?" : "¿Eliminar Cuenta?"}
+        message={
+          isLinkedToBank
+            ? `Vas a desconectar el banco y borrar las cuentas importadas de esta conexión.`
+            : `Estás a punto de eliminar "${account.name}". Se perderá el historial de saldo asociado a esta cuenta.`
+        }
+        confirmText={
+          isLinkedToBank ? "Sí, desconectar y borrar" : "Sí, Eliminar"
+        }
         cancelText="Cancelar"
       />
       <PremiumSheet

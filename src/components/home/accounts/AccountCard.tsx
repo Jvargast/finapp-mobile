@@ -1,9 +1,15 @@
 import React, { memo } from "react";
 import { YStack, XStack, Text, Stack, Image } from "tamagui";
 import { LinearGradient } from "@tamagui/linear-gradient";
-import { Wallet, Wifi } from "@tamagui/lucide-icons";
+import {
+  Wallet,
+  Wifi,
+  Link as LinkIcon,
+  CheckCircle,
+} from "@tamagui/lucide-icons";
 import { Account } from "../../../types/account.types";
 import { BANK_SKINS } from "../../../constants/bankSkins";
+import { getBankSkinKey } from "../../../utils/formatSkinColor";
 
 interface AccountCardProps {
   account: Account | any;
@@ -21,15 +27,29 @@ export const AccountCard = memo(
     onPress,
     isStacked = false,
   }: AccountCardProps) => {
-    let skin = (BANK_SKINS as any)[account.color] ||
-      BANK_SKINS.DEFAULT || {
-        type: "color",
-        value: "#1E293B",
-        logoAsset: null,
-        textColor: "white",
-      };
+    const isConnected = !!account.bankLinkId;
+    const DEFAULT_COLOR = "#1E293B";
+    const color = (account.color || "").toUpperCase();
+    const isHex = color.startsWith("#");
+    const isDefaultHex = isHex && color === DEFAULT_COLOR;
 
-    if (account.color && account.color.startsWith("#")) {
+    const colorIsSkinKey =
+      account.color &&
+      !account.color.startsWith("#") &&
+      (BANK_SKINS as any)[account.color];
+    const instSkinKey = getBankSkinKey(account.institution);
+    const instHasSkin =
+      instSkinKey &&
+      instSkinKey !== "DEFAULT" &&
+      (BANK_SKINS as any)[instSkinKey];
+
+    const skinKey =
+      (colorIsSkinKey ? account.color : null) ||
+      (instHasSkin ? instSkinKey : "DEFAULT");
+
+    let skin = (BANK_SKINS as any)[skinKey] || BANK_SKINS.DEFAULT;
+
+    if (isHex && !isDefaultHex && !colorIsSkinKey && !instHasSkin) {
       skin = {
         ...BANK_SKINS.DEFAULT,
         type: "color",
@@ -52,6 +72,15 @@ export const AccountCard = memo(
     const fallbackBg =
       skin.type === "color" ? skin.value : skin.colors?.[0] || "#1E293B";
 
+    /* console.log(
+      "institution:",
+      account.institution,
+      "skinKey:",
+      skinKey,
+      "color:",
+      account.color,
+    ); */
+
     return (
       <Stack
         width={260}
@@ -60,10 +89,8 @@ export const AccountCard = memo(
         borderRadius="$8"
         overflow="hidden"
         justifyContent="space-between"
-        onPress={onPress}
-        animation="bouncy"
+        onPressIn={onPress}
         y={isActive ? 1 : 0}
-        scale={isActive ? 1.05 : 1}
         rotate={isActive ? "0deg" : "0deg"}
         shadowColor={fallbackBg}
         shadowRadius={isActive ? 20 : 10}
@@ -104,6 +131,44 @@ export const AccountCard = memo(
             zIndex={1}
           />
         )}
+        <XStack
+          position="absolute"
+          top={12}
+          right={12}
+          zIndex={3}
+          backgroundColor="rgba(0,0,0,0.25)"
+          borderRadius="$10"
+          paddingVertical="$1"
+          paddingHorizontal="$2"
+          alignItems="center"
+          space="$2"
+          borderWidth={1}
+          borderColor="rgba(255,255,255,0.2)"
+        >
+          {isConnected ? (
+            <>
+              <LinkIcon size={14} color="rgba(255,255,255,0.9)" />
+              <Text
+                color="rgba(255,255,255,0.9)"
+                fontSize={11}
+                fontWeight="800"
+              >
+                Conectada
+              </Text>
+            </>
+          ) : (
+            <>
+              <CheckCircle size={14} color="rgba(255,255,255,0.85)" />
+              <Text
+                color="rgba(255,255,255,0.85)"
+                fontSize={11}
+                fontWeight="800"
+              >
+                Manual
+              </Text>
+            </>
+          )}
+        </XStack>
 
         <YStack padding="$4" flex={1} justifyContent="space-between" zIndex={2}>
           <XStack justifyContent="space-between" alignItems="flex-start">
@@ -152,7 +217,7 @@ export const AccountCard = memo(
                   fontStyle="italic"
                   fontSize={16}
                 >
-                  {account.brand}
+                  {account.institution ?? account.brand ?? "Banco"}
                 </Text>
               )
             )}
@@ -169,11 +234,13 @@ export const AccountCard = memo(
               >
                 Saldo Disponible
               </Text>
-              <Wifi
-                size={16}
-                color="rgba(255,255,255,0.6)"
-                style={{ transform: [{ rotate: "90deg" }] }}
-              />
+              {isConnected && (
+                <Wifi
+                  size={16}
+                  color="rgba(255,255,255,0.6)"
+                  style={{ transform: [{ rotate: "90deg" }] }}
+                />
+              )}
             </XStack>
 
             <Text
@@ -212,5 +279,5 @@ export const AccountCard = memo(
         </YStack>
       </Stack>
     );
-  }
+  },
 );

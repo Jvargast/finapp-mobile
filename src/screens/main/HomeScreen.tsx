@@ -1,4 +1,4 @@
-import { useEffect } from "react"; // 1. Importar useEffect
+import { useCallback } from "react";
 import { ScrollView } from "tamagui";
 import { MainLayout } from "../../components/layout/MainLayout";
 import { HomeHeader } from "../../components/home/HomeHeader";
@@ -9,17 +9,15 @@ import { RecentTransactions } from "../../components/home/RecentTransactions";
 import { AccountActions } from "../../actions/accountActions";
 import { TransactionActions } from "../../actions/transactionActions";
 import { AnalyticsPreview } from "../../components/home/AnalyticsPreview";
+import { useFocusEffect } from "@react-navigation/native";
 
 export default function HomeScreen() {
-  useEffect(() => {
-    const initData = async () => {
-      await Promise.all([
-        AccountActions.loadAccounts(),
-        TransactionActions.loadRecent(),
-      ]);
-    };
-    initData();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      AccountActions.loadAccounts();
+      TransactionActions.loadRecent();
+    }, []),
+  );
 
   return (
     <MainLayout>

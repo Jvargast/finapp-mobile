@@ -3,6 +3,21 @@ import { SubscriptionService } from "../services/subscriptionService";
 import { UserService } from "../services/userService";
 import { useUserStore } from "../stores/useUserStore";
 
+const mergeUser = (currentUser: any, incomingUser: any) => {
+  if (!currentUser) return incomingUser;
+  const mergedPreferences = {
+    ...(currentUser.preferences || {}),
+    ...(incomingUser?.preferences || {}),
+  };
+
+  return {
+    ...currentUser,
+    ...incomingUser,
+    email: incomingUser?.email || currentUser.email,
+    preferences: mergedPreferences,
+  };
+};
+
 export const UserActions = {
   completeSetup: async (settings: any) => {
     try {
@@ -13,8 +28,8 @@ export const UserActions = {
       };
 
       const updatedUser = await UserService.setupUser(payload);
-
-      useUserStore.getState().setUser(updatedUser);
+      const currentUser = useUserStore.getState().user;
+      useUserStore.getState().setUser(mergeUser(currentUser, updatedUser));
     } catch (error) {
       console.error("Error en setup:", error);
       throw error;
@@ -32,7 +47,8 @@ export const UserActions = {
 
     try {
       const updatedUserResponse = await UserService.updatePreferences(newPrefs);
-      useUserStore.getState().setUser(updatedUserResponse);
+      const latestUser = useUserStore.getState().user;
+      useUserStore.getState().setUser(mergeUser(latestUser, updatedUserResponse));
     } catch (error) {
       console.error("Error guardando preferencias", error);
       useUserStore.getState().setUser(currentUser);
@@ -43,7 +59,8 @@ export const UserActions = {
   refreshProfile: async () => {
     try {
       const freshUser = await AuthService.getMe();
-      useUserStore.getState().setUser(freshUser);
+      const currentUser = useUserStore.getState().user;
+      useUserStore.getState().setUser(mergeUser(currentUser, freshUser));
     } catch (error) {
       console.warn("No se pudo refrescar el perfil (quizás offline)", error);
     }
@@ -99,10 +116,7 @@ export const UserActions = {
 
       const currentUser = useUserStore.getState().user;
       if (currentUser) {
-        useUserStore.getState().setUser({
-          ...currentUser,
-          ...updatedUser,
-        });
+        useUserStore.getState().setUser(mergeUser(currentUser, updatedUser));
       }
 
       console.log("Avatar actualizado con éxito");

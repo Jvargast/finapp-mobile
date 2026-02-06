@@ -15,6 +15,7 @@ export interface Account {
   last4?: string | null;
   icon?: any;
   brand?: string | null;
+  bankLinkId?: string | null;
 
   userId?: string;
   createdAt?: string | Date;

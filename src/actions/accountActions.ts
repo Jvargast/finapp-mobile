@@ -8,6 +8,15 @@ export const AccountActions = {
 
     try {
       const accounts = await AccountService.getAll();
+      console.log(
+        "📦 /accounts =>",
+        accounts.length,
+        accounts.map((a) => ({
+          id: a.id,
+          name: a.name,
+          bankLinkId: a.bankLinkId,
+        })),
+      );
       store.setAccounts(accounts);
     } catch (error) {
       console.error("Error cargando cuentas:", error);

@@ -27,6 +27,7 @@ import TransactionDetailScreen from "../screens/transactions/TransactionDetailSc
 import AllTransactionsScreen from "../screens/transactions/AllTransactionsScreen";
 import AddTransferScreen from "../screens/transactions/AddTransferScreen";
 import ConnectBankScreen from "../screens/fintoc/ConnectBankScreen";
+import FintocWidgetScreen from "../screens/fintoc/FintocWidgetScreen";
 
 const Drawer = createDrawerNavigator();
 const Stack = createNativeStackNavigator();
@@ -255,6 +256,15 @@ export default function MainNavigator() {
         name="ConnectBank"
         component={ConnectBankScreen}
         options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="FintocWidget"
+        component={FintocWidgetScreen}
+        options={{
+          headerShown: false,
+          presentation: "modal",
+          animation: "slide_from_bottom",
+        }}
       />
     </Stack.Navigator>
   );

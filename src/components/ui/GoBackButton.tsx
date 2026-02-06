@@ -1,30 +1,48 @@
 import React from "react";
 import { Stack, StackProps } from "tamagui";
 import { ChevronLeft } from "@tamagui/lucide-icons";
-import { useNavigation } from "@react-navigation/native";
+import { CommonActions, useNavigation } from "@react-navigation/native";
 
 interface GoBackButtonProps extends StackProps {
   onPress?: () => void;
   iconColor?: string;
   transparent?: boolean;
+  fallbackRouteName?: string;
 }
 
 export const GoBackButton = ({
   onPress,
   iconColor = "$gray11",
   transparent = false,
+  fallbackRouteName = "Dashboard",
   ...props
 }: GoBackButtonProps) => {
-  const navigation = useNavigation();
+  const navigation: any = useNavigation();
+
+  const navigateToInParents = (routeName: string) => {
+    let nav: any = navigation;
+
+    while (nav) {
+      const state = nav.getState?.();
+      const routeNames: string[] = state?.routeNames ?? [];
+
+      if (routeNames.includes(routeName)) {
+        nav.dispatch(CommonActions.navigate({ name: routeName }));
+        return true;
+      }
+
+      nav = nav.getParent?.();
+    }
+
+    return false;
+  };
 
   const handlePress = () => {
-    if (onPress) {
-      onPress();
-      return;
-    }
-    if (navigation.canGoBack()) {
-      navigation.goBack();
-    }
+    if (onPress) return onPress();
+
+    if (navigation.canGoBack()) return navigation.goBack();
+
+    navigateToInParents(fallbackRouteName);
   };
 
   return (

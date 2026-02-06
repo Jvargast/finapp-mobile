@@ -6,6 +6,21 @@ import { useToastStore } from "../stores/useToastStore";
 
 const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
+const mergeUser = (currentUser: any, incomingUser: any) => {
+  if (!currentUser) return incomingUser;
+  const mergedPreferences = {
+    ...(currentUser.preferences || {}),
+    ...(incomingUser?.preferences || {}),
+  };
+
+  return {
+    ...currentUser,
+    ...incomingUser,
+    email: incomingUser?.email || currentUser.email,
+    preferences: mergedPreferences,
+  };
+};
+
 export const AuthActions = {
   login: async (email: string, password: string) => {
     try {
@@ -13,7 +28,19 @@ export const AuthActions = {
 
       await SecureStore.setItemAsync("access_token", data.access_token);
       await SecureStore.setItemAsync("refresh_token", data.refresh_token);
-      useUserStore.getState().setUser(data.user);
+      let resolvedUser = data.user;
+      try {
+        resolvedUser = await AuthService.getMe();
+      } catch (e) {
+        console.warn("No se pudo hidratar el perfil tras login", e);
+      }
+
+      const currentUser = useUserStore.getState().user;
+      const mergedUser = mergeUser(currentUser, resolvedUser);
+      useUserStore.getState().setUser({
+        ...mergedUser,
+        email: mergedUser?.email || email,
+      });
 
       useAuthStore.getState().setAuthenticated(true);
 
@@ -35,9 +62,19 @@ export const AuthActions = {
       await SecureStore.setItemAsync("access_token", data.access_token);
       await SecureStore.setItemAsync("refresh_token", data.refresh_token);
 
-      useUserStore
-        .getState()
-        .setUser({ ...data.user, email: data.user.email || userData.email });
+      let resolvedUser = data.user;
+      try {
+        resolvedUser = await AuthService.getMe();
+      } catch (e) {
+        console.warn("No se pudo hidratar el perfil tras registro", e);
+      }
+
+      const currentUser = useUserStore.getState().user;
+      const mergedUser = mergeUser(currentUser, resolvedUser);
+      useUserStore.getState().setUser({
+        ...mergedUser,
+        email: mergedUser?.email || userData.email,
+      });
       useAuthStore.getState().setAuthenticated(true);
     } catch (error) {
       console.error("Registro falló", error);
@@ -80,7 +117,8 @@ export const AuthActions = {
       const user = await AuthService.getMe();
 
       useAuthStore.getState().setHasSeenOnboarding(hasSeenBool);
-      useUserStore.getState().setUser(user);
+      const currentUser = useUserStore.getState().user;
+      useUserStore.getState().setUser(mergeUser(currentUser, user));
       useAuthStore.getState().setAuthenticated(true);
     } catch (error) {
       console.log("Sesión expirada o inválida");

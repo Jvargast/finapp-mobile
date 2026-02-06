@@ -55,8 +55,6 @@ export default function App() {
     );
   }
 
-  console.log(isDarkMode ? "--> MODO OSCURO" : "--> MODO CLARO");
-
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>

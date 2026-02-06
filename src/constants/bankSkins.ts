@@ -54,13 +54,22 @@ export const BANK_SKINS = {
     textColor: "white",
   },
 
+  SCOTIABANK_RED: {
+    id: "SCOTIABANK_RED",
+    name: "Scotiabank",
+    type: "gradient",
+    colors: ["#D71920", "#8B0F14"],
+    start: [0, 0],
+    end: [1, 1],
+    logoAsset: require("../../assets/logos/Scotiabank.png"),
+    textColor: "white",
+  },
+
   DEFAULT: {
     id: "DEFAULT",
     name: "Cuenta",
     type: "color",
-    colors: ["#000000", "#000000"],
-    start: [0, 0],
-    end: [0, 0],
+    value: "#1E293B",
     logoAsset: null,
     textColor: "white",
   },

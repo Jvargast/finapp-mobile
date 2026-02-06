@@ -7,8 +7,6 @@ export const useSubscription = () => {
 
   const isPro = user?.plan && user.plan !== "FREE";
 
-  console.log(user?.plan)
-
   return {
     isPro,
     canCreateAccount: isPro || accounts.length < 3,

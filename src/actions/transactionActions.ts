@@ -22,6 +22,18 @@ export const TransactionActions = {
         limit: 100,
       });
 
+      console.log(
+        "📦 /transactions =>",
+        response.data.length,
+        response.data.slice(0, 5).map((t) => ({
+          id: t.id,
+          amount: t.amount,
+          type: t.type,
+          date: t.date,
+          accountId: t.accountId,
+        })),
+      );
+
       store.setTransactions(response.data);
     } catch (error) {
       console.error("Error cargando transacciones", error);
@@ -86,7 +98,7 @@ export const TransactionActions = {
       const newTransaction = await TransactionService.create(data);
 
       const selectedAccount = accountStore.accounts.find(
-        (acc) => acc.id === data.accountId
+        (acc) => acc.id === data.accountId,
       );
 
       const transactionWithFullData = {
