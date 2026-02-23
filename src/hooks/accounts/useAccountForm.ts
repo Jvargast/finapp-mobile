@@ -15,7 +15,7 @@ export const useAccountForm = (accountToEdit?: Account) => {
   const navigation = useNavigation();
   const showToast = useToastStore((state) => state.showToast);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { canCreateAccount } = useSubscription();
+  const { canCreateAccount, isPro } = useSubscription();
 
   const form = useForm<CreateAccountFormInputs>({
     resolver: zodResolver(createAccountSchema) as any,
@@ -23,11 +23,12 @@ export const useAccountForm = (accountToEdit?: Account) => {
     defaultValues: {
       name: accountToEdit?.name || "",
       balance: accountToEdit ? String(accountToEdit.balance) : "",
-      type: (accountToEdit?.type as any) || "BANK",
+      type: (accountToEdit?.type as any) || "CHECKING",
       currency: (accountToEdit?.currency as any) || "CLP",
       institution: accountToEdit?.institution || "",
       color: accountToEdit?.color || "DEFAULT",
       isCredit: accountToEdit?.isCredit || false,
+      last4: accountToEdit?.last4 || "",
     },
   });
 
@@ -36,11 +37,12 @@ export const useAccountForm = (accountToEdit?: Account) => {
       form.reset({
         name: accountToEdit.name,
         balance: String(accountToEdit.balance),
-        type: accountToEdit.type as any,
+        type: (accountToEdit.type as any) || "CHECKING",
         currency: accountToEdit.currency as any,
         institution: accountToEdit.institution || "",
         color: accountToEdit.color,
         isCredit: accountToEdit.isCredit || false,
+        last4: accountToEdit.last4 || "",
       });
     }
   }, [accountToEdit, form]);
@@ -49,9 +51,24 @@ export const useAccountForm = (accountToEdit?: Account) => {
     try {
       setIsSubmitting(true);
 
+      const mapTypeToApi = (type?: string) => {
+        const raw = (type || "CHECKING").toUpperCase();
+        if (
+          raw === "CHECKING" ||
+          raw === "SAVINGS" ||
+          raw === "CREDIT_CARD" ||
+          raw === "CASH" ||
+          raw === "OTHER"
+        ) {
+          return raw;
+        }
+        return "CHECKING";
+      };
+
       const payload = {
         ...data,
         balance: parseFloat(data.balance),
+        type: mapTypeToApi(data.type),
       };
 
       if (accountToEdit) {
@@ -69,16 +86,32 @@ export const useAccountForm = (accountToEdit?: Account) => {
           // navigation.navigate("Paywall");
           return;
         }
-        await AccountActions.createAccount(payload);
+        const created = await AccountActions.createAccount(payload);
         showToast("Cuenta creada exitosamente", "success");
+        if (created && isPro) {
+          navigation.navigate("AccountSetup" as never, {
+            accountId: created.id,
+            startAt: 1,
+          } as never);
+          return;
+        }
       }
 
       if (navigation.canGoBack()) {
         navigation.goBack();
       }
-    } catch (error) {
-      console.error("Error procesando cuenta:", error);
-      showToast("Ocurrió un error al guardar", "error");
+    } catch (error: any) {
+      const apiMessage =
+        error?.response?.data?.message || error?.response?.data?.error;
+      if (apiMessage) {
+        showToast(String(apiMessage), "error");
+      } else {
+        showToast("Ocurrió un error al guardar", "error");
+      }
+      console.error("Error procesando cuenta:", {
+        status: error?.response?.status,
+        data: error?.response?.data,
+      });
     } finally {
       setIsSubmitting(false);
     }

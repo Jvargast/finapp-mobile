@@ -168,6 +168,15 @@ export const TransactionItem = memo(
       prev.transaction.id === next.transaction.id &&
       prev.transaction.amount === next.transaction.amount &&
       prev.transaction.description === next.transaction.description &&
+      prev.transaction.date === next.transaction.date &&
+      prev.transaction.type === next.transaction.type &&
+      prev.transaction.categoryId === next.transaction.categoryId &&
+      prev.transaction.category?.name === next.transaction.category?.name &&
+      prev.transaction.category?.color === next.transaction.category?.color &&
+      prev.transaction.category?.icon === next.transaction.category?.icon &&
+      prev.transaction.accountId === next.transaction.accountId &&
+      prev.transaction.account?.name === next.transaction.account?.name &&
+      prev.transaction.account?.currency === next.transaction.account?.currency &&
       prev.isLast === next.isLast
     );
   }

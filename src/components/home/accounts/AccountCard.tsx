@@ -6,6 +6,7 @@ import {
   Wifi,
   Link as LinkIcon,
   CheckCircle,
+  Clock,
 } from "@tamagui/lucide-icons";
 import { Account } from "../../../types/account.types";
 import { BANK_SKINS } from "../../../constants/bankSkins";
@@ -15,7 +16,8 @@ interface AccountCardProps {
   account: Account | any;
   index: number;
   isActive: boolean;
-  onPress: () => void;
+  onPress?: () => void;
+  onPressIn?: () => void;
   isStacked?: boolean;
 }
 
@@ -25,9 +27,16 @@ export const AccountCard = memo(
     index,
     isActive,
     onPress,
+    onPressIn,
     isStacked = false,
   }: AccountCardProps) => {
+    const handlePressIn = onPressIn || onPress;
     const isConnected = !!account.bankLinkId;
+    const setupStatus = account.setupStatus || null;
+    const normalizedType = String(account.type || "").toUpperCase();
+    const isCash = normalizedType === "CASH";
+    const isSetupPending = !isCash && setupStatus === "PENDING";
+    const isSetupActive = !isCash && setupStatus === "ACTIVE";
     const DEFAULT_COLOR = "#1E293B";
     const color = (account.color || "").toUpperCase();
     const isHex = color.startsWith("#");
@@ -89,7 +98,9 @@ export const AccountCard = memo(
         borderRadius="$8"
         overflow="hidden"
         justifyContent="space-between"
-        onPressIn={onPress}
+        onPressIn={handlePressIn}
+        renderToHardwareTextureAndroid
+        shouldRasterizeIOS
         y={isActive ? 1 : 0}
         rotate={isActive ? "0deg" : "0deg"}
         shadowColor={fallbackBg}
@@ -145,7 +156,29 @@ export const AccountCard = memo(
           borderWidth={1}
           borderColor="rgba(255,255,255,0.2)"
         >
-          {isConnected ? (
+          {isSetupPending ? (
+            <>
+              <Clock size={14} color="rgba(255,255,255,0.9)" />
+              <Text
+                color="rgba(255,255,255,0.9)"
+                fontSize={11}
+                fontWeight="800"
+              >
+                Pendiente
+              </Text>
+            </>
+          ) : isSetupActive ? (
+            <>
+              <LinkIcon size={14} color="rgba(255,255,255,0.9)" />
+              <Text
+                color="rgba(255,255,255,0.9)"
+                fontSize={11}
+                fontWeight="800"
+              >
+                Activa
+              </Text>
+            </>
+          ) : isConnected ? (
             <>
               <LinkIcon size={14} color="rgba(255,255,255,0.9)" />
               <Text
@@ -172,7 +205,9 @@ export const AccountCard = memo(
 
         <YStack padding="$4" flex={1} justifyContent="space-between" zIndex={2}>
           <XStack justifyContent="space-between" alignItems="flex-start">
-            {account.type === "CASH" || account.type === "WALLET" ? (
+            {["CASH", "WALLET", "CREDIT_CARD", "OTHER"].includes(
+              String(account.type || "").toUpperCase()
+            ) ? (
               <Stack
                 backgroundColor="rgba(255,255,255,0.2)"
                 padding="$2"

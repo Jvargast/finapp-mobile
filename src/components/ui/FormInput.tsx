@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useId } from "react";
 import { YStack, Label, Input, Text } from "tamagui";
 import { Controller, Control } from "react-hook-form";
 
@@ -9,6 +9,7 @@ interface FormInputProps {
   placeholder?: string;
   keyboardType?: "default" | "numeric" | "email-address";
   isCurrency?: boolean;
+  inputId?: string;
 }
 
 export const FormInput = ({
@@ -18,10 +19,13 @@ export const FormInput = ({
   placeholder,
   keyboardType = "default",
   isCurrency = false,
+  inputId,
 }: FormInputProps) => {
+  const autoId = useId();
+  const resolvedId = inputId ? inputId : `${name}-${autoId}`;
   return (
     <YStack space="$2">
-      <Label htmlFor={name} fontWeight="700" fontSize="$3" color="$gray11">
+      <Label htmlFor={resolvedId} fontWeight="700" fontSize="$3" color="$gray11">
         {label}
       </Label>
       <Controller
@@ -29,7 +33,7 @@ export const FormInput = ({
         name={name}
         render={({ field: { onChange, value } }) => (
           <Input
-            id={name}
+            id={resolvedId}
             size="$5"
             placeholder={placeholder}
             keyboardType={keyboardType}

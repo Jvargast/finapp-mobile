@@ -1,5 +1,9 @@
 import finappApi from "../api/finappApi";
-import { Budget, CreateBudgetParams } from "../types/budget.types";
+import {
+  Budget,
+  CreateBudgetParams,
+  UpdateBudgetParams,
+} from "../types/budget.types";
 
 export const BudgetService = {
   /**
@@ -62,15 +66,21 @@ export const BudgetService = {
     return data;
   },
 
-  updateBudget: async (
-    id: string,
-    data: Partial<CreateBudgetParams>
-  ): Promise<Budget> => {
+  updateBudget: async (id: string, data: UpdateBudgetParams): Promise<Budget> => {
     try {
       const response = await finappApi.patch<Budget>(`/budgets/${id}`, data);
       return response.data;
     } catch (error) {
       console.error(`❌ Error actualizando presupuesto ${id}:`, error);
+      throw error;
+    }
+  },
+
+  stopRecurrence: async (id: string): Promise<void> => {
+    try {
+      await finappApi.post(`/budgets/${id}/stop-recurrence`);
+    } catch (error) {
+      console.error(`❌ Error deteniendo recurrencia ${id}:`, error);
       throw error;
     }
   },

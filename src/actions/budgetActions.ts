@@ -1,6 +1,6 @@
 import { BudgetService } from "../services/budgetService";
 import { useBudgetStore } from "../stores/useBudgetStore";
-import { Budget, CreateBudgetParams } from "../types/budget.types";
+import { Budget, CreateBudgetParams, UpdateBudgetParams } from "../types/budget.types";
 
 export const BudgetActions = {
   loadBudgets: async () => {
@@ -116,7 +116,7 @@ export const BudgetActions = {
     }
   },
 
-  updateBudget: async (id: string, data: Partial<CreateBudgetParams>) => {
+  updateBudget: async (id: string, data: UpdateBudgetParams) => {
     const store = useBudgetStore.getState();
     store.setLoading(true);
 
@@ -126,6 +126,22 @@ export const BudgetActions = {
       return true;
     } catch (error) {
       console.error("Error actualizando presupuesto:", error);
+      throw error;
+    } finally {
+      store.setLoading(false);
+    }
+  },
+
+  stopRecurrence: async (id: string) => {
+    const store = useBudgetStore.getState();
+    store.setLoading(true);
+
+    try {
+      await BudgetService.stopRecurrence(id);
+      await BudgetActions.loadBudgets();
+      return true;
+    } catch (error) {
+      console.error("Error deteniendo recurrencia:", error);
       throw error;
     } finally {
       store.setLoading(false);

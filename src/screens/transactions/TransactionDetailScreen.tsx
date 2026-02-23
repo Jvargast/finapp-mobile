@@ -222,8 +222,9 @@ export default function TransactionDetailScreen() {
           </YStack>
         </YStack>
       </ScrollView>
-      {transaction && (
+      {isEditOpen && transaction && (
         <EditTransactionSheet
+          key={transaction.id}
           open={isEditOpen}
           onOpenChange={setIsEditOpen}
           transaction={transaction}

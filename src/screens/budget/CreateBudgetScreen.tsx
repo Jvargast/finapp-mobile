@@ -1,30 +1,37 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Keyboard, Platform, TouchableWithoutFeedback } from "react-native";
+import { Keyboard, Platform } from "react-native";
 import {
   YStack,
   XStack,
   Text,
   Input,
   Button,
+  Sheet,
   Switch,
   Slider,
   Avatar,
   Spinner,
   Checkbox,
 } from "tamagui";
-import { X, Check, Users, Lock, Info } from "@tamagui/lucide-icons";
+import { X, Check, Users, Lock, Info, Calendar } from "@tamagui/lucide-icons";
 import { useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useBudgetStore } from "../../stores/useBudgetStore";
 import { useFamilyStore } from "../../stores/useFamilyStore";
 import { BudgetActions } from "../../actions/budgetActions";
 import { CategorySelector } from "../../components/budget/CategorySelector";
-import { BudgetType } from "../../types/budget.types";
+import {
+  BudgetAmountStrategy,
+  BudgetRecurrenceUnit,
+  BudgetType,
+  CreateBudgetParams,
+} from "../../types/budget.types";
 import { useUserStore } from "../../stores/useUserStore";
 import { useCategoryStore } from "../../stores/useCategoryStore";
 import { CategoryActions } from "../../actions/categoryActions";
 import { CreateCategorySheet } from "../../components/category/CreateCategorySheet";
 import { ScrollView } from "react-native-gesture-handler";
+import DateTimePicker from "@react-native-community/datetimepicker";
 
 export default function CreateBudgetScreen() {
   const insets = useSafeAreaInsets();
@@ -56,6 +63,18 @@ export default function CreateBudgetScreen() {
   const [amount, setAmount] = useState("");
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [isRollover, setIsRollover] = useState(false);
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [recurrenceUnit, setRecurrenceUnit] =
+    useState<BudgetRecurrenceUnit>("MONTHLY");
+  const [recurrenceInterval, setRecurrenceInterval] = useState("1");
+  const [amountStrategy, setAmountStrategy] =
+    useState<BudgetAmountStrategy>("FIXED");
+  const [recurrenceEndsAt, setRecurrenceEndsAt] = useState<Date | null>(null);
+  const [recurrenceEndDraft, setRecurrenceEndDraft] = useState<Date>(
+    new Date()
+  );
+  const [isRecurrenceDatePickerOpen, setIsRecurrenceDatePickerOpen] =
+    useState(false);
   const [warningThreshold, setWarningThreshold] = useState(80);
   const [isShared, setIsShared] = useState(false);
   const [selectedParticipantIds, setSelectedParticipantIds] = useState<
@@ -66,6 +85,12 @@ export default function CreateBudgetScreen() {
   const [currency, setCurrency] = useState(
     user?.preferences?.currency || "CLP"
   );
+
+  useEffect(() => {
+    if (recurrenceUnit === "MONTHLY" && amountStrategy !== "FIXED") {
+      setAmountStrategy("FIXED");
+    }
+  }, [amountStrategy, recurrenceUnit]);
 
   const formattedAmount = useMemo(() => {
     if (!amount) {
@@ -80,6 +105,31 @@ export default function CreateBudgetScreen() {
       maximumFractionDigits: 0,
     }).format(Number(amount));
   }, [amount, currency]);
+
+  const formatYmd = (date: Date) => {
+    const year = date.getFullYear();
+    const month = `${date.getMonth() + 1}`.padStart(2, "0");
+    const day = `${date.getDate()}`.padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  const recurrenceEndLabel = recurrenceEndsAt
+    ? recurrenceEndsAt.toLocaleDateString("es-CL", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      })
+    : "Sin fecha de término";
+
+  const openRecurrenceEndPicker = () => {
+    setRecurrenceEndDraft(recurrenceEndsAt || new Date());
+    setIsRecurrenceDatePickerOpen(true);
+  };
+
+  const handleConfirmRecurrenceEnd = () => {
+    setRecurrenceEndsAt(recurrenceEndDraft);
+    setIsRecurrenceDatePickerOpen(false);
+  };
 
   const handleToggleParticipant = (userId: string) => {
     setSelectedParticipantIds((prev) => {
@@ -96,7 +146,7 @@ export default function CreateBudgetScreen() {
     const finalType = isShared ? BudgetType.SHARED : BudgetType.PERSONAL;
 
     try {
-      await BudgetActions.createBudget({
+      const payload: CreateBudgetParams = {
         name: name,
         amount: Number(amount),
         currency: currency,
@@ -107,7 +157,23 @@ export default function CreateBudgetScreen() {
         warningThreshold,
         type: finalType,
         participantIds: selectedParticipantIds,
-      });
+      };
+
+      if (isRecurring) {
+        const normalizedInterval = Math.max(
+          1,
+          Number(recurrenceInterval) || 1
+        );
+        payload.isRecurring = true;
+        payload.recurrenceUnit = recurrenceUnit;
+        payload.recurrenceInterval = normalizedInterval;
+        payload.amountStrategy = amountStrategy;
+        payload.recurrenceEndsAt = recurrenceEndsAt
+          ? formatYmd(recurrenceEndsAt)
+          : null;
+      }
+
+      await BudgetActions.createBudget(payload);
       navigation.goBack();
     } catch (error) {
       console.error(error);
@@ -296,6 +362,217 @@ export default function CreateBudgetScreen() {
               </Switch>
             </XStack>
 
+            <YStack
+              backgroundColor="$gray1"
+              borderRadius="$5"
+              padding="$3"
+              space="$3"
+              borderWidth={1}
+              borderColor="$gray3"
+            >
+              <XStack justifyContent="space-between" alignItems="center">
+                <YStack flex={1} paddingRight="$3">
+                  <Text fontSize="$3" fontWeight="700" color="$color">
+                    Recurrencia
+                  </Text>
+                  <Text fontSize={11} color="$gray10">
+                    Repite automáticamente este presupuesto.
+                  </Text>
+                </YStack>
+                <Switch
+                  size="$3"
+                  checked={isRecurring}
+                  onCheckedChange={setIsRecurring}
+                  backgroundColor={isRecurring ? "$color" : "$gray5"}
+                >
+                  <Switch.Thumb animation="quick" />
+                </Switch>
+              </XStack>
+
+              {isRecurring && (
+                <YStack
+                  space="$3"
+                  paddingTop="$2"
+                  borderTopWidth={1}
+                  borderColor="$gray3"
+                >
+                  <YStack space="$2">
+                    <Text
+                      fontSize={11}
+                      color="$gray9"
+                      fontWeight="700"
+                      textTransform="uppercase"
+                    >
+                      Frecuencia
+                    </Text>
+                    <XStack space="$2">
+                      <Button
+                        flex={1}
+                        borderWidth={1}
+                        borderColor={
+                          recurrenceUnit === "MONTHLY" ? "$color" : "$gray4"
+                        }
+                        backgroundColor={
+                          recurrenceUnit === "MONTHLY" ? "$color" : "$background"
+                        }
+                        color={
+                          recurrenceUnit === "MONTHLY" ? "$background" : "$gray11"
+                        }
+                        onPress={() => setRecurrenceUnit("MONTHLY")}
+                      >
+                        Mensual
+                      </Button>
+                      <Button
+                        flex={1}
+                        borderWidth={1}
+                        borderColor={
+                          recurrenceUnit === "WEEKLY" ? "$color" : "$gray4"
+                        }
+                        backgroundColor={
+                          recurrenceUnit === "WEEKLY" ? "$color" : "$background"
+                        }
+                        color={
+                          recurrenceUnit === "WEEKLY" ? "$background" : "$gray11"
+                        }
+                        onPress={() => setRecurrenceUnit("WEEKLY")}
+                      >
+                        Semanal
+                      </Button>
+                    </XStack>
+                  </YStack>
+
+                  <YStack space="$2">
+                    <Text
+                      fontSize={11}
+                      color="$gray9"
+                      fontWeight="700"
+                      textTransform="uppercase"
+                    >
+                      Intervalo
+                    </Text>
+                    <XStack space="$2" alignItems="center">
+                      <Text fontSize="$3" fontWeight="600" color="$gray11">
+                        Cada
+                      </Text>
+                      <Input
+                        value={recurrenceInterval}
+                        onChangeText={(text) =>
+                          setRecurrenceInterval(text.replace(/[^0-9]/g, ""))
+                        }
+                        keyboardType="numeric"
+                        backgroundColor="$background"
+                        borderColor="$gray4"
+                        borderWidth={1}
+                        width={70}
+                        textAlign="center"
+                        placeholder="1"
+                      />
+                      <Text fontSize="$3" fontWeight="600" color="$gray11">
+                        {recurrenceUnit === "MONTHLY" ? "mes(es)" : "semana(s)"}
+                      </Text>
+                    </XStack>
+                  </YStack>
+
+                  {recurrenceUnit === "WEEKLY" && (
+                    <YStack space="$2">
+                      <Text
+                        fontSize={11}
+                        color="$gray9"
+                        fontWeight="700"
+                        textTransform="uppercase"
+                      >
+                        Estrategia de monto
+                      </Text>
+                      <XStack space="$2">
+                        <Button
+                          flex={1}
+                          borderWidth={1}
+                          borderColor={
+                            amountStrategy === "FIXED" ? "$color" : "$gray4"
+                          }
+                          backgroundColor={
+                            amountStrategy === "FIXED"
+                              ? "$color"
+                              : "$background"
+                          }
+                          color={
+                            amountStrategy === "FIXED"
+                              ? "$background"
+                              : "$gray11"
+                          }
+                          onPress={() => setAmountStrategy("FIXED")}
+                        >
+                          Fijo (x4)
+                        </Button>
+                        <Button
+                          flex={1}
+                          borderWidth={1}
+                          borderColor={
+                            amountStrategy === "PER_OCCURRENCE"
+                              ? "$color"
+                              : "$gray4"
+                          }
+                          backgroundColor={
+                            amountStrategy === "PER_OCCURRENCE"
+                              ? "$color"
+                              : "$background"
+                          }
+                          color={
+                            amountStrategy === "PER_OCCURRENCE"
+                              ? "$background"
+                              : "$gray11"
+                          }
+                          onPress={() => setAmountStrategy("PER_OCCURRENCE")}
+                        >
+                          Por ocurrencia
+                        </Button>
+                      </XStack>
+                      <Text fontSize={11} color="$gray9">
+                        Fijo: monto x 4. Por ocurrencia: monto x semanas reales.
+                      </Text>
+                    </YStack>
+                  )}
+
+                  <YStack space="$2">
+                    <Text
+                      fontSize={11}
+                      color="$gray9"
+                      fontWeight="700"
+                      textTransform="uppercase"
+                    >
+                      Término
+                    </Text>
+                    <XStack space="$2" alignItems="center">
+                      <Button
+                        flex={1}
+                        variant="outlined"
+                        borderColor="$gray4"
+                        backgroundColor="$background"
+                        icon={<Calendar size={16} color="$gray10" />}
+                        justifyContent="flex-start"
+                        onPress={openRecurrenceEndPicker}
+                      >
+                        {recurrenceEndLabel}
+                      </Button>
+                      {recurrenceEndsAt && (
+                        <Button
+                          size="$2"
+                          variant="outlined"
+                          borderColor="$gray4"
+                          onPress={() => setRecurrenceEndsAt(null)}
+                        >
+                          Quitar
+                        </Button>
+                      )}
+                    </XStack>
+                    <Text fontSize={11} color="$gray9">
+                      Si no eliges fecha, se repetirá indefinidamente.
+                    </Text>
+                  </YStack>
+                </YStack>
+              )}
+            </YStack>
+
             <YStack opacity={canShare ? 1 : 0.5}>
               <XStack justifyContent="space-between" alignItems="center">
                 <XStack space="$3" alignItems="center" flex={1}>
@@ -408,6 +685,88 @@ export default function CreateBudgetScreen() {
           }}
           type="EXPENSE"
           initialData={editingCategory}
+        />
+      )}
+      {Platform.OS === "ios" && (
+        <Sheet
+          modal
+          open={isRecurrenceDatePickerOpen}
+          onOpenChange={setIsRecurrenceDatePickerOpen}
+          snapPoints={[45]}
+          dismissOnSnapToBottom
+          zIndex={100000}
+          animation="medium"
+        >
+          <Sheet.Overlay
+            animation="lazy"
+            enterStyle={{ opacity: 0 }}
+            exitStyle={{ opacity: 0 }}
+          />
+          <Sheet.Handle />
+          <Sheet.Frame padding="$4" space="$3" backgroundColor="$background">
+            <YStack space="$1">
+              <Text
+                fontSize="$5"
+                fontWeight="800"
+                textAlign="center"
+                color="$color"
+              >
+                Fecha de término
+              </Text>
+              <Text fontSize={12} color="$gray9" textAlign="center">
+                Elige hasta cuándo se repetirá este presupuesto.
+              </Text>
+            </YStack>
+
+            <YStack
+              backgroundColor="$gray2"
+              borderRadius="$4"
+              padding="$2"
+            >
+              <DateTimePicker
+                value={recurrenceEndDraft}
+                mode="date"
+                display="spinner"
+                onChange={(_, selectedDate) => {
+                  if (selectedDate) setRecurrenceEndDraft(selectedDate);
+                }}
+              />
+            </YStack>
+
+            <XStack space="$2">
+              <Button
+                flex={1}
+                variant="outlined"
+                borderColor="$gray4"
+                onPress={() => setIsRecurrenceDatePickerOpen(false)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                flex={1}
+                theme="active"
+                backgroundColor="$color"
+                color="$background"
+                onPress={handleConfirmRecurrenceEnd}
+              >
+                Guardar
+              </Button>
+            </XStack>
+          </Sheet.Frame>
+        </Sheet>
+      )}
+
+      {Platform.OS === "android" && isRecurrenceDatePickerOpen && (
+        <DateTimePicker
+          value={recurrenceEndDraft}
+          mode="date"
+          display="default"
+          onChange={(event, selectedDate) => {
+            setIsRecurrenceDatePickerOpen(false);
+            if (event.type === "set" && selectedDate) {
+              setRecurrenceEndsAt(selectedDate);
+            }
+          }}
         />
       )}
     </YStack>

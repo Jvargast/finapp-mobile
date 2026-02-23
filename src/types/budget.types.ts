@@ -5,6 +5,19 @@ export enum BudgetType {
   SHARED = "SHARED",
 }
 
+export type BudgetRecurrenceUnit = "WEEKLY" | "MONTHLY";
+export type BudgetAmountStrategy = "FIXED" | "PER_OCCURRENCE";
+
+export interface BudgetTemplate {
+  id: string;
+  recurrenceUnit: BudgetRecurrenceUnit;
+  interval: number;
+  amountStrategy: BudgetAmountStrategy;
+  startsAt: string;
+  endsAt: string | null;
+  isActive: boolean;
+}
+
 export interface BudgetProgress {
   spent: number;
   remaining: number;
@@ -57,6 +70,7 @@ export interface Budget {
   warningThreshold: number;
   shareToken?: string;
   isRollover: boolean;
+  template?: BudgetTemplate | null;
 
   category: {
     id: string;
@@ -91,4 +105,13 @@ export interface CreateBudgetParams {
   warningThreshold?: number;
   isRollover?: boolean;
   participantIds?: string[];
+  isRecurring?: boolean;
+  recurrenceUnit?: BudgetRecurrenceUnit;
+  recurrenceInterval?: number;
+  amountStrategy?: BudgetAmountStrategy;
+  recurrenceEndsAt?: string | null;
+}
+
+export interface UpdateBudgetParams extends Partial<CreateBudgetParams> {
+  applyToFuture?: boolean;
 }

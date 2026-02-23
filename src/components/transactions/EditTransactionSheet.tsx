@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { InteractionManager } from "react-native";
 import { Sheet, YStack, Text, Input, Button, XStack, Spinner } from "tamagui";
 import { Transaction } from "../../types/transaction.types";
 import { TransactionActions } from "../../actions/transactionActions";
@@ -52,6 +53,17 @@ export const EditTransactionSheet = ({
       setIsSaving(false);
     }
   };
+
+  const handleAddCategory = () => {
+    onOpenChange(false);
+    InteractionManager.runAfterInteractions(() => {
+      navigation.navigate("ManageCategories");
+    });
+  };
+
+  if (!open || !transaction) {
+    return null;
+  }
 
   return (
     <>
@@ -170,6 +182,7 @@ export const EditTransactionSheet = ({
                   selectedId={categoryId}
                   onSelect={setCategoryId}
                   navigation={navigation}
+                  onAddCategory={handleAddCategory}
                 />
               </YStack>
             </YStack>

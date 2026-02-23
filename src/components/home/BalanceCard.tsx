@@ -1,5 +1,11 @@
 import { YStack, Text, XStack, Button, Stack, Separator } from "tamagui";
-import { Eye, EyeOff, CreditCard, Wallet } from "@tamagui/lucide-icons";
+import {
+  Eye,
+  EyeOff,
+  CreditCard,
+  Banknote,
+  Landmark,
+} from "@tamagui/lucide-icons";
 import { useState, useMemo } from "react";
 import { useUserStore } from "../../stores/useUserStore";
 import { useAccountStore } from "../../stores/useAccountStore";
@@ -21,20 +27,33 @@ export const BalanceCard = () => {
   const targetCurrency = user?.preferences?.currency || "CLP";
   const rate = REF_RATES[targetCurrency] || 1;
 
-  const { liquidTotal, creditTotal } = useMemo(() => {
+  const { debitTotal, cashTotal, creditTotal } = useMemo(() => {
     return accounts.reduce(
       (acc, account) => {
         const val = Number(account.balance || 0);
-        if (account.isCredit) {
+        const type = (account.type || "").toUpperCase();
+        const isCredit =
+          Boolean(account.isCredit) ||
+          type === "CREDIT_CARD" ||
+          type === "CREDIT";
+
+        if (isCredit) {
           acc.creditTotal += val;
+          return acc;
+        }
+
+        if (type === "CASH") {
+          acc.cashTotal += val;
         } else {
-          acc.liquidTotal += val;
+          acc.debitTotal += val;
         }
         return acc;
       },
-      { liquidTotal: 0, creditTotal: 0 }
+      { debitTotal: 0, cashTotal: 0, creditTotal: 0 }
     );
   }, [accounts]);
+
+  const liquidTotal = debitTotal + cashTotal;
 
   const formatMoney = (amount: number) => {
     const value = amount * rate;
@@ -141,18 +160,50 @@ export const BalanceCard = () => {
           backgroundColor="rgba(0,0,0,0.2)"
           borderRadius="$4"
           padding="$2.5"
-          space="$3"
+          space="$2"
           alignItems="center"
         >
           <YStack flex={1}>
             <XStack space="$1.5" alignItems="center" marginBottom={2}>
-              <Wallet size={12} color="#A5F3FC" />
+              <Landmark size={12} color="#A5F3FC" />
               <Text fontSize={10} color="#C7D2FE" fontWeight="600">
-                TU DINERO
+                DÉBITO
               </Text>
             </XStack>
-            <Text fontSize="$4" fontWeight="700" color="white">
-              {showBalance ? formatMoney(liquidTotal) : "••••"}
+            <Text
+              fontSize="$4"
+              fontWeight="700"
+              color="white"
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.7}
+            >
+              {showBalance ? formatMoney(debitTotal) : "••••"}
+            </Text>
+          </YStack>
+
+          <Separator
+            vertical
+            minHeight={25}
+            borderColor="rgba(255,255,255,0.2)"
+          />
+
+          <YStack flex={1}>
+            <XStack space="$1.5" alignItems="center" marginBottom={2}>
+              <Banknote size={12} color="#86EFAC" />
+              <Text fontSize={10} color="#86EFAC" fontWeight="600">
+                EFECTIVO
+              </Text>
+            </XStack>
+            <Text
+              fontSize="$4"
+              fontWeight="700"
+              color="white"
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.7}
+            >
+              {showBalance ? formatMoney(cashTotal) : "••••"}
             </Text>
           </YStack>
 
@@ -166,10 +217,17 @@ export const BalanceCard = () => {
             <XStack space="$1.5" alignItems="center" marginBottom={2}>
               <CreditCard size={12} color="#FDBA74" />
               <Text fontSize={10} color="#FDBA74" fontWeight="600">
-                EN TARJETAS
+                CRÉDITO
               </Text>
             </XStack>
-            <Text fontSize="$4" fontWeight="700" color="white">
+            <Text
+              fontSize="$4"
+              fontWeight="700"
+              color="white"
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.7}
+            >
               {showBalance ? formatMoney(creditTotal) : "••••"}
             </Text>
           </YStack>

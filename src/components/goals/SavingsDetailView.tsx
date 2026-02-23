@@ -112,6 +112,8 @@ export const SavingsDetailView = ({
     }
   };
 
+  console.log(analysis)
+
   return (
     <YStack space="$4">
       <Card

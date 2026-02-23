@@ -15,6 +15,8 @@ export const AccountSelector = ({ accounts, selectedId, onSelect }: Props) => {
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
+      keyboardShouldPersistTaps="always"
+      nestedScrollEnabled
       contentContainerStyle={{
         paddingHorizontal: 20,
         paddingVertical: 10,

@@ -13,10 +13,23 @@ import { CreateGoalScreen } from "../screens/goals/CreateGoalScreen";
 import { GoalDetailScreen } from "../screens/goals/GoalDetailScreen";
 import { EditGoalScreen } from "../screens/goals/EditGoalScreen";
 import AddAccountScreen from "../screens/accounts/AddAccountScreen";
+import AccountSourcesScreen from "../screens/accounts/AccountSourcesScreen";
+import AccountSetupWizardScreen from "../screens/accounts/AccountSetupWizardScreen";
+import AccountDetailScreen from "../screens/accounts/AccountDetailScreen";
+import EmailSourceCreateScreen from "../screens/banking/EmailSourceCreateScreen";
+import EmailRuleSelectScreen from "../screens/banking/EmailRuleSelectScreen";
+import EmailRuleCreateScreen from "../screens/banking/EmailRuleCreateScreen";
+import EmailRuleAttachScreen from "../screens/banking/EmailRuleAttachScreen";
+import EmailSourceConnectScreen from "../screens/banking/EmailSourceConnectScreen";
+import EmailSourcePreviewScreen from "../screens/banking/EmailSourcePreviewScreen";
+import EmailSourceSyncScreen from "../screens/banking/EmailSourceSyncScreen";
+import PendingMovementsScreen from "../screens/banking/PendingMovementsScreen";
 import AccountsScreen from "../screens/main/AccountsScreen";
+import AnalyticsScreen from "../screens/analytics/AnalyticsScreen";
 import SubscriptionScreen from "../screens/subscription/SubscriptionScreen";
 import SubscriptionDetailsScreen from "../screens/settings/SubscriptionDetailsScreen";
 import FamilyGroupScreen from "../screens/settings/FamilyGroupScreen";
+import BankingIntegrationsScreen from "../screens/settings/BankingIntegrationsScreen";
 import BudgetScreen from "../screens/budget/BudgetScreen";
 import CreateBudgetScreen from "../screens/budget/CreateBudgetScreen";
 import ManageCategoriesScreen from "../screens/profile/ManageCategoriesScreen";
@@ -25,6 +38,7 @@ import AddExpenseScreen from "../screens/transactions/AddExpenseScreen";
 import AddIncomeScreen from "../screens/transactions/AddIncomeScreen";
 import TransactionDetailScreen from "../screens/transactions/TransactionDetailScreen";
 import AllTransactionsScreen from "../screens/transactions/AllTransactionsScreen";
+import MovementsScreen from "../screens/transactions/MovementsScreen";
 import AddTransferScreen from "../screens/transactions/AddTransferScreen";
 import ConnectBankScreen from "../screens/fintoc/ConnectBankScreen";
 import FintocWidgetScreen from "../screens/fintoc/FintocWidgetScreen";
@@ -105,6 +119,11 @@ export default function MainNavigator() {
         options={{ headerShown: false }}
       />
       <Stack.Screen
+        name="BankingIntegrations"
+        component={BankingIntegrationsScreen}
+        options={{ headerShown: false, animation: "slide_from_right" }}
+      />
+      <Stack.Screen
         name="ChangePassword"
         component={ChangePasswordScreen}
         options={{
@@ -171,6 +190,75 @@ export default function MainNavigator() {
         }}
       />
       <Stack.Screen
+        name="Analytics"
+        component={AnalyticsScreen}
+        options={{ headerShown: false, animation: "slide_from_right" }}
+      />
+      <Stack.Screen
+        name="AccountSources"
+        component={AccountSourcesScreen}
+        options={{
+          headerShown: false,
+          animation: "slide_from_right",
+        }}
+      />
+      <Stack.Screen
+        name="AccountSetup"
+        component={AccountSetupWizardScreen}
+        options={{
+          headerShown: false,
+          animation: "slide_from_right",
+        }}
+      />
+      <Stack.Screen
+        name="AccountDetail"
+        component={AccountDetailScreen}
+        options={{
+          headerShown: false,
+          animation: "slide_from_right",
+        }}
+      />
+      <Stack.Screen
+        name="EmailSourceCreate"
+        component={EmailSourceCreateScreen}
+        options={{ headerShown: false, animation: "slide_from_right" }}
+      />
+      <Stack.Screen
+        name="EmailRuleSelect"
+        component={EmailRuleSelectScreen}
+        options={{ headerShown: false, animation: "slide_from_right" }}
+      />
+      <Stack.Screen
+        name="EmailRuleCreate"
+        component={EmailRuleCreateScreen}
+        options={{ headerShown: false, animation: "slide_from_right" }}
+      />
+      <Stack.Screen
+        name="EmailRuleAttach"
+        component={EmailRuleAttachScreen}
+        options={{ headerShown: false, animation: "slide_from_right" }}
+      />
+      <Stack.Screen
+        name="EmailSourceConnect"
+        component={EmailSourceConnectScreen}
+        options={{ headerShown: false, animation: "slide_from_right" }}
+      />
+      <Stack.Screen
+        name="EmailSourcePreview"
+        component={EmailSourcePreviewScreen}
+        options={{ headerShown: false, animation: "slide_from_right" }}
+      />
+      <Stack.Screen
+        name="EmailSourceSync"
+        component={EmailSourceSyncScreen}
+        options={{ headerShown: false, animation: "slide_from_right" }}
+      />
+      <Stack.Screen
+        name="PendingMovements"
+        component={PendingMovementsScreen}
+        options={{ headerShown: false, animation: "slide_from_right" }}
+      />
+      <Stack.Screen
         name="Subscription"
         component={SubscriptionScreen}
         options={{
@@ -212,6 +300,14 @@ export default function MainNavigator() {
       <Stack.Screen
         name="AllTransactions"
         component={AllTransactionsScreen}
+        options={{
+          headerShown: false,
+          animation: "slide_from_right",
+        }}
+      />
+      <Stack.Screen
+        name="Movements"
+        component={MovementsScreen}
         options={{
           headerShown: false,
           animation: "slide_from_right",

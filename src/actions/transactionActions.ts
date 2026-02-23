@@ -68,6 +68,16 @@ export const TransactionActions = {
     }
   },
 
+  getFilteredTransactionsPaged: async (filters: any) => {
+    try {
+      const response = await TransactionService.getAll(filters);
+      return response;
+    } catch (error) {
+      console.error("Error filtrando transacciones (paginado)", error);
+      throw error;
+    }
+  },
+
   changeDate: (month: number, year: number) => {
     const store = useTransactionStore.getState();
     store.setDateContext(month, year);

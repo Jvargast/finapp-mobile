@@ -1,5 +1,6 @@
 import "react-native-gesture-handler";
 import { View, Text } from "react-native";
+import { enableScreens, enableFreeze } from "react-native-screens";
 import { useFonts } from "expo-font";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import config from "./tamagui.config";
@@ -15,6 +16,9 @@ import { PortalProvider } from "@tamagui/portal";
 import { TamaguiProvider, Theme } from "tamagui";
 
 const queryClient = new QueryClient();
+
+enableScreens();
+enableFreeze(true);
 
 export default function App() {
   const colorScheme = useColorScheme();
@@ -40,7 +44,6 @@ export default function App() {
   }
 
   if (!loaded) {
-    console.log("--> CARGANDO FUENTES...");
     return (
       <View
         style={{

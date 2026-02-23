@@ -35,6 +35,7 @@ import {
   Users,
   Gift,
   Tags,
+  Link2,
 } from "@tamagui/lucide-icons";
 import { Alert, Linking } from "react-native";
 import { CommonActions, useNavigation } from "@react-navigation/native";
@@ -322,6 +323,21 @@ export default function SettingsScreen() {
               onSwitchChange={(val: boolean) =>
                 handleTogglePreference("notifications", val, setNotifications)
               }
+            />
+          </YStack>
+
+          <SectionTitle title="Integraciones" />
+          <YStack
+            borderTopWidth={1}
+            borderBottomWidth={1}
+            borderColor="$borderColor"
+          >
+            <SettingItem
+              icon={Link2}
+              color="#2563EB"
+              label="Correo (Gmail / Google)"
+              value="Conectar"
+              onPress={() => navigation.navigate("BankingIntegrations")}
             />
           </YStack>
 

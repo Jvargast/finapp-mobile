@@ -53,11 +53,11 @@ export default function AddAccountScreen() {
     name: formValues.name || accountToEdit?.name || "Nueva Cuenta",
     balance: formValues.balance || 0,
     currency: (formValues.currency as any) || "CLP",
-    type: (formValues.type as any) || "BANK",
+    type: (formValues.type as any) || "CHECKING",
     color: formValues.color || "DEFAULT",
     institution: formValues.institution || null,
     isCredit: formValues.isCredit || false,
-    last4: accountToEdit?.last4 || "8888",
+    last4: formValues.last4 || accountToEdit?.last4 || "8888",
   };
 
   const selectedBankData = BANK_CATALOG.CL.banks.find(
@@ -105,7 +105,7 @@ export default function AddAccountScreen() {
                 account={previewAccount as any}
                 index={0}
                 isActive={true}
-                onPress={() => {}}
+                onPressIn={() => {}}
               />
             </YStack>
 
@@ -114,7 +114,7 @@ export default function AddAccountScreen() {
               onChange={(val) => setValue("type", val as any)}
             />
 
-            {(formValues.type === "BANK" || formValues.type === "WALLET") && (
+            {formValues.type !== "CASH" && (
               <YStack space="$4">
                 <YStack space="$2">
                   <Text fontWeight="700" fontSize="$3" color="$gray11">
@@ -162,7 +162,7 @@ export default function AddAccountScreen() {
                       htmlFor="is-credit-switch"
                       fontSize="$3"
                     >
-                      ¿Es Tarjeta de Crédito / Deuda?
+                      ¿Es Tarjeta de Crédito?
                     </Label>
                     <Switch
                       id="is-credit-switch"
@@ -191,8 +191,8 @@ export default function AddAccountScreen() {
                         color={formValues.isCredit ? "$red10" : "$green10"}
                         fontWeight="800"
                       >
-                        {formValues.isCredit ? "CRÉDITO" : "DÉBITO"}
-                      </Text>
+                      {formValues.isCredit ? "CRÉDITO" : "DÉBITO"}
+                    </Text>
                       <Text fontSize={10} color="$gray9">
                         (Automático)
                       </Text>
@@ -211,6 +211,14 @@ export default function AddAccountScreen() {
                   ? "Ej: Caja Chica"
                   : "Ej: Gastos Diarios"
               }
+            />
+
+            <FormInput
+              control={form.control}
+              name="last4"
+              label="Ultimos 4 digitos (opcional)"
+              placeholder="1234"
+              keyboardType="numeric"
             />
 
             <YStack>

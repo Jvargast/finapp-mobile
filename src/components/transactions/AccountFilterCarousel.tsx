@@ -57,7 +57,7 @@ export const AccountFilterCarousel = memo(
             account={allAccountsCard}
             index={-1}
             isActive={selectedAccountId === null}
-            onPress={() => onSelect(null)}
+            onPressIn={() => onSelect(null)}
             isStacked={false}
           />
 
@@ -67,7 +67,7 @@ export const AccountFilterCarousel = memo(
               account={account}
               index={index}
               isActive={selectedAccountId === account.id}
-              onPress={() => onSelect(account.id)}
+              onPressIn={() => onSelect(account.id)}
               isStacked={false}
             />
           ))}

@@ -32,7 +32,7 @@ export const AccountActions = {
     try {
       const newAccount = await AccountService.create(data);
       store.addAccount(newAccount);
-      return true;
+      return newAccount;
     } catch (error) {
       console.error("Error creando cuenta:", error);
       throw error;

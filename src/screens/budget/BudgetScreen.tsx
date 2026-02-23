@@ -5,8 +5,9 @@ import {
   InteractionManager,
   ActivityIndicator,
 } from "react-native";
-import { YStack, Text, Button, XStack } from "tamagui";
+import { YStack, Text, Button, XStack, Stack, useThemeName } from "tamagui";
 import { Plus } from "@tamagui/lucide-icons";
+import Svg, { Rect, Circle as SvgCircle, Path } from "react-native-svg";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { useBudgetStore } from "../../stores/useBudgetStore";
@@ -20,6 +21,8 @@ import { BudgetEntrySheet } from "../../components/budget/BudgetEntrySheet";
 export default function BudgetScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
+  const themeName = useThemeName();
+  const isDark = themeName.startsWith("dark");
 
   const [isEntrySheetOpen, setIsEntrySheetOpen] = useState(false);
 
@@ -47,6 +50,17 @@ export default function BudgetScreen() {
 
   const renderedBudgets = useMemo(() => {
     if (budgets.length === 0 && !isLoading) {
+      const glyphPalette = {
+        bg: isDark ? "#111827" : "#F8FAFC",
+        border: isDark ? "rgba(148, 163, 184, 0.25)" : "#E2E8F0",
+        wallet: isDark ? "#0B1220" : "#FFFFFF",
+        walletStroke: isDark ? "rgba(226, 232, 240, 0.45)" : "#CBD5E1",
+        flap: isDark ? "#1F2937" : "#F1F5F9",
+        coin: isDark ? "#FBBF24" : "#F59E0B",
+        coinInner: isDark ? "#FDE68A" : "#FDBA74",
+        accent: isDark ? "#A5B4FC" : "#8BA7F2",
+      };
+
       return (
         <YStack
           padding="$8"
@@ -55,8 +69,63 @@ export default function BudgetScreen() {
           space="$4"
           opacity={0.6}
         >
-          <Text fontSize={40}>📉</Text>
-          <Text textAlign="center" color="$gray10">
+          <Stack
+            width={64}
+            height={64}
+            borderRadius={32}
+            backgroundColor="transparent"
+            borderWidth={1}
+            borderColor={glyphPalette.border}
+            alignItems="center"
+            justifyContent="center"
+          >
+            <Svg width={56} height={56} viewBox="0 0 64 64">
+              <Rect
+                x={6}
+                y={6}
+                width={52}
+                height={52}
+                rx={16}
+                fill={glyphPalette.bg}
+              />
+              <Rect
+                x={16}
+                y={30}
+                width={32}
+                height={20}
+                rx={6}
+                fill={glyphPalette.wallet}
+                stroke={glyphPalette.walletStroke}
+                strokeWidth={2}
+              />
+              <Rect
+                x={20}
+                y={24}
+                width={24}
+                height={10}
+                rx={5}
+                fill={glyphPalette.flap}
+                stroke={glyphPalette.walletStroke}
+                strokeWidth={2}
+              />
+              <SvgCircle cx={46} cy={20} r={6} fill={glyphPalette.coin} />
+              <SvgCircle cx={46} cy={20} r={2.5} fill={glyphPalette.coinInner} />
+              <SvgCircle cx={42} cy={40} r={2} fill={glyphPalette.accent} />
+              <Path
+                d="M22 40h14"
+                stroke={glyphPalette.accent}
+                strokeWidth={2}
+                strokeLinecap="round"
+              />
+              <Path
+                d="M22 45h10"
+                stroke={glyphPalette.accent}
+                strokeWidth={2}
+                strokeLinecap="round"
+              />
+            </Svg>
+          </Stack>
+          <Text textAlign="center" color="$gray10" maxWidth={260}>
             No tienes presupuestos para este mes.{"\n"}¡Crea uno para empezar a
             ahorrar!
           </Text>

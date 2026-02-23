@@ -8,7 +8,7 @@ import {
   Banknote,
   AlertCircle,
 } from "@tamagui/lucide-icons";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import { NumericKeypad } from "../../components/transactions/NumericKeypad";
 import { CategorySelector } from "../../components/transactions/CategorySelector";
 import { useToastStore } from "../../stores/useToastStore";
@@ -24,14 +24,20 @@ import { InteractionManager } from "react-native";
 export default function AddExpenseScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
+  const route = useRoute<any>();
   const showToast = useToastStore((state) => state.showToast);
   const budgets = useBudgetStore((state) => state.budgets);
   const accounts = useAccountStore((state) => state.accounts);
   const [isDatePickerOpen, setDatePickerOpen] = useState(false);
 
+  const initialAccountId = route.params?.accountId || "";
   const [selectedAccountId, setSelectedAccountId] = useState(() => {
-    return accounts.length > 0 ? accounts[0].id : "";
+    return initialAccountId || (accounts.length > 0 ? accounts[0].id : "");
   });
+
+  useEffect(() => {
+    if (initialAccountId) setSelectedAccountId(initialAccountId);
+  }, [initialAccountId]);
 
   useEffect(() => {
     const task = InteractionManager.runAfterInteractions(() => {

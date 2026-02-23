@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ScrollView, YStack, XStack, Text, Button, Spinner } from "tamagui";
+import { ScrollView, YStack, XStack, Text, Spinner } from "tamagui";
 import { CreditCard, Wallet, Landmark, Banknote } from "@tamagui/lucide-icons";
 import { useNavigation } from "@react-navigation/native";
 import { AccountCard } from "./accounts/AccountCard";
@@ -7,6 +7,7 @@ import { AddAccountButton } from "./accounts/AddAccountButton";
 import { useAccountStore } from "../../stores/useAccountStore";
 import { PremiumSheet } from "../ui/PremiumSheet";
 import { useSubscription } from "../../hooks/useSubscription";
+import { PillButton } from "../ui/PillButton";
 
 const getIconByType = (type?: string) => {
   if (!type) return Landmark;
@@ -102,15 +103,10 @@ export const AccountsCarousel = () => {
             )}
           </XStack>
         </YStack>
-        <Button
-          size="$2"
-          chromeless
-          color="$brand"
-          fontWeight="700"
+        <PillButton
+          label="Ver todas"
           onPress={() => navigation.navigate("Accounts")}
-        >
-          Ver todas
-        </Button>
+        />
       </XStack>
 
       {isLoading && accounts.length === 0 ? (
@@ -162,7 +158,7 @@ export const AccountsCarousel = () => {
                   account={accountForUI}
                   index={index}
                   isActive={activeCardId === account.id}
-                  onPress={() => handleCardPress(account.id)}
+                  onPressIn={() => handleCardPress(account.id)}
                   isStacked={USE_STACKED_VIEW && !isLastItem}
                 />
               );

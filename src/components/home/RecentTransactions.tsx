@@ -1,8 +1,9 @@
 import React from "react";
-import { YStack, XStack, Text, Button, Spinner } from "tamagui";
+import { YStack, XStack, Text, Spinner } from "tamagui";
 import { useNavigation } from "@react-navigation/native";
 import { useTransactionStore } from "../../stores/useTransactionStore";
 import { TransactionItem } from "../transactions/TransactionItem";
+import { PillButton } from "../ui/PillButton";
 
 export const RecentTransactions = () => {
   const navigation = useNavigation<any>();
@@ -17,15 +18,10 @@ export const RecentTransactions = () => {
         <Text fontSize="$5" fontWeight="800" color="$color">
           Últimos Movimientos
         </Text>
-        <Button
-          size="$2"
-          chromeless
-          color="$brand"
-          fontWeight="700"
-          onPress={() => navigation.navigate("AllTransactions")}
-        >
-          Ver todo
-        </Button>
+        <PillButton
+          label="Ver todo"
+          onPress={() => navigation.navigate("Movements", { tab: "HISTORY" })}
+        />
       </XStack>
 
       {isLoading && transactions.length === 0 ? (

@@ -10,7 +10,9 @@ export const createAccountSchema = z.object({
     .min(1, "Ingresa un monto")
     .refine((val) => !isNaN(parseFloat(val)), "Debe ser un número válido"),
 
-  type: z.enum(["CASH", "BANK", "WALLET"]).default("BANK"),
+  type: z
+    .enum(["CHECKING", "SAVINGS", "CREDIT_CARD", "CASH", "OTHER"])
+    .default("CHECKING"),
 
   currency: z.enum(["CLP", "USD"]).default("CLP"),
 
@@ -19,6 +21,8 @@ export const createAccountSchema = z.object({
   color: z.string().default("DEFAULT"), 
 
   isCredit: z.boolean().default(false),
+
+  last4: z.string().optional(),
 });
 
 export type CreateAccountFormInputs = z.infer<typeof createAccountSchema>;
