@@ -13,7 +13,7 @@ import { useMyGoals } from "../../hooks/useMyGoals";
 import { GoalCard } from "../../components/goals/GoalCard";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { RefreshControl, Vibration } from "react-native";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { GoalOptionsSheet } from "../../components/goals/GoalOptionsSheet";
 import { FinancialGoal } from "../../types/goal.types";
 import { GoBackButton } from "../../components/ui/GoBackButton";
@@ -23,21 +23,42 @@ export const GoalsScreen = () => {
   const navigation = useNavigation<any>();
   const [selectedGoal, setSelectedGoal] = useState<FinancialGoal | null>(null);
   const { goals, isLoading, refetch } = useMyGoals();
+  const clearSelectionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  );
 
   const [openSheet, setOpenSheet] = useState(false);
   const [entrySheetOpen, setEntrySheetOpen] = useState(false);
 
   const handleCreateGoal = () => {
+    setOpenSheet(false);
+    setSelectedGoal(null);
     setEntrySheetOpen(true);
   };
 
   const handleLongPress = useCallback((goal: FinancialGoal) => {
     Vibration.vibrate(50);
+    if (clearSelectionTimeoutRef.current) {
+      clearTimeout(clearSelectionTimeoutRef.current);
+      clearSelectionTimeoutRef.current = null;
+    }
     setSelectedGoal(goal);
-    setTimeout(() => {
-      setOpenSheet(true);
-    }, 100);
+    setOpenSheet(true);
   }, []);
+
+  useEffect(() => {
+    return () => {
+      if (clearSelectionTimeoutRef.current) {
+        clearTimeout(clearSelectionTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!entrySheetOpen) return;
+    setOpenSheet(false);
+    setSelectedGoal(null);
+  }, [entrySheetOpen]);
 
   return (
     <YStack flex={1} backgroundColor="$background">
@@ -176,8 +197,15 @@ export const GoalsScreen = () => {
         open={openSheet}
         onOpenChange={(isOpen) => {
           setOpenSheet(isOpen);
+          if (clearSelectionTimeoutRef.current) {
+            clearTimeout(clearSelectionTimeoutRef.current);
+            clearSelectionTimeoutRef.current = null;
+          }
           if (!isOpen) {
-            setTimeout(() => setSelectedGoal(null), 300);
+            clearSelectionTimeoutRef.current = setTimeout(() => {
+              setSelectedGoal(null);
+              clearSelectionTimeoutRef.current = null;
+            }, 250);
           }
         }}
         onGoalUpdate={refetch}

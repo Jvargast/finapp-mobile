@@ -10,6 +10,8 @@ import { AccountActions } from "../../actions/accountActions";
 import { TransactionActions } from "../../actions/transactionActions";
 import { AnalyticsPreview } from "../../components/home/AnalyticsPreview";
 import { HomeGoalsBudgetRow } from "../../components/home/HomeGoalsBudgetRow";
+import { HomeRecurringWidget } from "../../components/home/HomeRecurringWidget";
+import { RecurringActions } from "../../actions/recurringActions";
 import { useFocusEffect } from "@react-navigation/native";
 
 export default function HomeScreen() {
@@ -17,6 +19,7 @@ export default function HomeScreen() {
     useCallback(() => {
       AccountActions.loadAccounts();
       TransactionActions.loadRecent();
+      RecurringActions.loadRecurring();
     }, []),
   );
 
@@ -26,6 +29,7 @@ export default function HomeScreen() {
         <HomeHeader />
         <HomePriorityRail />
         <BalanceCard />
+        <HomeRecurringWidget />
         <AccountsCarousel />
         <AnalyticsPreview />
         <HomeGoalsBudgetRow />

@@ -16,7 +16,6 @@ import {
   Receipt,
   Banknote,
   ArrowRightLeft,
-  ChevronRight,
 } from "@tamagui/lucide-icons";
 import { BankingActions } from "../../actions/bankingActions";
 
@@ -116,12 +115,6 @@ export const HomePriorityRail = () => {
             Lo importante primero.
           </Text>
         </YStack>
-        <XStack alignItems="center" space="$1">
-          <Text fontSize={11} color="$gray9" fontWeight="600">
-            Desliza
-          </Text>
-          <ChevronRight size={14} color="$gray8" />
-        </XStack>
       </XStack>
 
       <ScrollView

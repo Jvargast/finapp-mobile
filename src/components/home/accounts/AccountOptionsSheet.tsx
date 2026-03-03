@@ -79,6 +79,18 @@ export const AccountOptionsSheet = ({
     currency: account.currency || "CLP",
   }).format(Number(account.balance));
 
+  const summarizeCleanup = (cleanup?: Record<string, any>) => {
+    if (!cleanup || typeof cleanup !== "object") return null;
+    const entries = Object.entries(cleanup).filter(
+      ([, value]) => typeof value === "number",
+    ) as [string, number][];
+    if (entries.length === 0) return null;
+    return entries
+      .slice(0, 3)
+      .map(([key, value]) => `${key}: ${value}`)
+      .join(" · ");
+  };
+
   const handleEdit = () => {
     if (isEditLocked) {
       setShowPremiumSheet(true);
@@ -143,7 +155,17 @@ export const AccountOptionsSheet = ({
 
     setIsLoading(true);
     try {
-      await AccountActions.deleteAccount(account.id);
+      const result = await AccountActions.deleteAccount(account.id, {
+        deleteSources: true,
+        deleteIngestionArtifacts: true,
+        deleteOrphanRules: true,
+      });
+      const cleanupSummary = summarizeCleanup(result?.cleanup);
+      if (cleanupSummary) {
+        showToast(`Cuenta eliminada (${cleanupSummary})`, "success");
+      } else {
+        showToast("Cuenta eliminada con limpieza completa", "success");
+      }
       setShowDangerModal(false);
       onOpenChange(false);
     } catch (error) {
@@ -387,7 +409,7 @@ export const AccountOptionsSheet = ({
 
                           {!isCashAccount && (
                             <Text fontSize="$2" color="$gray9">
-                              Esto eliminará la cuenta y su historial asociado.
+                              Elimina cuenta, fuentes, artefactos y reglas huérfanas.
                             </Text>
                           )}
                         </YStack>
@@ -471,14 +493,20 @@ export const AccountOptionsSheet = ({
         onClose={() => setShowDangerModal(false)}
         onConfirm={isLinkedToBank ? handleDisconnectAndDelete : handleDelete}
         isLoading={isLoading}
-        title={isLinkedToBank ? "¿Desconectar y borrar?" : "¿Eliminar Cuenta?"}
+        title={
+          isLinkedToBank
+            ? "¿Desconectar y borrar definitivamente?"
+            : "¿Eliminar cuenta de forma irreversible?"
+        }
         message={
           isLinkedToBank
-            ? `Vas a desconectar el banco y borrar las cuentas importadas de esta conexión.`
-            : `Estás a punto de eliminar "${account.name}". Se perderá el historial de saldo asociado a esta cuenta.`
+            ? `Vas a desconectar el banco y borrar las cuentas importadas de esta conexión. Esta acción es irreversible.`
+            : `Estás a punto de eliminar "${account.name}". También se eliminarán fuentes, artefactos de ingestión y reglas huérfanas asociadas. Esta acción es irreversible.`
         }
         confirmText={
-          isLinkedToBank ? "Sí, desconectar y borrar" : "Sí, Eliminar"
+          isLinkedToBank
+            ? "Sí, borrar definitivamente"
+            : "Sí, eliminar definitivamente"
         }
         cancelText="Cancelar"
       />

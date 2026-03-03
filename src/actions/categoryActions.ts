@@ -8,8 +8,8 @@ import {
 export const CategoryActions = {
   loadCategories: async (withArchived: boolean = false) => {
     const store = useCategoryStore.getState();
-    if (!withArchived && store.categories.length > 0 && !store.isLoading)
-      return;
+    if (!withArchived && store.isLoading) return;
+    if (!withArchived && store.categories.length > 0) return;
 
     store.setLoading(true);
 

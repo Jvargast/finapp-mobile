@@ -1,15 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-  YStack,
-  Text,
-  Button,
-  Switch,
-  ScrollView,
-  Circle,
-  XStack,
-  Spacer,
-  Separator,
-} from "tamagui";
+import { YStack, Text, ScrollView, Spacer } from "tamagui";
 import {
   Moon,
   Bell,
@@ -17,11 +7,8 @@ import {
   Lock,
   LogOut,
   Coins,
-  Target,
   HelpCircle,
   FileText,
-  TrendingDown,
-  Building,
   ShieldCheck,
   Briefcase,
   TrendingUp,
@@ -38,7 +25,7 @@ import {
   Link2,
 } from "@tamagui/lucide-icons";
 import { Alert, Linking } from "react-native";
-import { CommonActions, useNavigation } from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
 import { useUserStore } from "../../stores/useUserStore";
 import { AuthActions } from "../../actions/authActions";
 import { UserActions } from "../../actions/userActions";
@@ -49,15 +36,6 @@ import { DangerModal } from "../../components/ui/DangerModal";
 import { SectionTitle } from "../../components/ui/SectionTitle";
 import { SettingItem } from "../../components/settings/SettingItem";
 import { JoinFamilySheet } from "../../components/family/JoinFamilySheet";
-
-const GOAL_LABELS: Record<string, string> = {
-  save: "Ahorrar Dinero",
-  debt: "Salir de Deudas",
-  house: "Comprar Vivienda",
-  control: "Controlar Gastos",
-  invest: "Invertir",
-  retire: "Jubilación",
-};
 
 const GOAL_CONFIG: Record<string, { label: string; icon: any; color: string }> =
   {
@@ -100,7 +78,6 @@ export default function SettingsScreen() {
 
   const [showJoinSheet, setShowJoinSheet] = useState(false);
   const [notifications, setNotifications] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
   const [biometrics, setBiometrics] = useState(false);
 
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
@@ -110,7 +87,6 @@ export default function SettingsScreen() {
     if (user?.preferences) {
       const notifValue = user.preferences.notifications ?? true;
       setNotifications(notifValue);
-      setDarkMode(user.preferences.darkMode ?? false);
     }
   }, [user]);
 
@@ -307,12 +283,9 @@ export default function SettingsScreen() {
             <SettingItem
               icon={Moon}
               color="#8B5CF6"
-              label="Modo Oscuro"
-              hasSwitch
-              switchValue={darkMode}
-              onSwitchChange={(val: boolean) =>
-                handleTogglePreference("darkMode", val, setDarkMode)
-              }
+              label="Apariencia"
+              value="Tema y horario"
+              onPress={() => navigation.navigate("AppearanceSettings")}
             />
             <SettingItem
               icon={Bell}

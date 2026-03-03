@@ -56,6 +56,7 @@ export default function AccountSetupWizardScreen() {
   const [forwardConfirmationCode, setForwardConfirmationCode] = useState("");
   const [forwardConfirmationLink, setForwardConfirmationLink] = useState("");
   const [forwardConfigured, setForwardConfigured] = useState(false);
+  const [isForwardMethodLocked, setIsForwardMethodLocked] = useState(false);
   const [isForwardVerifying, setIsForwardVerifying] = useState(false);
   const [isForwardPolling, setIsForwardPolling] = useState(false);
   const [isForwardConfirmPolling, setIsForwardConfirmPolling] =
@@ -154,12 +155,16 @@ export default function AccountSetupWizardScreen() {
       source?.email || source?.config?.email || source?.accountEmail,
     );
 
-  const getRuleId = (rule: any) =>
-    rule?.rule?.id ||
-    rule?.ruleId ||
-    rule?.id ||
-    rule?.uuid ||
-    rule?.rule_id;
+  const getRuleId = (rule: any) => {
+    const raw =
+      rule?.rule?.id ||
+      rule?.ruleId ||
+      rule?.id ||
+      rule?.uuid ||
+      rule?.rule_id;
+    if (raw === undefined || raw === null || raw === "") return undefined;
+    return String(raw);
+  };
 
   const normalizeText = (value?: string | null) =>
     (value || "")
@@ -284,12 +289,27 @@ export default function AccountSetupWizardScreen() {
       try {
         const data = await BankingActions.listSources();
         const list = Array.isArray(data) ? data : data?.data || [];
-        source = list.find(
+        const inboundSources = list.filter(
           (item) =>
             item?.type === "EMAIL_NOTIFICATION" &&
             item?.accountId === accountId &&
             getSourceStatus(item) !== "deleted",
         );
+        const sortedByRecent = [...inboundSources].sort((a, b) => {
+          const aTime = new Date(
+            a?.updatedAt || a?.lastSeenAt || a?.createdAt || 0,
+          ).getTime();
+          const bTime = new Date(
+            b?.updatedAt || b?.lastSeenAt || b?.createdAt || 0,
+          ).getTime();
+          return bTime - aTime;
+        });
+
+        source =
+          inboundSources.find((item) => getSourceStatus(item) === "active") ||
+          inboundSources.find((item) => isForwardConfiguredSource(item)) ||
+          sortedByRecent[0] ||
+          null;
       } catch (error) {
         console.error("Error cargando fuentes inbound", error);
       }
@@ -317,6 +337,7 @@ export default function AccountSetupWizardScreen() {
 
       const configured = isForwardConfiguredSource(sourceDetails || source);
       setForwardConfigured(configured);
+      setIsForwardMethodLocked(configured);
       if (configured) {
         setMethodConfigured(true);
         setForwardReady(true);
@@ -426,10 +447,20 @@ export default function AccountSetupWizardScreen() {
   }, []);
 
   useEffect(() => {
-    if (effectiveMethod === AccountSetupMethod.EMAIL_HISTORY) {
+    if (
+      effectiveMethod === AccountSetupMethod.EMAIL_HISTORY ||
+      effectiveMethod === AccountSetupMethod.EMAIL_FORWARD
+    ) {
       loadIntegrations();
     }
   }, [effectiveMethod, loadIntegrations]);
+
+  useEffect(() => {
+    if (!accountId) return;
+    if (currentStep !== 1) return;
+    if (emailSources.length > 0) return;
+    loadIntegrations();
+  }, [accountId, currentStep, emailSources.length, loadIntegrations]);
 
   const loadRules = useCallback(async () => {
     setIsRulesLoading(true);
@@ -445,16 +476,33 @@ export default function AccountSetupWizardScreen() {
     }
   }, [showToast]);
 
-  const loadSourceRules = useCallback(async (sourceId: string) => {
+  const loadSourceRules = useCallback(async (sourceIds: string[]) => {
     try {
-      const data = await BankingActions.listSourceRules(sourceId);
-      const list = Array.isArray(data) ? data : data?.data || [];
-      const ids = list
+      const uniqueSources = Array.from(new Set(sourceIds.filter(Boolean)));
+      if (uniqueSources.length === 0) {
+        setAttachedRuleIds([]);
+        return;
+      }
+
+      const responses = await Promise.all(
+        uniqueSources.map(async (sourceId) => {
+          try {
+            const data = await BankingActions.listSourceRules(sourceId);
+            return Array.isArray(data) ? data : data?.data || [];
+          } catch (error) {
+            console.error(`Error cargando reglas del source ${sourceId}`, error);
+            return [];
+          }
+        }),
+      );
+
+      const ids = responses
+        .flat()
         .map((rule: any) => getRuleId(rule))
         .filter(Boolean) as string[];
       setAttachedRuleIds(Array.from(new Set(ids)));
     } catch (error) {
-      console.error("Error cargando reglas del source", error);
+      console.error("Error cargando reglas de sources", error);
     }
   }, []);
 
@@ -590,31 +638,6 @@ export default function AccountSetupWizardScreen() {
     setHasPreviewed(false);
   }, [attachedVisibleRuleIds.join("|")]);
 
-  useEffect(() => {
-    if (
-      effectiveMethod !== AccountSetupMethod.EMAIL_HISTORY &&
-      effectiveMethod !== AccountSetupMethod.EMAIL_FORWARD
-    )
-      return;
-    if (!rulesSourceId) {
-      if (
-        effectiveMethod === AccountSetupMethod.EMAIL_HISTORY &&
-        !isLoadingIntegrations &&
-        emailSources.length > 0
-      ) {
-        setAttachedRuleIds([]);
-      }
-      return;
-    }
-    loadSourceRules(rulesSourceId);
-  }, [
-    effectiveMethod,
-    rulesSourceId,
-    loadSourceRules,
-    isLoadingIntegrations,
-    emailSources.length,
-  ]);
-
   const getEmailApiSource = useCallback(
     (provider?: "GMAIL" | "GOOGLE" | null) => {
       const candidates = emailSources.filter((source) => {
@@ -647,13 +670,55 @@ export default function AccountSetupWizardScreen() {
     () => getEmailApiSource(emailProvider),
     [getEmailApiSource, emailProvider],
   );
+  const hasConfiguredInboundSource = useMemo(
+    () =>
+      emailSources.some(
+        (source) =>
+          source?.type === "EMAIL_NOTIFICATION" &&
+          source?.accountId === accountId &&
+          getSourceStatus(source) !== "deleted" &&
+          isForwardConfiguredSource(source),
+      ),
+    [emailSources, accountId, isForwardConfiguredSource],
+  );
   const emailApiSourceId = emailApiSource?.id as string | undefined;
-  const rulesSourceId = useMemo(() => {
+  const rulesSourceIds = useMemo(() => {
     if (effectiveMethod === AccountSetupMethod.EMAIL_FORWARD) {
-      return forwardSourceId || undefined;
+      return Array.from(
+        new Set([emailApiSourceId, forwardSourceId].filter(Boolean)),
+      ) as string[];
     }
-    return emailApiSourceId;
+    return emailApiSourceId ? [emailApiSourceId] : [];
   }, [effectiveMethod, forwardSourceId, emailApiSourceId]);
+  const rulesSourceId = useMemo(() => {
+    return rulesSourceIds[0];
+  }, [rulesSourceIds]);
+
+  useEffect(() => {
+    if (
+      effectiveMethod !== AccountSetupMethod.EMAIL_HISTORY &&
+      effectiveMethod !== AccountSetupMethod.EMAIL_FORWARD
+    ) {
+      return;
+    }
+    if (rulesSourceIds.length === 0) {
+      if (
+        effectiveMethod === AccountSetupMethod.EMAIL_HISTORY &&
+        !isLoadingIntegrations &&
+        emailSources.length > 0
+      ) {
+        setAttachedRuleIds([]);
+      }
+      return;
+    }
+    loadSourceRules(rulesSourceIds);
+  }, [
+    effectiveMethod,
+    rulesSourceIds,
+    loadSourceRules,
+    isLoadingIntegrations,
+    emailSources.length,
+  ]);
 
   useEffect(() => {
     if (effectiveMethod !== AccountSetupMethod.EMAIL_HISTORY) return;
@@ -702,6 +767,10 @@ export default function AccountSetupWizardScreen() {
   const handleSaveMethod = useCallback(async () => {
     if (!accountId || !selectedMethod) return;
     if (selectedMethod === AccountSetupMethod.EMAIL_HISTORY && !emailProvider) {
+      setCurrentStep(2);
+      return;
+    }
+    if (selectedMethod === AccountSetupMethod.EMAIL_FORWARD) {
       setCurrentStep(2);
       return;
     }
@@ -1195,6 +1264,7 @@ export default function AccountSetupWizardScreen() {
       if (configured) {
         setMethodConfigured(true);
         setForwardReady(true);
+        setIsForwardMethodLocked(true);
         setIsForwardPolling(false);
         setIsForwardConfirmPolling(false);
       }
@@ -1320,8 +1390,6 @@ export default function AccountSetupWizardScreen() {
     }
   }, [
     accountId,
-    selectedMethod,
-    account?.setupMethod,
     updateAccountInStore,
     navigation,
     showToast,
@@ -1377,6 +1445,17 @@ export default function AccountSetupWizardScreen() {
     attachedVisibleRuleIds.length,
     methodConfigured,
   ]);
+
+  const normalizedAccountMethod = normalizeSetupMethod(account?.setupMethod);
+  const isEmailHistoryLocked =
+    Boolean(account?.firstSyncedAt) ||
+    (normalizedAccountMethod === AccountSetupMethod.EMAIL_HISTORY &&
+      account?.setupStatus === AccountSetupStatus.ACTIVE);
+  const isEmailForwardLocked =
+    isForwardMethodLocked ||
+    hasConfiguredInboundSource ||
+    (normalizedAccountMethod === AccountSetupMethod.EMAIL_FORWARD &&
+      account?.setupStatus === AccountSetupStatus.ACTIVE);
 
   if (!isPro) {
     return (
@@ -1441,7 +1520,8 @@ export default function AccountSetupWizardScreen() {
                   isSaving={isSaving}
                   onSelectMethod={setSelectedMethod}
                   onContinue={handleSaveMethod}
-                  isEmailHistoryLocked={Boolean(account?.firstSyncedAt)}
+                  isEmailHistoryLocked={isEmailHistoryLocked}
+                  isEmailForwardLocked={isEmailForwardLocked}
                 />
               )}
 

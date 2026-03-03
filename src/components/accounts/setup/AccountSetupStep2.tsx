@@ -11,66 +11,76 @@ interface AccountSetupStep2Props {
   onSelectMethod: (method: AccountSetupMethod) => void;
   onContinue: () => void;
   isEmailHistoryLocked?: boolean;
+  isEmailForwardLocked?: boolean;
 }
 
-export const AccountSetupStep2 = memo(({
-  selectedMethod,
-  isSaving,
-  onSelectMethod,
-  onContinue,
-  isEmailHistoryLocked = false,
-}: AccountSetupStep2Props) => {
-  const isLockedSelection =
-    isEmailHistoryLocked &&
-    selectedMethod === AccountSetupMethod.EMAIL_HISTORY;
-  const emailHistoryDescription = isEmailHistoryLocked
-    ? "Ya está configurado. Reinicia desde Detalles para cambiarlo."
-    : "Importa movimientos recientes desde correos.";
+export const AccountSetupStep2 = memo(
+  ({
+    selectedMethod,
+    isSaving,
+    onSelectMethod,
+    onContinue,
+    isEmailHistoryLocked = false,
+    isEmailForwardLocked = false,
+  }: AccountSetupStep2Props) => {
+    const isLockedSelection =
+      (isEmailHistoryLocked &&
+        selectedMethod === AccountSetupMethod.EMAIL_HISTORY) ||
+      (isEmailForwardLocked &&
+        selectedMethod === AccountSetupMethod.EMAIL_FORWARD);
+    const emailHistoryDescription = isEmailHistoryLocked
+      ? "Ya está configurado. Reinicia desde Detalles para cambiarlo."
+      : "Importa movimientos recientes desde correos.";
+    const emailForwardDescription = isEmailForwardLocked
+      ? "Ya está configurado. Reinicia desde Detalles para cambiarlo."
+      : "Reenvia emails del banco para importar movimientos automaticamente.";
 
-  return (
-    <YStack space="$4">
-      <Text fontSize="$4" fontWeight="800" color="$color">
-        Elige como llenar esta cuenta
-      </Text>
+    return (
+      <YStack space="$4">
+        <Text fontSize="$4" fontWeight="800" color="$color">
+          Elige como llenar esta cuenta
+        </Text>
 
-      <AccountSetupMethodCard
-        title="Importar desde Gmail/Google (90 dias)"
-        description={emailHistoryDescription}
-        icon={Mail}
-        color="#2563EB"
-        bg="#EFF6FF"
-        isSelected={selectedMethod === AccountSetupMethod.EMAIL_HISTORY}
-        disabled={isEmailHistoryLocked}
-        onPress={() => onSelectMethod(AccountSetupMethod.EMAIL_HISTORY)}
-      />
+        <AccountSetupMethodCard
+          title="Sincronizacion por correo (90 días)"
+          description={emailHistoryDescription}
+          icon={Mail}
+          color="#2563EB"
+          bg="#EFF6FF"
+          isSelected={selectedMethod === AccountSetupMethod.EMAIL_HISTORY}
+          disabled={isEmailHistoryLocked}
+          onPress={() => onSelectMethod(AccountSetupMethod.EMAIL_HISTORY)}
+        />
 
-      <AccountSetupMethodCard
-        title="Reenvio de correos (casi tiempo real)"
-        description="Configura un alias para reenviar emails del banco."
-        icon={Send}
-        color="#7C3AED"
-        bg="#F5F3FF"
-        isSelected={selectedMethod === AccountSetupMethod.EMAIL_FORWARD}
-        onPress={() => onSelectMethod(AccountSetupMethod.EMAIL_FORWARD)}
-      />
+        <AccountSetupMethodCard
+          title="Reenvio automatico por correo"
+          description={emailForwardDescription}
+          icon={Send}
+          color="#7C3AED"
+          bg="#F5F3FF"
+          isSelected={selectedMethod === AccountSetupMethod.EMAIL_FORWARD}
+          disabled={isEmailForwardLocked}
+          onPress={() => onSelectMethod(AccountSetupMethod.EMAIL_FORWARD)}
+        />
 
-      <AccountSetupMethodCard
-        title="Subir cartola"
-        description="Carga tu archivo y importa movimientos."
-        icon={FileText}
-        color="#059669"
-        bg="#ECFDF5"
-        isSelected={selectedMethod === AccountSetupMethod.STATEMENT}
-        onPress={() => onSelectMethod(AccountSetupMethod.STATEMENT)}
-      />
+        <AccountSetupMethodCard
+          title="Subir cartola"
+          description="Carga tu archivo y importa movimientos."
+          icon={FileText}
+          color="#059669"
+          bg="#ECFDF5"
+          isSelected={selectedMethod === AccountSetupMethod.STATEMENT}
+          onPress={() => onSelectMethod(AccountSetupMethod.STATEMENT)}
+        />
 
-      <ContinueButton
-        label="Continuar"
-        isLoading={isSaving}
-        loadingLabel="Guardando..."
-        onPress={onContinue}
-        disabled={!selectedMethod || isSaving || isLockedSelection}
-      />
-    </YStack>
-  );
-});
+        <ContinueButton
+          label="Continuar"
+          isLoading={isSaving}
+          loadingLabel="Guardando..."
+          onPress={onContinue}
+          disabled={!selectedMethod || isSaving || isLockedSelection}
+        />
+      </YStack>
+    );
+  },
+);

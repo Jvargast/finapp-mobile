@@ -20,6 +20,23 @@ interface AllTransactionsScreenProps {
 
 const PAGE_SIZE = 50;
 
+const dedupeTransactionsById = (items: Transaction[]) => {
+  const seen = new Set<string>();
+  const unique: Transaction[] = [];
+
+  items.forEach((item) => {
+    if (!item?.id) {
+      unique.push(item);
+      return;
+    }
+    if (seen.has(item.id)) return;
+    seen.add(item.id);
+    unique.push(item);
+  });
+
+  return unique;
+};
+
 export default function AllTransactionsScreen({
   embedded = false,
   backgroundColor = "$background",
@@ -126,7 +143,9 @@ export default function AllTransactionsScreen({
         const list = Array.isArray(response) ? response : response?.data || [];
         const metaTotal = Array.isArray(response) ? undefined : response?.meta?.total;
 
-        setTransactions((prev) => (reset ? list : [...prev, ...list]));
+        setTransactions((prev) =>
+          dedupeTransactionsById(reset ? list : [...prev, ...list])
+        );
 
         const newOffset = nextOffset + list.length;
         setOffset(newOffset);
@@ -208,7 +227,7 @@ export default function AllTransactionsScreen({
       }
 
       if (idx === -1) {
-        const next = [lastUpdatedTransaction, ...prev];
+        const next = dedupeTransactionsById([lastUpdatedTransaction, ...prev]);
         next.sort(
           (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
         );
@@ -258,7 +277,9 @@ export default function AllTransactionsScreen({
 
       <FlatList
         data={transactions}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item, index) =>
+          item.id || `tx-${item.date}-${item.amount}-${index}`
+        }
         renderItem={({ item }) => (
           <View paddingHorizontal="$4" marginBottom="$3">
             <TransactionItem

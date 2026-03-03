@@ -17,6 +17,28 @@ interface Props {
 }
 
 const PREVIEW_LIMIT = 5;
+const AVATAR_COLORS = [
+  "#F87171",
+  "#F59E0B",
+  "#84CC16",
+  "#14B8A6",
+  "#3B82F6",
+  "#8B5CF6",
+  "#EC4899",
+];
+
+const getAvatarColor = (seed: string) => {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    hash = seed.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+};
+
+const getAvatarInitial = (firstName?: string, email?: string) =>
+  firstName?.trim()?.[0]?.toUpperCase() ||
+  email?.trim()?.[0]?.toUpperCase() ||
+  "U";
 
 export const BudgetHistorySection = ({ budget }: Props) => {
   const [tab, setTab] = useState<"HISTORY" | "RANKING">("HISTORY");
@@ -137,10 +159,14 @@ export const BudgetHistorySection = ({ budget }: Props) => {
         ) : (
           <YStack space="$3">
             {visibleItems.map((item: any, index) => {
-              const tx = item;
-              const user = tx.account?.user;
               if (tab === "HISTORY") {
                 const tx = item;
+                const user = tx.account?.user || tx.user;
+                const firstName = user?.profile?.firstName || "Usuario";
+                const avatarUrl = user?.profile?.avatarUrl;
+                const avatarInitial = getAvatarInitial(firstName, user?.email);
+                const avatarBg = getAvatarColor(firstName);
+
                 return (
                   <XStack
                     key={tx.id || index}
@@ -150,8 +176,17 @@ export const BudgetHistorySection = ({ budget }: Props) => {
                   >
                     <XStack alignItems="center" space="$3">
                       <Avatar circular size="$3">
-                        <Avatar.Image src={tx.user?.profile?.avatarUrl} />
-                        <Avatar.Fallback backgroundColor="$gray5" />
+                        <Avatar.Image src={avatarUrl || undefined} />
+                        <Avatar.Fallback
+                          backgroundColor={avatarBg}
+                          justifyContent="center"
+                          alignItems="center"
+                          delayMs={0}
+                        >
+                          <Text fontSize={11} fontWeight="800" color="white">
+                            {avatarInitial}
+                          </Text>
+                        </Avatar.Fallback>
                       </Avatar>
 
                       <YStack>
@@ -160,7 +195,7 @@ export const BudgetHistorySection = ({ budget }: Props) => {
                         </Text>
                         <XStack space="$2" alignItems="center">
                           <Text fontSize={11} color="$gray9">
-                            {user?.profile?.firstName || "Usuario"}
+                            {firstName}
                           </Text>
                           <Text fontSize={10} color="$gray8">
                             •
@@ -188,6 +223,13 @@ export const BudgetHistorySection = ({ budget }: Props) => {
                 const isFirst = index === 0;
                 const spentTotal = budget.progress?.spent || 1;
                 const percentage = (rankUser.total / spentTotal) * 100 || 0;
+                const firstName = rankUser.user?.profile?.firstName || "Usuario";
+                const avatarUrl = rankUser.user?.profile?.avatarUrl;
+                const avatarInitial = getAvatarInitial(
+                  firstName,
+                  rankUser.user?.email
+                );
+                const avatarBg = getAvatarColor(firstName);
 
                 return (
                   <XStack
@@ -196,7 +238,7 @@ export const BudgetHistorySection = ({ budget }: Props) => {
                     justifyContent="space-between"
                     backgroundColor={
                       isFirst ? "rgba(245, 158, 11, 0.1)" : "transparent"
-                    } 
+                    }
                     padding="$3"
                     borderRadius="$6"
                     borderWidth={isFirst ? 1 : 0}
@@ -218,14 +260,23 @@ export const BudgetHistorySection = ({ budget }: Props) => {
                         borderWidth={1}
                         borderColor="$gray4"
                       >
-                        <Avatar.Image src={rankUser.user?.profile?.avatarUrl} />
-                        <Avatar.Fallback backgroundColor="$gray5" />
+                        <Avatar.Image src={avatarUrl || undefined} />
+                        <Avatar.Fallback
+                          backgroundColor={avatarBg}
+                          justifyContent="center"
+                          alignItems="center"
+                          delayMs={0}
+                        >
+                          <Text fontSize={13} fontWeight="800" color="white">
+                            {avatarInitial}
+                          </Text>
+                        </Avatar.Fallback>
                       </Avatar>
 
                       <YStack>
                         <XStack alignItems="center" space="$2">
                           <Text fontWeight="700" fontSize="$4" color="$color">
-                            {rankUser.user?.profile?.firstName}
+                            {firstName}
                           </Text>
                           {isFirst && (
                             <Crown size={14} color="#D97706" fill="#FCD34D" />

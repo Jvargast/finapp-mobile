@@ -14,11 +14,11 @@ import {
   Wallet,
   Banknote,
   Plus,
-  RefreshCw,
 } from "@tamagui/lucide-icons";
 import { useNavigation } from "@react-navigation/native";
 import { MainLayout } from "../../components/layout/MainLayout";
 import { AccountCard } from "../../components/home/accounts/AccountCard";
+import { AccountActions } from "../../actions/accountActions";
 import { useAccountStore } from "../../stores/useAccountStore";
 import { Account } from "../../types/account.types";
 import { AccountOptionsSheet } from "../../components/home/accounts/AccountOptionsSheet";
@@ -54,35 +54,9 @@ export default function AccountsScreen() {
   const [activeFilter, setActiveFilter] = useState("ALL");
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
   const [isSheetOpen, setSheetOpen] = useState(false);
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [cooldownUntilMs, setCooldownUntilMs] = useState<number | null>(null);
-  const [cooldownLeftSec, setCooldownLeftSec] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [showPremiumSheet, setShowPremiumSheet] = useState(false);
   const [isListReady, setIsListReady] = useState(false);
-
-  const COOLDOWN_MS = 60 * 1000;
-
-  const isInCooldown =
-    !!cooldownUntilMs && cooldownUntilMs > Date.now();
-
-  useEffect(() => {
-    if (!cooldownUntilMs) {
-      setCooldownLeftSec(0);
-      return;
-    }
-
-    const tick = () => {
-      const msLeft = Math.max(0, cooldownUntilMs - Date.now());
-      setCooldownLeftSec(Math.ceil(msLeft / 1000));
-      if (msLeft <= 0) {
-        setCooldownUntilMs(null);
-      }
-    };
-
-    tick();
-    const interval = setInterval(tick, 1000);
-    return () => clearInterval(interval);
-  }, [cooldownUntilMs]);
 
   useEffect(() => {
     const task = InteractionManager.runAfterInteractions(() => {
@@ -179,26 +153,15 @@ export default function AccountsScreen() {
     );
   }, [activeFilter, filteredAccounts.length, handleConnectPress]);
 
-  const handleRefreshPress = async () => {
-    if (isInCooldown) {
-      return;
-    }
-
-    if (isSyncing) {
-      return;
-    }
-
+  const handleRefresh = useCallback(async () => {
+    if (isRefreshing) return;
     try {
-      setIsSyncing(true);
-      // TODO: reemplazar por refresh real de fuentes cuando estén listas.
-      await Promise.all([
-        new Promise((r) => setTimeout(r, 700)),
-      ]);
-      setCooldownUntilMs(Date.now() + COOLDOWN_MS);
+      setIsRefreshing(true);
+      await AccountActions.loadAccounts();
     } finally {
-      setIsSyncing(false);
+      setIsRefreshing(false);
     }
-  };
+  }, [isRefreshing]);
 
   return (
     <MainLayout noPadding={true}>
@@ -217,30 +180,6 @@ export default function AccountsScreen() {
           </XStack>
 
           <XStack space="$2" alignItems="center" flexShrink={0}>
-            <Button
-              size="$3"
-              width={40}
-              height={40}
-              padding={0}
-              backgroundColor={isInCooldown ? "$gray3" : "$color2"}
-              opacity={isInCooldown ? 0.7 : 1}
-              borderRadius="$10"
-              onPress={handleRefreshPress}
-              disabled={isSyncing}
-              pressStyle={{ opacity: 0.8 }}
-              borderWidth={1}
-              borderColor={"$borderColor"}
-              icon={
-                isSyncing ? (
-                  <Spinner size="small" />
-                ) : (
-                  <RefreshCw
-                    size={18}
-                    color={isInCooldown ? "$gray9" : "$gray11"}
-                  />
-                )
-              }
-            />
             <Button
               size="$3"
               backgroundColor="$blue10"
@@ -351,12 +290,6 @@ export default function AccountsScreen() {
             </XStack>
           </ScrollView>
         </YStack>
-        {cooldownLeftSec > 0 && (
-          <Text fontSize={11} color="$gray10" marginTop="$1">
-            Puedes refrescar en {cooldownLeftSec}s
-          </Text>
-        )}
-
         {isListReady ? (
           <FlatList
             data={filteredAccounts}
@@ -369,8 +302,8 @@ export default function AccountsScreen() {
             }}
             refreshControl={
               <RefreshControl
-                refreshing={isSyncing}
-                onRefresh={handleRefreshPress}
+                refreshing={isRefreshing}
+                onRefresh={handleRefresh}
               />
             }
             ItemSeparatorComponent={() => <YStack height="$4" />}

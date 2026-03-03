@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Sheet, YStack, Text, Button, XStack, Separator } from "tamagui";
 import {
   Trash2,
@@ -14,7 +14,7 @@ import {
 } from "@tamagui/lucide-icons";
 import { FinancialGoal, GoalType, GoalRole } from "../../types/goal.types";
 import { formatGoalAmount } from "../../utils/formatMoney";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import { useToastStore } from "../../stores/useToastStore";
 import { useUserStore } from "../../stores/useUserStore";
 import { GoalService } from "../../services/goalService";
@@ -34,10 +34,18 @@ export const GoalOptionsSheet = ({
   goal,
 }: GoalOptionsSheetProps) => {
   const navigation = useNavigation<any>();
+  const route = useRoute<any>();
   const showToast = useToastStore((s) => s.showToast);
   const myUserId = useUserStore((s) => s.user?.id);
   const [showDangerModal, setShowDangerModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (open && !goal) {
+      onOpenChange(false);
+    }
+  }, [open, goal, onOpenChange]);
+
   if (!goal) return null;
   const amIOwner =
     (goal.userId && goal.userId === myUserId) ||
@@ -64,6 +72,11 @@ export const GoalOptionsSheet = ({
   };
   const { icon: GoalIcon, bg, color } = getGoalVisuals(goal.type);
 
+  const closeAndRun = (fn: () => void) => {
+    onOpenChange(false);
+    setTimeout(fn, 200);
+  };
+
   const handleAction = async () => {
     setIsLoading(true);
     try {
@@ -77,7 +90,17 @@ export const GoalOptionsSheet = ({
 
       setShowDangerModal(false);
       onOpenChange(false);
-      onGoalUpdate();
+
+      const isDetailScreen = route.name === "GoalDetail";
+      if (isDetailScreen) {
+        if (navigation.canGoBack()) {
+          navigation.goBack();
+        } else {
+          navigation.navigate("Goals");
+        }
+      } else {
+        await Promise.resolve(onGoalUpdate());
+      }
     } catch (error) {
       showToast("Ocurrió un error al procesar la solicitud", "error");
     } finally {
@@ -170,17 +193,19 @@ export const GoalOptionsSheet = ({
                 backgroundColor="$blue2"
                 color="$blue10"
                 icon={<Edit3 size={20} />}
-                onPressIn={() => {
-                  onOpenChange(false);
-                  navigation.navigate("EditGoal", {
-                    goal: goal,
-                  });
-                }}
+                onPress={() =>
+                  closeAndRun(() => {
+                    navigation.navigate("EditGoal", {
+                      goal: goal,
+                    });
+                  })
+                }
                 borderColor="$blue4"
                 borderWidth={1}
                 fontWeight="bold"
                 borderRadius="$10"
                 pressStyle={{ opacity: 0.8, scale: 0.98 }}
+                disabled={isLoading}
               >
                 Editar Meta
               </Button>
@@ -190,7 +215,7 @@ export const GoalOptionsSheet = ({
               backgroundColor="$red2"
               color="$red10"
               icon={amIOwner ? <Trash2 size={20} /> : <LogOut size={20} />}
-              onPressIn={() => {
+              onPress={() => {
                 setShowDangerModal(true);
               }}
               fontWeight="bold"
@@ -198,6 +223,7 @@ export const GoalOptionsSheet = ({
               pressStyle={{ opacity: 0.8, scale: 0.98 }}
               borderColor="$red4"
               borderWidth={1}
+              disabled={isLoading}
             >
               {amIOwner ? "Eliminar Meta" : "Abandonar Meta"}
             </Button>
@@ -207,10 +233,11 @@ export const GoalOptionsSheet = ({
               chromeless
               backgroundColor="$gray3"
               color="$gray11"
-              onPressIn={() => onOpenChange(false)}
+              onPress={() => onOpenChange(false)}
               fontWeight="700"
               borderRadius="$10"
               hoverStyle={{ backgroundColor: "$gray4" }}
+              disabled={isLoading}
             >
               Cancelar
             </Button>

@@ -5,6 +5,7 @@ import ProfileScreen from "../screens/profile/ProfileScreen";
 import { Sidebar } from "../components/layout/Sidebar";
 import EditPreferenceScreen from "../screens/profile/EditPreferenceScreen";
 import SettingsScreen from "../screens/settings/SettingsScreen";
+import AppearanceSettingsScreen from "../screens/settings/AppearanceSettingsScreen";
 import ChangePasswordScreen from "../screens/settings/ChangePasswordScreen";
 import EditProfileScreen from "../screens/profile/EditProfileScreen";
 import { useTheme } from "tamagui";
@@ -42,6 +43,9 @@ import MovementsScreen from "../screens/transactions/MovementsScreen";
 import AddTransferScreen from "../screens/transactions/AddTransferScreen";
 import ConnectBankScreen from "../screens/fintoc/ConnectBankScreen";
 import FintocWidgetScreen from "../screens/fintoc/FintocWidgetScreen";
+import RecurringScreen from "../screens/recurring/RecurringScreen";
+import RecurringCreateScreen from "../screens/recurring/RecurringCreateScreen";
+import RecurringEditScreen from "../screens/recurring/RecurringEditScreen";
 
 const Drawer = createDrawerNavigator();
 const Stack = createNativeStackNavigator();
@@ -103,6 +107,17 @@ export default function MainNavigator() {
           headerShown: true,
           headerTintColor: "$color",
           headerStyle: { backgroundColor: theme.brand.val },
+        }}
+      />
+      <Stack.Screen
+        name="AppearanceSettings"
+        component={AppearanceSettingsScreen}
+        options={{
+          title: "Apariencia",
+          headerShown: true,
+          headerTintColor: "$color",
+          headerStyle: { backgroundColor: theme.brand.val },
+          animation: "slide_from_right",
         }}
       />
       <Stack.Screen
@@ -308,6 +323,31 @@ export default function MainNavigator() {
       <Stack.Screen
         name="Movements"
         component={MovementsScreen}
+        options={{
+          headerShown: false,
+          animation: "slide_from_right",
+        }}
+      />
+      <Stack.Screen
+        name="Recurring"
+        component={RecurringScreen}
+        options={{
+          headerShown: false,
+          animation: "slide_from_right",
+        }}
+      />
+      <Stack.Screen
+        name="RecurringCreate"
+        component={RecurringCreateScreen}
+        options={{
+          headerShown: false,
+          animation: "slide_from_bottom",
+          presentation: "modal",
+        }}
+      />
+      <Stack.Screen
+        name="RecurringEdit"
+        component={RecurringEditScreen}
         options={{
           headerShown: false,
           animation: "slide_from_right",

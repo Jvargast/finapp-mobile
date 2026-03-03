@@ -8,9 +8,15 @@ interface Props {
   accounts: Account[];
   selectedId: string;
   onSelect: (id: string) => void;
+  embedded?: boolean;
 }
 
-export const AccountSelector = ({ accounts, selectedId, onSelect }: Props) => {
+export const AccountSelector = ({
+  accounts,
+  selectedId,
+  onSelect,
+  embedded = false,
+}: Props) => {
   return (
     <ScrollView
       horizontal
@@ -18,8 +24,8 @@ export const AccountSelector = ({ accounts, selectedId, onSelect }: Props) => {
       keyboardShouldPersistTaps="always"
       nestedScrollEnabled
       contentContainerStyle={{
-        paddingHorizontal: 20,
-        paddingVertical: 10,
+        paddingHorizontal: embedded ? 0 : 20,
+        paddingVertical: embedded ? 6 : 10,
         gap: 12,
       }}
       style={{ flexGrow: 0 }}

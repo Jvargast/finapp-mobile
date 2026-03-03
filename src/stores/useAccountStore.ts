@@ -12,46 +12,55 @@ interface AccountState {
   setLoading: (loading: boolean) => void;
 }
 
+const dedupeAccountsById = (accounts: Account[]) => {
+  const map = new Map<string, Account>();
+  const noIdAccounts: Account[] = [];
+
+  accounts.forEach((account) => {
+    if (!account?.id) {
+      noIdAccounts.push(account);
+      return;
+    }
+    map.set(account.id, account);
+  });
+
+  return [...Array.from(map.values()), ...noIdAccounts];
+};
+
+const getTotalBalance = (accounts: Account[]) =>
+  accounts.reduce((sum, acc) => sum + Number(acc.balance || 0), 0);
+
 export const useAccountStore = create<AccountState>((set, get) => ({
   accounts: [],
   isLoading: false,
   totalBalance: 0,
 
   setAccounts: (accounts) => {
-    const total = accounts.reduce((sum, acc) => sum + Number(acc.balance), 0);
-    set({ accounts, totalBalance: total });
+    const uniqueAccounts = dedupeAccountsById(accounts);
+    set({ accounts: uniqueAccounts, totalBalance: getTotalBalance(uniqueAccounts) });
   },
 
   addAccount: (account) => {
     const current = get().accounts;
-    const newAccounts = [...current, account];
-    const total = newAccounts.reduce(
-      (sum, acc) => sum + Number(acc.balance),
-      0
-    );
-    set({ accounts: newAccounts, totalBalance: total });
+    const newAccounts = dedupeAccountsById([...current, account]);
+    set({ accounts: newAccounts, totalBalance: getTotalBalance(newAccounts) });
   },
   updateAccount: (updatedAccount: Account) => {
     const current = get().accounts;
-
-    const newAccounts = current.map((acc) =>
-      acc.id === updatedAccount.id ? updatedAccount : acc
-    );
-    const total = newAccounts.reduce(
-      (sum, acc) => sum + Number(acc.balance),
-      0
-    );
-    set({ accounts: newAccounts, totalBalance: total });
+    const exists = current.some((acc) => acc.id === updatedAccount.id);
+    const updated = exists
+      ? current.map((acc) =>
+          acc.id === updatedAccount.id ? updatedAccount : acc
+        )
+      : [...current, updatedAccount];
+    const newAccounts = dedupeAccountsById(updated);
+    set({ accounts: newAccounts, totalBalance: getTotalBalance(newAccounts) });
   },
 
   removeAccount: (id) => {
     const current = get().accounts;
     const newAccounts = current.filter((acc) => acc.id !== id);
-    const total = newAccounts.reduce(
-      (sum, acc) => sum + Number(acc.balance),
-      0
-    );
-    set({ accounts: newAccounts, totalBalance: total });
+    set({ accounts: newAccounts, totalBalance: getTotalBalance(newAccounts) });
   },
 
   setLoading: (isLoading) => set({ isLoading }),

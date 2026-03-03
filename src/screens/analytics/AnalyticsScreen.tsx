@@ -1,6 +1,17 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Pressable, ScrollView } from "react-native";
-import { YStack, XStack, Text, Button, Circle, Stack, Spinner, Sheet } from "tamagui";
+import { Pressable, ScrollView, TextInput } from "react-native";
+import {
+  YStack,
+  XStack,
+  Text,
+  Button,
+  Circle,
+  Stack,
+  Spinner,
+  Sheet,
+  Separator,
+  useThemeName,
+} from "tamagui";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import {
@@ -8,6 +19,7 @@ import {
   ChevronRight,
   SlidersHorizontal,
   Search,
+  X,
 } from "@tamagui/lucide-icons";
 import { PieChart } from "react-native-gifted-charts";
 import Svg, { Defs, Pattern, Rect, Mask, Circle as SvgCircle, Line } from "react-native-svg";
@@ -21,6 +33,8 @@ import { Transaction } from "../../types/transaction.types";
 import { getIcon } from "../../utils/iconMap";
 
 type ViewMode = "EXPENSE" | "INCOME";
+type MinPercentFilter = 0 | 3 | 5 | 10;
+type MaxCategoriesFilter = 5 | 8 | 12;
 
 type LabelPosition = {
   id: string;
@@ -55,7 +69,7 @@ type LabelCluster = {
   gap?: number;
 };
 
-const pastel = {
+const LIGHT_PALETTE = {
   page: "#FBF8F4",
   surface: "#FFFFFF",
   border: "#E6DFD6",
@@ -67,9 +81,41 @@ const pastel = {
   peachText: "#C2410C",
   mint: "#DCFCE7",
   mintText: "#15803D",
+  hatchStrong: "rgba(255,255,255,0.3)",
+  hatchSoft: "rgba(255,255,255,0.16)",
+  clusterBg: "rgba(255,255,255,0.35)",
+  badgeBg: "#1F2937",
+  badgeText: "#FFFFFF",
+  emptyPie: "#E5E7EB",
+  iconBgFallback: "#EEF2FF",
+  mixBase: "#FFFFFF",
+  mixAlt: "#0F172A",
 };
 
-const PIE_COLORS = [
+const DARK_PALETTE = {
+  page: "#0B1220",
+  surface: "#111827",
+  border: "#233044",
+  muted: "#94A3B8",
+  ink: "#F8FAFC",
+  accent: "#A5B4FC",
+  accentSoft: "rgba(165,180,252,0.18)",
+  peach: "#FB923C",
+  peachText: "#FDBA74",
+  mint: "#34D399",
+  mintText: "#6EE7B7",
+  hatchStrong: "rgba(255,255,255,0.14)",
+  hatchSoft: "rgba(255,255,255,0.08)",
+  clusterBg: "rgba(15,23,42,0.7)",
+  badgeBg: "#E2E8F0",
+  badgeText: "#0F172A",
+  emptyPie: "#334155",
+  iconBgFallback: "rgba(148,163,184,0.18)",
+  mixBase: "#0F172A",
+  mixAlt: "#FFFFFF",
+};
+
+const LIGHT_PIE_COLORS = [
   "#9DB8F7",
   "#F6C9A6",
   "#9ADBC0",
@@ -78,6 +124,91 @@ const PIE_COLORS = [
   "#B7D4F1",
   "#F2D48A",
 ];
+
+const DARK_PIE_COLORS = [
+  "#8FB4FF",
+  "#F7B983",
+  "#6AD2A9",
+  "#B9A6FF",
+  "#F5A0C2",
+  "#7FC8E8",
+  "#F0D070",
+];
+
+type AnalyticsPalette = typeof LIGHT_PALETTE;
+type SegmentOption = { id: string; label: string };
+
+const chunkBy = <T,>(items: readonly T[], size: number) => {
+  const chunks: T[][] = [];
+  for (let i = 0; i < items.length; i += size) {
+    chunks.push(items.slice(i, i + size) as T[]);
+  }
+  return chunks;
+};
+
+const SegmentControl = ({
+  options,
+  value,
+  onChange,
+  columns = 2,
+  pastel,
+  activeColor,
+}: {
+  options: readonly SegmentOption[];
+  value: string;
+  onChange: (id: string) => void;
+  columns?: number;
+  pastel: AnalyticsPalette;
+  activeColor: string;
+}) => {
+  const rows = chunkBy(options, columns);
+
+  return (
+    <YStack
+      backgroundColor={pastel.page}
+      borderRadius="$5"
+      padding="$1.5"
+      space="$1.5"
+    >
+      {rows.map((row, rowIndex) => (
+        <XStack key={`row-${rowIndex}`} space="$1.5" justifyContent="center">
+          {row.map((option) => {
+            const active = value === option.id;
+            return (
+              <Button
+                key={option.id}
+                flex={1}
+                height={44}
+                borderRadius="$3"
+                paddingHorizontal="$2"
+                paddingVertical="$2.5"
+                borderWidth={active ? 0 : 1}
+                borderColor={active ? "transparent" : pastel.border}
+                backgroundColor={active ? activeColor : pastel.surface}
+                onPress={() => onChange(option.id)}
+                pressStyle={{ opacity: 0.9, scale: 0.985 }}
+              >
+                <Text
+                  fontSize={12}
+                  fontWeight={active ? "800" : "600"}
+                  color={active ? "white" : pastel.muted}
+                  numberOfLines={1}
+                  textAlign="center"
+                >
+                  {option.label}
+                </Text>
+              </Button>
+            );
+          })}
+          {row.length < columns &&
+            Array.from({ length: columns - row.length }).map((_, idx) => (
+              <Stack key={`spacer-${rowIndex}-${idx}`} flex={1} />
+            ))}
+        </XStack>
+      ))}
+    </YStack>
+  );
+};
 
 const DONUT_SIZE = 260;
 const DONUT_RADIUS = 120;
@@ -104,11 +235,30 @@ const OVERLAY_PAD = 26;
 const PILL_HEIGHT = 16;
 const PILL_WIDTH = 44;
 
+const TRANSFER_FILTER_OPTIONS = [
+  { id: "include", label: "Con transferencias" },
+  { id: "only-expense", label: "Solo gastos" },
+] as const;
+
+const MIN_PERCENT_OPTIONS = [
+  { id: "0", label: "Todos" },
+  { id: "3", label: "Desde 3%" },
+  { id: "5", label: "Desde 5%" },
+  { id: "10", label: "Desde 10%" },
+] as const;
+
+const MAX_CATEGORY_OPTIONS = [
+  { id: "5", label: "Top 5" },
+  { id: "8", label: "Top 8" },
+  { id: "12", label: "Top 12" },
+] as const;
+
 const formatPercent = (value: number, detailed = false) => {
   if (!Number.isFinite(value) || value <= 0) return "0%";
   if (value < 0.5) return "<0.5%";
-  if (value < 10) return `${value.toFixed(1)}%`;
-  if (detailed) return `${value.toFixed(1)}%`;
+  const oneDecimal = Number(value.toFixed(1));
+  if (value < 10) return `${oneDecimal}%`;
+  if (detailed) return `${oneDecimal}%`;
   return `${Math.round(value)}%`;
 };
 
@@ -137,31 +287,76 @@ const hashCode = (value: string) => {
   return Math.abs(hash);
 };
 
-const soften = (hex: string, amount = 0.82) => {
+const mixHex = (
+  hex: string,
+  targetHex: string,
+  amount = 0.82,
+  fallback = "#F3F4F6"
+) => {
   const clean = hex.replace("#", "");
-  if (clean.length !== 6) return "#F3F4F6";
+  const cleanTarget = targetHex.replace("#", "");
+  if (clean.length !== 6 || cleanTarget.length !== 6) return fallback;
   const r = parseInt(clean.slice(0, 2), 16);
   const g = parseInt(clean.slice(2, 4), 16);
   const b = parseInt(clean.slice(4, 6), 16);
-  const mix = (c: number) => Math.round(c + (255 - c) * amount);
-  return `rgb(${mix(r)}, ${mix(g)}, ${mix(b)})`;
+  const tr = parseInt(cleanTarget.slice(0, 2), 16);
+  const tg = parseInt(cleanTarget.slice(2, 4), 16);
+  const tb = parseInt(cleanTarget.slice(4, 6), 16);
+  const mix = (c: number, t: number) => Math.round(c + (t - c) * amount);
+  const rr = mix(r, tr)
+    .toString(16)
+    .padStart(2, "0");
+  const gg = mix(g, tg)
+    .toString(16)
+    .padStart(2, "0");
+  const bb = mix(b, tb)
+    .toString(16)
+    .padStart(2, "0");
+  return `#${rr}${gg}${bb}`;
 };
 
-const getIconBg = (color?: string) => {
-  if (!color) return "#EEF2FF";
+const toRgba = (hex: string, alpha: number, fallback: string) => {
+  const clean = hex.replace("#", "");
+  if (clean.length !== 6) return fallback;
+  const r = parseInt(clean.slice(0, 2), 16);
+  const g = parseInt(clean.slice(2, 4), 16);
+  const b = parseInt(clean.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
+const getIconBg = (
+  color: string | undefined,
+  isDark: boolean,
+  fallback: string
+) => {
+  if (!color) return fallback;
   if (color.startsWith("#")) {
-    return `${color}22`;
+    return toRgba(color, isDark ? 0.22 : 0.16, fallback);
   }
-  return "#EEF2FF";
+  return fallback;
 };
 
 export default function AnalyticsScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
+  const themeName = useThemeName();
+  const isDark = themeName.startsWith("dark");
   const [viewMode, setViewMode] = useState<ViewMode>("EXPENSE");
+  const [filterSheetOpen, setFilterSheetOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [includeTransfers, setIncludeTransfers] = useState(true);
+  const [minPercentFilter, setMinPercentFilter] =
+    useState<MinPercentFilter>(0);
+  const [maxCategories, setMaxCategories] = useState<MaxCategoriesFilter>(8);
   const [labelSheetOpen, setLabelSheetOpen] = useState(false);
   const [activeCluster, setActiveCluster] = useState<LabelCluster | null>(null);
   const categories = useCategoryStore((state) => state.categories);
+  const pastel = isDark ? DARK_PALETTE : LIGHT_PALETTE;
+  const pieColors = isDark ? DARK_PIE_COLORS : LIGHT_PIE_COLORS;
+  const softMixAmount = isDark ? 0.68 : 0.82;
+  const gradientMixAmount = isDark ? 0.24 : 0.65;
+  const searchNormalized = searchQuery.trim().toLowerCase();
 
   const {
     transactions,
@@ -191,10 +386,9 @@ export default function AnalyticsScreen() {
     TransactionActions.changeDate(nextMonth, nextYear);
   };
 
-
   const { rows, total } = useMemo(() => {
     const categoryMap = new Map(categories.map((cat) => [cat.id, cat]));
-    const filtered = transactions.filter((tx) => {
+    const monthTransactions = transactions.filter((tx) => {
       const date = new Date(tx.date);
       if (
         date.getMonth() + 1 !== selectedMonth ||
@@ -203,7 +397,7 @@ export default function AnalyticsScreen() {
         return false;
       }
       if (viewMode === "INCOME") return tx.type === "INCOME";
-      return tx.type === "EXPENSE" || tx.type === "TRANSFER";
+      return tx.type === "EXPENSE" || (includeTransfers && tx.type === "TRANSFER");
     });
 
     const map = new Map<
@@ -218,14 +412,14 @@ export default function AnalyticsScreen() {
       }
     >();
 
-    filtered.forEach((tx) => {
+    monthTransactions.forEach((tx) => {
       const amount = Math.abs(Number(tx.amount || 0));
       const category = tx.category || categoryMap.get(tx.categoryId);
       const key = tx.categoryId || category?.id || "unknown";
       const prev = map.get(key);
       const baseColor =
         category?.color ||
-        PIE_COLORS[hashCode(key) % PIE_COLORS.length];
+        pieColors[hashCode(key) % pieColors.length];
       const name = category?.name || "Sin categoría";
       map.set(key, {
         id: key,
@@ -237,37 +431,93 @@ export default function AnalyticsScreen() {
       });
     });
 
-    const totalValue = Array.from(map.values()).reduce(
-      (acc, item) => acc + item.total,
-      0,
-    );
+    let list = Array.from(map.values()).sort((a, b) => b.total - a.total);
 
-    const list = Array.from(map.values())
-      .sort((a, b) => b.total - a.total)
-      .map((item) => ({
+    if (searchNormalized) {
+      list = list.filter((item) =>
+        item.name.toLowerCase().includes(searchNormalized)
+      );
+    }
+
+    list = list.slice(0, maxCategories);
+
+    const totalBeforeThreshold = list.reduce((acc, item) => acc + item.total, 0);
+    let rowsWithPercent = list.map((item) => ({
+      ...item,
+      percent: totalBeforeThreshold > 0 ? (item.total / totalBeforeThreshold) * 100 : 0,
+      softColor: mixHex(
+        item.color,
+        pastel.mixBase,
+        softMixAmount,
+        pastel.iconBgFallback
+      ),
+    }));
+
+    if (minPercentFilter > 0) {
+      rowsWithPercent = rowsWithPercent.filter(
+        (item) => item.percent >= minPercentFilter
+      );
+
+      const thresholdTotal = rowsWithPercent.reduce(
+        (acc, item) => acc + item.total,
+        0
+      );
+
+      rowsWithPercent = rowsWithPercent.map((item) => ({
         ...item,
-        percent: totalValue > 0 ? (item.total / totalValue) * 100 : 0,
-        softColor: soften(item.color),
+        percent: thresholdTotal > 0 ? (item.total / thresholdTotal) * 100 : 0,
       }));
+    }
 
-    return { rows: list, total: totalValue };
-  }, [transactions, selectedMonth, selectedYear, viewMode, categories]);
+    const visibleTotal = rowsWithPercent.reduce((acc, item) => acc + item.total, 0);
+
+    return { rows: rowsWithPercent, total: visibleTotal };
+  }, [
+    transactions,
+    selectedMonth,
+    selectedYear,
+    viewMode,
+    includeTransfers,
+    searchNormalized,
+    minPercentFilter,
+    maxCategories,
+    categories,
+    pieColors,
+    pastel.mixBase,
+    pastel.iconBgFallback,
+    softMixAmount,
+  ]);
 
   const pieData = useMemo(() => {
     if (rows.length === 0) {
-      return [{ value: 1, color: "#E5E7EB" }];
+      return [{ value: 1, color: pastel.emptyPie }];
     }
     return rows.map((row) => ({
       value: row.total,
       color: row.color,
-      gradientCenterColor: soften(row.color, 0.65),
+      gradientCenterColor: mixHex(
+        row.color,
+        "#FFFFFF",
+        gradientMixAmount,
+        row.color
+      ),
       percent: row.percent,
       icon: row.icon,
     }));
-  }, [rows]);
+  }, [rows, pastel.emptyPie, gradientMixAmount]);
 
   const viewLabel = viewMode === "EXPENSE" ? "Gastos" : "Ingresos";
   const summaryTotal = viewMode === "EXPENSE" ? totalExpense : totalIncome;
+  const hasActiveFilters =
+    searchNormalized.length > 0 ||
+    minPercentFilter > 0 ||
+    maxCategories !== 8 ||
+    (viewMode === "EXPENSE" && !includeTransfers);
+  const filterCount =
+    (viewMode === "EXPENSE" && !includeTransfers ? 1 : 0) +
+    (minPercentFilter > 0 ? 1 : 0) +
+    (maxCategories !== 8 ? 1 : 0);
+  const centerTotal = hasActiveFilters ? total : summaryTotal || total;
   const labelPositions: LabelPosition[] = useMemo(() => {
     if (!total || rows.length === 0) return [];
     let acc = 0;
@@ -464,12 +714,38 @@ export default function AnalyticsScreen() {
         baseY,
       };
     });
-  }, [clusters]);
+  }, [
+    clusters,
+    pastel.ink,
+    pastel.border,
+    pastel.mixBase,
+    pastel.mixAlt,
+    pastel.clusterBg,
+    pastel.iconBgFallback,
+    pastel.badgeBg,
+    pastel.badgeText,
+    isDark,
+  ]);
 
   const handleClusterPress = (cluster: LabelCluster) => {
     if (cluster.items.length <= 1) return;
     setActiveCluster(cluster);
     setLabelSheetOpen(true);
+  };
+
+  const toggleSearch = () => {
+    if (searchOpen) {
+      setSearchOpen(false);
+      setSearchQuery("");
+      return;
+    }
+    setSearchOpen(true);
+  };
+
+  const clearFilters = () => {
+    setIncludeTransfers(true);
+    setMinPercentFilter(0);
+    setMaxCategories(8);
   };
 
   return (
@@ -518,30 +794,40 @@ export default function AnalyticsScreen() {
             />
           </XStack>
           <XStack alignItems="center" space="$2">
-            <Stack
-              width={36}
-              height={36}
-              borderRadius={12}
+            <Button
+              size="$3"
+              circular
+              backgroundColor={
+                filterSheetOpen || filterCount > 0 ? pastel.accentSoft : pastel.surface
+              }
               borderWidth={1}
               borderColor={pastel.border}
-              backgroundColor={pastel.surface}
-              alignItems="center"
-              justifyContent="center"
-            >
-              <SlidersHorizontal size={16} color={pastel.muted} />
-            </Stack>
-            <Stack
-              width={36}
-              height={36}
-              borderRadius={12}
+              onPress={() => setFilterSheetOpen(true)}
+              icon={
+                <SlidersHorizontal
+                  size={16}
+                  color={filterCount > 0 ? pastel.accent : pastel.muted}
+                />
+              }
+            />
+            <Button
+              size="$3"
+              circular
+              backgroundColor={
+                searchOpen || searchNormalized.length > 0
+                  ? pastel.accentSoft
+                  : pastel.surface
+              }
               borderWidth={1}
               borderColor={pastel.border}
-              backgroundColor={pastel.surface}
-              alignItems="center"
-              justifyContent="center"
-            >
-              <Search size={16} color={pastel.muted} />
-            </Stack>
+              onPress={toggleSearch}
+              icon={
+                <Search
+                  size={16}
+                  color={searchNormalized.length > 0 ? pastel.accent : pastel.muted}
+                />
+              }
+            />
           </XStack>
         </XStack>
 
@@ -594,6 +880,39 @@ export default function AnalyticsScreen() {
           </Button>
         </XStack>
 
+        {searchOpen && (
+          <XStack
+            height={40}
+            borderRadius="$10"
+            borderWidth={1}
+            borderColor={pastel.border}
+            backgroundColor={pastel.surface}
+            alignItems="center"
+            paddingHorizontal="$3"
+            space="$2"
+          >
+            <Search size={14} color={pastel.muted} />
+            <TextInput
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholder="Buscar categoría..."
+              placeholderTextColor={pastel.muted}
+              autoFocus
+              style={{
+                flex: 1,
+                color: pastel.ink,
+                fontSize: 14,
+                paddingVertical: 0,
+              }}
+            />
+            {searchQuery.length > 0 && (
+              <Pressable onPress={() => setSearchQuery("")} hitSlop={8}>
+                <X size={14} color={pastel.muted} />
+              </Pressable>
+            )}
+          </XStack>
+        )}
+
         <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 40 }}
@@ -624,8 +943,8 @@ export default function AnalyticsScreen() {
                     radius={DONUT_RADIUS}
                     innerRadius={DONUT_INNER}
                     strokeWidth={10}
-                    strokeColor={pastel.surface}
-                    innerCircleColor={pastel.surface}
+                    strokeColor={pastel.page}
+                    innerCircleColor={pastel.page}
                     showGradient={true}
                     focusOnPress={false}
                     toggleFocusOnPress={false}
@@ -641,7 +960,7 @@ export default function AnalyticsScreen() {
                           {viewLabel.toUpperCase()}
                         </Text>
                         <Text fontSize="$5" fontWeight="800" color={pastel.ink}>
-                          {formatCurrency(summaryTotal || total)}
+                          {formatCurrency(centerTotal)}
                         </Text>
                       </YStack>
                     )}
@@ -668,7 +987,7 @@ export default function AnalyticsScreen() {
                           y1="0"
                           x2="0"
                           y2="8"
-                          stroke="rgba(255,255,255,0.3)"
+                          stroke={pastel.hatchStrong}
                           strokeWidth="1"
                         />
                         <Line
@@ -676,7 +995,7 @@ export default function AnalyticsScreen() {
                           y1="0"
                           x2="4"
                           y2="8"
-                          stroke="rgba(255,255,255,0.16)"
+                          stroke={pastel.hatchSoft}
                           strokeWidth="1"
                         />
                       </Pattern>
@@ -739,8 +1058,13 @@ export default function AnalyticsScreen() {
                                 height={cluster.ovalHeight}
                                 borderRadius={999}
                                 borderWidth={1}
-                                borderColor={soften(cluster.primaryColor, 0.2)}
-                                backgroundColor="rgba(255,255,255,0.35)"
+                                borderColor={mixHex(
+                                  cluster.primaryColor,
+                                  pastel.mixAlt,
+                                  isDark ? 0.3 : 0.15,
+                                  pastel.border
+                                )}
+                                backgroundColor={pastel.clusterBg}
                                 zIndex={0}
                               />
                             )}
@@ -762,7 +1086,12 @@ export default function AnalyticsScreen() {
                                   >
                                     <Circle
                                       size={entry.iconSize || LABEL_ICON_SIZE}
-                                      backgroundColor={soften(entry.color, 0.9)}
+                                      backgroundColor={mixHex(
+                                        entry.color,
+                                        pastel.mixBase,
+                                        isDark ? 0.72 : 0.9,
+                                        pastel.iconBgFallback
+                                      )}
                                       borderWidth={1}
                                       borderColor={entry.color}
                                     >
@@ -788,12 +1117,16 @@ export default function AnalyticsScreen() {
                               {cluster.items.length > cluster.visibleItems.length && (
                                 <Circle
                                   size={14}
-                                  backgroundColor={pastel.ink}
+                                  backgroundColor={pastel.badgeBg}
                                   position="absolute"
                                   right={-4}
                                   bottom={-4}
                                 >
-                                  <Text fontSize={9} fontWeight="700" color="white">
+                                  <Text
+                                    fontSize={9}
+                                    fontWeight="700"
+                                    color={pastel.badgeText}
+                                  >
                                     +{cluster.items.length - cluster.visibleItems.length}
                                   </Text>
                                 </Circle>
@@ -844,11 +1177,13 @@ export default function AnalyticsScreen() {
                   alignItems="center"
                 >
                   <Text color={pastel.muted}>
-                    Aún no hay movimientos en este mes.
+                    {hasActiveFilters
+                      ? "No hay resultados con los filtros actuales."
+                      : "Aún no hay movimientos en este mes."}
                   </Text>
                 </YStack>
               ) : (
-                rows.slice(0, 8).map((row) => (
+                rows.map((row) => (
                   <YStack
                     key={row.id}
                     backgroundColor={pastel.surface}
@@ -860,7 +1195,14 @@ export default function AnalyticsScreen() {
                   >
                     <XStack alignItems="center" justifyContent="space-between">
                       <XStack alignItems="center" space="$3">
-                        <Circle size={38} backgroundColor={getIconBg(row.color)}>
+                        <Circle
+                          size={38}
+                          backgroundColor={getIconBg(
+                            row.color,
+                            isDark,
+                            pastel.iconBgFallback
+                          )}
+                        >
                           {(() => {
                             const Icon = getIcon(row.icon || "HelpCircle");
                             return (
@@ -903,8 +1245,157 @@ export default function AnalyticsScreen() {
 
       <Sheet
         modal
+        open={filterSheetOpen}
+        onOpenChange={(open: boolean) => setFilterSheetOpen(open)}
+        snapPoints={[70]}
+        dismissOnSnapToBottom
+        zIndex={100_200}
+        animation="medium"
+      >
+        <Sheet.Overlay
+          animation="lazy"
+          backgroundColor={isDark ? "rgba(2,6,23,0.74)" : "rgba(15,23,42,0.3)"}
+          enterStyle={{ opacity: 0 }}
+          exitStyle={{ opacity: 0 }}
+        />
+        <Sheet.Handle />
+        <Sheet.Frame backgroundColor={pastel.surface}>
+          <YStack flex={1}>
+            <XStack
+              paddingHorizontal="$4"
+              paddingTop="$4"
+              paddingBottom="$3"
+              alignItems="center"
+              justifyContent="space-between"
+            >
+              <YStack space="$1">
+                <Text fontSize="$6" fontWeight="800" color={pastel.ink}>
+                  Filtros de análisis
+                </Text>
+                <Text fontSize="$3" color={pastel.muted}>
+                  Personaliza el gráfico y la lista.
+                </Text>
+              </YStack>
+              <Button
+                size="$3"
+                circular
+                chromeless
+                onPress={() => setFilterSheetOpen(false)}
+                icon={<X size={16} color={pastel.muted} />}
+              />
+            </XStack>
+
+            <Separator borderColor={pastel.border} />
+
+            <YStack
+              flex={1}
+              paddingHorizontal="$4"
+              paddingTop="$4"
+              justifyContent="space-between"
+              space="$4"
+            >
+              <YStack space="$4.5">
+                {viewMode === "EXPENSE" && (
+                  <YStack space="$3">
+                    <Text
+                      fontSize={11}
+                      fontWeight="800"
+                      color={pastel.muted}
+                      letterSpacing={0.45}
+                    >
+                      MOVIMIENTOS
+                    </Text>
+                    <SegmentControl
+                      options={TRANSFER_FILTER_OPTIONS}
+                      value={includeTransfers ? "include" : "only-expense"}
+                      onChange={(id) => setIncludeTransfers(id === "include")}
+                      columns={2}
+                      pastel={pastel}
+                      activeColor={pastel.accent}
+                    />
+                  </YStack>
+                )}
+
+                <YStack space="$3">
+                  <Text
+                    fontSize={11}
+                    fontWeight="800"
+                    color={pastel.muted}
+                    letterSpacing={0.45}
+                  >
+                    UMBRAL MÍNIMO
+                  </Text>
+                  <SegmentControl
+                    options={MIN_PERCENT_OPTIONS}
+                    value={String(minPercentFilter)}
+                    onChange={(id) => setMinPercentFilter(Number(id) as MinPercentFilter)}
+                    columns={2}
+                    pastel={pastel}
+                    activeColor={pastel.accent}
+                  />
+                </YStack>
+
+                <YStack space="$3">
+                  <Text
+                    fontSize={11}
+                    fontWeight="800"
+                    color={pastel.muted}
+                    letterSpacing={0.45}
+                  >
+                    UMBRAL MÁXIMO DE CATEGORÍAS
+                  </Text>
+                  <SegmentControl
+                    options={MAX_CATEGORY_OPTIONS}
+                    value={String(maxCategories)}
+                    onChange={(id) => setMaxCategories(Number(id) as MaxCategoriesFilter)}
+                    columns={3}
+                    pastel={pastel}
+                    activeColor={pastel.accent}
+                  />
+                </YStack>
+              </YStack>
+
+              <YStack
+                paddingBottom={Math.max(insets.bottom, 12)}
+                space="$3"
+              >
+                <Separator borderColor={pastel.border} />
+              <XStack space="$2">
+                <Button
+                  flex={1}
+                  height={44}
+                  backgroundColor={pastel.accentSoft}
+                  borderWidth={0}
+                  borderRadius="$4"
+                  onPress={clearFilters}
+                >
+                  <Text fontSize="$3" fontWeight="700" color={pastel.accent}>
+                    Limpiar
+                  </Text>
+                </Button>
+                <Button
+                  flex={1}
+                  height={44}
+                  backgroundColor={pastel.accent}
+                  borderWidth={0}
+                  borderRadius="$4"
+                  onPress={() => setFilterSheetOpen(false)}
+                >
+                  <Text fontSize="$3" fontWeight="700" color="white">
+                    Aplicar
+                  </Text>
+                </Button>
+              </XStack>
+            </YStack>
+            </YStack>
+          </YStack>
+        </Sheet.Frame>
+      </Sheet>
+
+      <Sheet
+        modal
         open={labelSheetOpen}
-        onOpenChange={(open) => {
+        onOpenChange={(open: boolean) => {
           setLabelSheetOpen(open);
           if (!open) setActiveCluster(null);
         }}
@@ -915,6 +1406,7 @@ export default function AnalyticsScreen() {
       >
         <Sheet.Overlay
           animation="lazy"
+          backgroundColor={isDark ? "rgba(2,6,23,0.74)" : "rgba(15,23,42,0.3)"}
           enterStyle={{ opacity: 0 }}
           exitStyle={{ opacity: 0 }}
         />
@@ -961,7 +1453,11 @@ export default function AnalyticsScreen() {
                           <XStack alignItems="center" space="$3">
                             <Circle
                               size={36}
-                              backgroundColor="white"
+                              backgroundColor={getIconBg(
+                                item.color,
+                                isDark,
+                                pastel.iconBgFallback
+                              )}
                               borderWidth={1}
                               borderColor={item.color}
                             >

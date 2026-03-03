@@ -10,8 +10,9 @@ interface AccountSetupStep4Props {
 
 const getMethodLabel = (method: AccountSetupMethod | null) => {
   if (method === AccountSetupMethod.EMAIL_HISTORY)
-    return "Gmail / Google (90 dias)";
-  if (method === AccountSetupMethod.EMAIL_FORWARD) return "Reenvio de correos";
+    return "Sincronizacion por correo (90 días)";
+  if (method === AccountSetupMethod.EMAIL_FORWARD)
+    return "Reenvio automatico por correo";
   if (method === AccountSetupMethod.STATEMENT) return "Cartola";
   return "Manual";
 };

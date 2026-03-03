@@ -1,22 +1,18 @@
-import { AccountService } from "../services/accountService";
+import {
+  AccountService,
+  DeleteAccountOptions,
+  DeleteAccountResult,
+} from "../services/accountService";
 import { useAccountStore } from "../stores/useAccountStore";
 
 export const AccountActions = {
   loadAccounts: async () => {
     const store = useAccountStore.getState();
+    if (store.isLoading) return;
     store.setLoading(true);
 
     try {
       const accounts = await AccountService.getAll();
-      console.log(
-        "📦 /accounts =>",
-        accounts.length,
-        accounts.map((a) => ({
-          id: a.id,
-          name: a.name,
-          bankLinkId: a.bankLinkId,
-        })),
-      );
       store.setAccounts(accounts);
     } catch (error) {
       console.error("Error cargando cuentas:", error);
@@ -58,14 +54,17 @@ export const AccountActions = {
     }
   },
 
-  deleteAccount: async (id: string) => {
+  deleteAccount: async (
+    id: string,
+    options?: DeleteAccountOptions,
+  ): Promise<DeleteAccountResult> => {
     const store = useAccountStore.getState();
     const previousAccounts = store.accounts;
 
     store.removeAccount(id);
 
     try {
-      await AccountService.delete(id);
+      return await AccountService.delete(id, options);
     } catch (error) {
       console.error("Error borrando cuenta:", error);
       store.setAccounts(previousAccounts);

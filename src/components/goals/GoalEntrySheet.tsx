@@ -8,7 +8,7 @@ import {
 } from "@tamagui/lucide-icons";
 import { useNavigation } from "@react-navigation/native";
 import * as Clipboard from "expo-clipboard";
-import { Alert, Keyboard, TextInput } from "react-native";
+import { Keyboard, TextInput } from "react-native";
 import { GoalService } from "../../services/goalService";
 import { useToastStore } from "../../stores/useToastStore";
 
@@ -31,6 +31,8 @@ const extractTokenFromText = (text: string) => {
   return cleanText;
 };
 
+const SHEET_CLOSE_DELAY_MS = 220;
+
 export const GoalEntrySheet = ({
   open,
   onOpenChange,
@@ -44,17 +46,17 @@ export const GoalEntrySheet = ({
 
   const inputRef = useRef<TextInput>(null);
 
-  const snapPoints = [45];
+  const snapPoints = mode === "JOIN" ? [58] : [46];
 
-  useEffect(() => {
-    if (!open) {
-      const timer = setTimeout(() => {
-        setMode("MENU");
-        setInviteCode("");
-      }, 300);
-      return () => clearTimeout(timer);
+  const handleSheetOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen) {
+      Keyboard.dismiss();
+      setMode("MENU");
+      setInviteCode("");
+      setIsJoining(false);
     }
-  }, [open]);
+    onOpenChange(nextOpen);
+  };
 
   useEffect(() => {
     if (open && mode === "JOIN") {
@@ -66,10 +68,10 @@ export const GoalEntrySheet = ({
   }, [open, mode]);
 
   const handleGoToCreate = () => {
-    onOpenChange(false);
+    handleSheetOpenChange(false);
     setTimeout(() => {
       navigation.navigate("CreateGoal");
-    }, 100);
+    }, SHEET_CLOSE_DELAY_MS);
   };
 
   const handlePaste = async () => {
@@ -86,7 +88,7 @@ export const GoalEntrySheet = ({
       await GoalService.joinByToken(inviteCode);
       await new Promise((r) => setTimeout(r, 1500));
       showToast("¡Te has unido a la meta correctamente!", "success");
-      onOpenChange(false);
+      handleSheetOpenChange(false);
       onGoalCreated?.();
     } catch (error: any) {
       const msg =
@@ -102,12 +104,11 @@ export const GoalEntrySheet = ({
       key="goal-sheet"
       modal
       open={open}
-      onOpenChange={onOpenChange}
+      onOpenChange={handleSheetOpenChange}
       snapPoints={snapPoints}
       dismissOnSnapToBottom
       zIndex={100_000}
       animation="medium"
-      moveOnKeyboardChange={true}
       dismissOnOverlayPress={mode === "MENU"}
     >
       <Sheet.Overlay
@@ -117,8 +118,8 @@ export const GoalEntrySheet = ({
       />
       <Sheet.Handle />
 
-      <Sheet.Frame padding="$4" backgroundColor="$background">
-        <YStack space="$4" flex={1}>
+      <Sheet.Frame padding="$4" backgroundColor="$background" minHeight={260}>
+        <YStack space="$4">
           {mode === "MENU" ? (
             <YStack space="$4">
               <Text
@@ -136,10 +137,11 @@ export const GoalEntrySheet = ({
                   backgroundColor="$brand"
                   color="white"
                   icon={<Plus size={22} />}
-                  onPressIn={handleGoToCreate}
+                  onPress={handleGoToCreate}
                   fontWeight="bold"
                   justifyContent="flex-start"
                   paddingLeft="$6"
+                  disabled={isJoining}
                 >
                   Crear desde cero
                 </Button>
@@ -149,12 +151,13 @@ export const GoalEntrySheet = ({
                   backgroundColor="$blue2"
                   color="$blue10"
                   icon={<Link size={22} />}
-                  onPressIn={() => setMode("JOIN")}
+                  onPress={() => setMode("JOIN")}
                   fontWeight="bold"
                   justifyContent="flex-start"
                   paddingLeft="$6"
                   borderWidth={1}
                   borderColor="$blue5"
+                  disabled={isJoining}
                 >
                   Unirse con código
                 </Button>

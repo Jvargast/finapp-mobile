@@ -29,10 +29,10 @@ export const CategorySelector = ({
   const isLoading = useCategoryStore((state) => state.isLoading);
 
   useEffect(() => {
-    if (categories.length === 0) {
-      CategoryActions.loadCategories(true);
+    if (categories.length === 0 && !isLoading) {
+      CategoryActions.loadCategories();
     }
-  }, []);
+  }, [categories.length, isLoading]);
 
   const activeCategories = useMemo(() => {
     return categories
@@ -74,7 +74,6 @@ export const CategorySelector = ({
           paddingBottom: embedded ? 10 : 15,
           paddingTop: embedded ? 6 : 10,
         }}
-        overflow="visible"
       >
         {activeCategories.map((cat) => {
           const isSelected = selectedId === cat.id;

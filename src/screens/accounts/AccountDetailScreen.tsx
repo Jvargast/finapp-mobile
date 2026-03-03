@@ -3,11 +3,10 @@ import { ScrollView } from "react-native";
 import { YStack, XStack, Text, Spinner, Input, Circle, useThemeName } from "tamagui";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Check, Plus, Calendar, RotateCcw } from "@tamagui/lucide-icons";
+import { Check, Plus, Calendar } from "@tamagui/lucide-icons";
 import Svg, { Path, Circle as SvgCircle } from "react-native-svg";
 import { MainLayout } from "../../components/layout/MainLayout";
 import { AccountService } from "../../services/accountService";
-import { DangerModal } from "../../components/ui/DangerModal";
 import { WouLoader } from "../../components/ui/WouLoader";
 import { GoBackButton } from "../../components/ui/GoBackButton";
 import { WouButton } from "../../components/ui/WouButton";
@@ -25,79 +24,86 @@ type RouteParams = {
 };
 
 const getPalette = (isDark: boolean) => ({
-  page: isDark ? "#0B0F1A" : "#FBF8F4",
-  border: isDark ? "rgba(148,163,184,0.25)" : "#E8E1D8",
+  page: isDark ? "#0A1020" : "#F8FAFC",
+  border: isDark ? "rgba(148,163,184,0.22)" : "#DCE3EE",
   ink: isDark ? "#F8FAFC" : "#1F2937",
   muted: isDark ? "#94A3B8" : "#6B7280",
-  cardBlue: isDark ? "#0F172A" : "#EEF3FF",
-  cardBlueBorder: isDark ? "#1E293B" : "#D9E4FF",
-  cardLilac: isDark ? "#1B1530" : "#F5F3FF",
-  cardLilacBorder: isDark ? "#2B1F4D" : "#E4DBFF",
-  cardPeach: isDark ? "#2A1C12" : "#FFF4E6",
-  cardPeachBorder: isDark ? "#4A2A18" : "#FADDC2",
-  cardMint: isDark ? "#0F1F1A" : "#ECFDF3",
-  cardMintBorder: isDark ? "#193126" : "#D1F5DF",
-  mintIconBg: isDark ? "rgba(94,234,212,0.18)" : "#DCFCE7",
-  mintIcon: isDark ? "#5EEAD4" : "#16A34A",
-  cardRose: isDark ? "#2A1417" : "#FEF2F2",
-  cardRoseBorder: isDark ? "#4A1F24" : "#FECACA",
-  surface: isDark ? "#111827" : "#FFFFFF",
-  surfaceBorder: isDark ? "rgba(148,163,184,0.2)" : "#E5E7EB",
-  inputBg: isDark ? "#0F172A" : "#F8FAFF",
-  accent: isDark ? "#A5B4FC" : "#8BA7F2",
-  peachIconBg: isDark ? "rgba(251,146,60,0.18)" : "#FFE6D1",
-  peachIcon: isDark ? "#FDBA74" : "#C2410C",
-  lilacIconBg: isDark ? "rgba(167,139,250,0.2)" : "#EEE6FF",
-  lilacIcon: isDark ? "#C4B5FD" : "#6D28D9",
-  roseIconBg: isDark ? "rgba(248,113,113,0.2)" : "#FFE4E6",
-  roseIcon: isDark ? "#FCA5A5" : "#BE123C",
+  cardBlue: isDark ? "#121C34" : "#F4F8FF",
+  cardBlueBorder: isDark ? "#243252" : "#DCE8FF",
+  cardLilac: isDark ? "#1B1934" : "#FAF7FF",
+  cardLilacBorder: isDark ? "#2F2852" : "#E8DEFF",
+  cardPeach: isDark ? "#2A2018" : "#FFF8F0",
+  cardPeachBorder: isDark ? "#4B3424" : "#F8E1C8",
+  cardMint: isDark ? "#13261F" : "#F3FCF7",
+  cardMintBorder: isDark ? "#254236" : "#D7F2E3",
+  mintIconBg: isDark ? "rgba(110,231,183,0.17)" : "#E6F8EE",
+  mintIcon: isDark ? "#6EE7B7" : "#1F8A59",
+  cardRose: isDark ? "#2A1A20" : "#FFF6F7",
+  cardRoseBorder: isDark ? "#4A2931" : "#F9D7DB",
+  surface: isDark ? "#101A2C" : "#FFFFFF",
+  surfaceBorder: isDark ? "rgba(148,163,184,0.22)" : "#E6EBF2",
+  inputBg: isDark ? "#0D1728" : "#F8FAFD",
+  inputText: isDark ? "#E2E8F0" : "#0F172A",
+  inputPlaceholder: isDark ? "#64748B" : "#94A3B8",
+  accent: isDark ? "#9AB5FF" : "#5B7EEA",
+  peachIconBg: isDark ? "rgba(251,191,36,0.18)" : "#FFEDD9",
+  peachIcon: isDark ? "#FCD34D" : "#B45309",
+  lilacIconBg: isDark ? "rgba(196,181,253,0.2)" : "#F1EBFF",
+  lilacIcon: isDark ? "#DDD6FE" : "#5B34B4",
+  roseIconBg: isDark ? "rgba(251,113,133,0.18)" : "#FFECEE",
+  roseIcon: isDark ? "#FDA4AF" : "#B42344",
   pill: {
     active: isDark
       ? {
-          bg: "rgba(34,197,94,0.18)",
-          border: "rgba(34,197,94,0.4)",
-          text: "#4ADE80",
+          bg: "rgba(52,211,153,0.18)",
+          border: "rgba(52,211,153,0.34)",
+          text: "#6EE7B7",
         }
-      : { bg: "#DCFCE7", border: "#BBF7D0", text: "#15803D" },
+      : { bg: "#ECFDF3", border: "#CFF5E0", text: "#166534" },
     pending: isDark
       ? {
-          bg: "rgba(245,158,11,0.18)",
-          border: "rgba(245,158,11,0.4)",
-          text: "#FBBF24",
+          bg: "rgba(251,191,36,0.18)",
+          border: "rgba(251,191,36,0.36)",
+          text: "#FCD34D",
         }
-      : { bg: "#FEF3C7", border: "#FDE68A", text: "#B45309" },
+      : { bg: "#FFF7E6", border: "#FDE6B3", text: "#9A5B12" },
     manual: isDark
       ? {
-          bg: "rgba(148,163,184,0.18)",
-          border: "rgba(148,163,184,0.35)",
+          bg: "rgba(148,163,184,0.16)",
+          border: "rgba(148,163,184,0.32)",
           text: "#CBD5E1",
         }
-      : { bg: "#E5E7EB", border: "#D1D5DB", text: "#6B7280" },
+      : { bg: "#EEF2F7", border: "#D8E0EC", text: "#5D6B82" },
     method: isDark
       ? {
-          bg: "rgba(99,102,241,0.2)",
-          border: "rgba(99,102,241,0.4)",
-          text: "#A5B4FC",
+          bg: "rgba(147,197,253,0.18)",
+          border: "rgba(147,197,253,0.33)",
+          text: "#BFDBFE",
         }
-      : { bg: "#E0E7FF", border: "#C7D2FE", text: "#4338CA" },
+      : { bg: "#ECF2FF", border: "#D4E1FF", text: "#2D4EA2" },
     synced: isDark
       ? {
-          bg: "rgba(167,139,250,0.2)",
-          border: "rgba(167,139,250,0.4)",
-          text: "#C4B5FD",
+          bg: "rgba(196,181,253,0.18)",
+          border: "rgba(196,181,253,0.34)",
+          text: "#DDD6FE",
         }
-      : { bg: "#F5F3FF", border: "#E4DBFF", text: "#6D28D9" },
+      : { bg: "#F2EDFF", border: "#E3D7FF", text: "#5532A5" },
     alert: isDark
       ? {
-          bg: "rgba(94,234,212,0.16)",
-          border: "rgba(94,234,212,0.35)",
-          text: "#5EEAD4",
+          bg: "rgba(110,231,183,0.16)",
+          border: "rgba(110,231,183,0.31)",
+          text: "#6EE7B7",
         }
-      : { bg: "#ECFDF3", border: "#D1F5DF", text: "#166534" },
+      : { bg: "#EDFCF5", border: "#CFEFDF", text: "#156947" },
   },
 });
 
-const RULE_CARD_HEIGHT = 84;
+const RULE_CARD_HEIGHT = 78;
+const SECTION_RADIUS = "$8" as const;
+const CHIP_RADIUS = "$6" as const;
+const ITEM_RADIUS = "$7" as const;
+const INPUT_RADIUS = "$6" as const;
+const BUTTON_RADIUS = "$8" as const;
 
 const StatusBadgeIcon = ({
   status,
@@ -232,8 +238,6 @@ export default function AccountDetailScreen() {
   const [toDate, setToDate] = useState("");
   const [isRangeSyncing, setIsRangeSyncing] = useState(false);
   const [rangeError, setRangeError] = useState<string | null>(null);
-  const [showResetModal, setShowResetModal] = useState(false);
-  const [isResetting, setIsResetting] = useState(false);
 
   useEffect(() => {
     if (!accountId) return;
@@ -490,10 +494,6 @@ export default function AccountDetailScreen() {
     : isSetupPending
       ? "PENDING"
       : "MANUAL";
-  const canResetSetup =
-    !isCashAccount &&
-    Boolean(account?.firstSyncedAt) &&
-    (isEmailHistory || Boolean(ruleSourceId));
   const canShowRangeSync = isSetupActive && !isCashAccount;
   const showInboundPill =
     Boolean(inboundSourceId) || setupMethod === AccountSetupMethod.EMAIL_FORWARD;
@@ -600,32 +600,6 @@ export default function AccountDetailScreen() {
     }
   };
 
-  const handleResetSetup = async () => {
-    if (!accountId) return;
-    if (!isPro) {
-      showToast("Requiere Wou+ para reiniciar", "info");
-      return;
-    }
-    setIsResetting(true);
-    try {
-      await AccountService.resetSync(accountId);
-      const refreshed = await AccountService.getById(accountId);
-      setAccount(refreshed);
-      showToast("Configuración reiniciada", "success");
-    } catch (error: any) {
-      const apiMessage =
-        error?.response?.data?.message || error?.response?.data?.error;
-      showToast(
-        apiMessage ? String(apiMessage) : "No pudimos reiniciar la configuración",
-        "error",
-      );
-    } finally {
-      setIsResetting(false);
-      setShowResetModal(false);
-    }
-  };
-
-
   return (
     <>
       <MainLayout noPadding>
@@ -643,6 +617,7 @@ export default function AccountDetailScreen() {
               backgroundColor={pastel.surface}
               borderColor={pastel.border}
               iconColor={pastel.ink}
+              borderRadius={SECTION_RADIUS}
             />
             <Text fontSize="$6" fontWeight="900" color={pastel.ink}>
               Detalle de cuenta
@@ -658,7 +633,7 @@ export default function AccountDetailScreen() {
             <YStack space="$4">
               <YStack
                 backgroundColor={pastel.cardBlue}
-                borderRadius="$12"
+                borderRadius={SECTION_RADIUS}
                 borderWidth={1}
                 borderColor={pastel.cardBlueBorder}
                 padding="$4"
@@ -672,7 +647,7 @@ export default function AccountDetailScreen() {
                 </Text>
                 {account.last4 && (
                   <Text fontSize="$3" color={pastel.muted}>
-                    Terminacion {account.last4}
+                    Terminación {account.last4}
                   </Text>
                 )}
               </YStack>
@@ -682,7 +657,7 @@ export default function AccountDetailScreen() {
                   backgroundColor={statusPill.bg}
                   paddingHorizontal="$3"
                   paddingVertical="$2"
-                  borderRadius="$10"
+                  borderRadius={CHIP_RADIUS}
                   borderWidth={1}
                   borderColor={statusPill.border}
                   alignItems="center"
@@ -697,7 +672,7 @@ export default function AccountDetailScreen() {
                   backgroundColor={methodPill.bg}
                   paddingHorizontal="$3"
                   paddingVertical="$2"
-                  borderRadius="$10"
+                  borderRadius={CHIP_RADIUS}
                   borderWidth={1}
                   borderColor={methodPill.border}
                   alignItems="center"
@@ -715,7 +690,7 @@ export default function AccountDetailScreen() {
                     backgroundColor={alertPill.bg}
                     paddingHorizontal="$3"
                     paddingVertical="$2"
-                    borderRadius="$10"
+                    borderRadius={CHIP_RADIUS}
                     borderWidth={1}
                     borderColor={alertPill.border}
                     alignItems="center"
@@ -732,7 +707,7 @@ export default function AccountDetailScreen() {
               {!isCashAccount && (
                 <YStack
                   backgroundColor={pastel.cardLilac}
-                  borderRadius="$12"
+                  borderRadius={SECTION_RADIUS}
                   borderWidth={1}
                   borderColor={pastel.cardLilacBorder}
                   padding="$4"
@@ -741,7 +716,7 @@ export default function AccountDetailScreen() {
                   <XStack alignItems="center" justifyContent="space-between" space="$3">
                     <XStack alignItems="center" space="$3">
                       <Circle
-                        size={34}
+                        size={32}
                         backgroundColor={pastel.lilacIconBg}
                         borderWidth={1}
                         borderColor={pastel.cardLilacBorder}
@@ -757,6 +732,7 @@ export default function AccountDetailScreen() {
                       variant="soft"
                       tone="pastel"
                       size="sm"
+                      borderRadius={BUTTON_RADIUS}
                       onPress={() => setShowRules((prev) => !prev)}
                     />
                   </XStack>
@@ -805,7 +781,7 @@ export default function AccountDetailScreen() {
                             alignItems="center"
                             backgroundColor={pastel.surface}
                             padding="$3"
-                            borderRadius="$10"
+                            borderRadius={ITEM_RADIUS}
                             borderWidth={1}
                             borderColor={pastel.surfaceBorder}
                             borderLeftWidth={3}
@@ -840,6 +816,7 @@ export default function AccountDetailScreen() {
                             <WouButton
                               size="sm"
                               minWidth={90}
+                              borderRadius={BUTTON_RADIUS}
                               icon={
                                 isAttached ? (
                                   <Check size={14} color={ruleIconColor} />
@@ -876,7 +853,7 @@ export default function AccountDetailScreen() {
               {!isCashAccount && (
                 <YStack
                   backgroundColor={pastel.cardMint}
-                  borderRadius="$12"
+                  borderRadius={SECTION_RADIUS}
                   borderWidth={1}
                   borderColor={pastel.cardMintBorder}
                   padding="$4"
@@ -885,7 +862,7 @@ export default function AccountDetailScreen() {
                   <XStack alignItems="center" justifyContent="space-between" space="$3">
                     <XStack alignItems="center" space="$3">
                       <Circle
-                        size={34}
+                        size={32}
                         backgroundColor={pastel.mintIconBg}
                         borderWidth={1}
                         borderColor={pastel.cardMintBorder}
@@ -901,6 +878,7 @@ export default function AccountDetailScreen() {
                       variant="soft"
                       tone="pastel"
                       size="sm"
+                      borderRadius={BUTTON_RADIUS}
                       onPress={() => setShowInboundRules((prev) => !prev)}
                     />
                   </XStack>
@@ -950,7 +928,7 @@ export default function AccountDetailScreen() {
                             alignItems="center"
                             backgroundColor={pastel.surface}
                             padding="$3"
-                            borderRadius="$10"
+                            borderRadius={ITEM_RADIUS}
                             borderWidth={1}
                             borderColor={pastel.surfaceBorder}
                             borderLeftWidth={3}
@@ -985,6 +963,7 @@ export default function AccountDetailScreen() {
                             <WouButton
                               size="sm"
                               minWidth={90}
+                              borderRadius={BUTTON_RADIUS}
                               icon={
                                 isAttached ? (
                                   <Check size={14} color={ruleIconColor} />
@@ -1021,7 +1000,7 @@ export default function AccountDetailScreen() {
               {canShowRangeSync && (
                 <YStack
                   backgroundColor={pastel.cardPeach}
-                  borderRadius="$12"
+                  borderRadius={SECTION_RADIUS}
                   borderWidth={1}
                   borderColor={pastel.cardPeachBorder}
                   padding="$4"
@@ -1029,7 +1008,7 @@ export default function AccountDetailScreen() {
                 >
                   <XStack alignItems="center" space="$3">
                     <Circle
-                      size={38}
+                      size={34}
                       backgroundColor={pastel.peachIconBg}
                       borderWidth={1}
                       borderColor={pastel.cardPeachBorder}
@@ -1047,7 +1026,7 @@ export default function AccountDetailScreen() {
                     <XStack
                       paddingHorizontal="$3"
                       paddingVertical="$1"
-                      borderRadius="$10"
+                      borderRadius={CHIP_RADIUS}
                       backgroundColor={pastel.surface}
                       borderWidth={1}
                       borderColor={pastel.surfaceBorder}
@@ -1067,7 +1046,7 @@ export default function AccountDetailScreen() {
 
                   <YStack
                     backgroundColor={pastel.surface}
-                    borderRadius="$10"
+                    borderRadius={ITEM_RADIUS}
                     borderWidth={1}
                     borderColor={pastel.surfaceBorder}
                     padding="$3"
@@ -1085,6 +1064,7 @@ export default function AccountDetailScreen() {
                             size="sm"
                             variant={isSelected ? "solid" : "soft"}
                             tone="pastel"
+                            borderRadius={BUTTON_RADIUS}
                             label={`Últimos ${days} días`}
                             onPress={() => setQuickRange(days)}
                             disabled={!canEmailHistorySync}
@@ -1102,7 +1082,7 @@ export default function AccountDetailScreen() {
 
                   <YStack
                     backgroundColor={pastel.surface}
-                    borderRadius="$10"
+                    borderRadius={ITEM_RADIUS}
                     borderWidth={1}
                     borderColor={pastel.surfaceBorder}
                     padding="$3"
@@ -1124,9 +1104,11 @@ export default function AccountDetailScreen() {
                             setRangeError(null);
                           }}
                           backgroundColor={pastel.inputBg}
+                          color={pastel.inputText}
+                          placeholderTextColor={pastel.inputPlaceholder}
                           borderWidth={1}
                           borderColor={pastel.surfaceBorder}
-                          borderRadius="$8"
+                          borderRadius={INPUT_RADIUS}
                           editable={canEmailHistorySync}
                         />
                       </YStack>
@@ -1142,9 +1124,11 @@ export default function AccountDetailScreen() {
                             setRangeError(null);
                           }}
                           backgroundColor={pastel.inputBg}
+                          color={pastel.inputText}
+                          placeholderTextColor={pastel.inputPlaceholder}
                           borderWidth={1}
                           borderColor={pastel.surfaceBorder}
-                          borderRadius="$8"
+                          borderRadius={INPUT_RADIUS}
                           editable={canEmailHistorySync}
                         />
                       </YStack>
@@ -1161,6 +1145,7 @@ export default function AccountDetailScreen() {
                     variant="solid"
                     tone="pastel"
                     size="md"
+                    borderRadius={BUTTON_RADIUS}
                     onPress={handleRangeSync}
                     isLoading={isRangeSyncing}
                     loadingLabel="Sincronizando..."
@@ -1200,61 +1185,11 @@ export default function AccountDetailScreen() {
                   </YStack>
                 </YStack>
               )}
-              {canResetSetup && (
-                <YStack
-                  backgroundColor={pastel.cardRose}
-                  borderRadius="$12"
-                  borderWidth={1}
-                  borderColor={pastel.cardRoseBorder}
-                  padding="$4"
-                  space="$3"
-                >
-                  <XStack alignItems="center" space="$3">
-                    <Circle
-                      size={34}
-                      backgroundColor={pastel.roseIconBg}
-                      borderWidth={1}
-                      borderColor={pastel.cardRoseBorder}
-                    >
-                      <RotateCcw size={16} color={pastel.roseIcon} />
-                    </Circle>
-                    <Text fontSize="$4" fontWeight="800" color={pastel.ink}>
-                      Reiniciar configuración
-                    </Text>
-                  </XStack>
-                  <Text fontSize="$3" color={pastel.muted}>
-                    Esto habilita nuevamente la importación desde Gmail/Google en
-                    el wizard y reinicia el estado de sincronización.
-                  </Text>
-                  <WouButton
-                    label="Reiniciar configuración"
-                    variant="soft"
-                    tone="danger"
-                    onPress={() => setShowResetModal(true)}
-                    disabled={!isPro || isResetting}
-                  />
-                  {!isPro && (
-                    <Text fontSize="$2" color={pastel.muted}>
-                      Esta acción requiere Wou+.
-                    </Text>
-                  )}
-                </YStack>
-              )}
             </YStack>
           </ScrollView>
         </YStack>
       </MainLayout>
 
-      <DangerModal
-        visible={showResetModal}
-        onClose={() => setShowResetModal(false)}
-        onConfirm={handleResetSetup}
-        isLoading={isResetting}
-        title="¿Reiniciar configuración?"
-        message="Esto habilitará nuevamente la importación Gmail/Google y reiniciará el estado de sincronización."
-        confirmText="Sí, reiniciar"
-        cancelText="Cancelar"
-      />
     </>
   );
 }

@@ -41,6 +41,23 @@ const calculateTotals = (transactions: Transaction[]) => {
   );
 };
 
+const dedupeTransactionsById = (transactions: Transaction[]) => {
+  const seen = new Set<string>();
+  const unique: Transaction[] = [];
+
+  transactions.forEach((transaction) => {
+    if (!transaction?.id) {
+      unique.push(transaction);
+      return;
+    }
+    if (seen.has(transaction.id)) return;
+    seen.add(transaction.id);
+    unique.push(transaction);
+  });
+
+  return unique;
+};
+
 export const useTransactionStore = create<TransactionState>((set, get) => {
   const now = new Date();
 
@@ -55,11 +72,21 @@ export const useTransactionStore = create<TransactionState>((set, get) => {
     totalExpense: 0,
 
     setTransactions: (transactions) => {
-      const { income, expense } = calculateTotals(transactions);
-      set({ transactions, totalIncome: income, totalExpense: expense });
+      const uniqueTransactions = dedupeTransactionsById(transactions);
+      const { income, expense } = calculateTotals(uniqueTransactions);
+      set({
+        transactions: uniqueTransactions,
+        totalIncome: income,
+        totalExpense: expense,
+      });
     },
     setRecentTransactions: (recentTransactions) => {
-      set({ recentTransactions });
+      set({
+        recentTransactions: dedupeTransactionsById(recentTransactions).slice(
+          0,
+          5
+        ),
+      });
     },
     setLastUpdatedTransaction: (transaction) => {
       set({ lastUpdatedTransaction: transaction });
@@ -76,7 +103,10 @@ export const useTransactionStore = create<TransactionState>((set, get) => {
       let newExpense = state.totalExpense;
 
       if (txMonth === state.selectedMonth && txYear === state.selectedYear) {
-        newTransactions = [transaction, ...state.transactions];
+        newTransactions = dedupeTransactionsById([
+          transaction,
+          ...state.transactions,
+        ]);
         newTransactions.sort(
           (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
         );
@@ -85,7 +115,10 @@ export const useTransactionStore = create<TransactionState>((set, get) => {
         newExpense = totals.expense;
       }
 
-      const newRecent = [transaction, ...state.recentTransactions].slice(0, 5);
+      const newRecent = dedupeTransactionsById([
+        transaction,
+        ...state.recentTransactions,
+      ]).slice(0, 5);
 
       set({
         transactions: newTransactions,
@@ -123,13 +156,16 @@ export const useTransactionStore = create<TransactionState>((set, get) => {
         }
       }
 
+      newTransactions = dedupeTransactionsById(newTransactions);
+
       const totals = calculateTotals(newTransactions);
 
-      const newRecent = existsInRecent
+      const recentBase = existsInRecent
         ? state.recentTransactions.map((t) =>
             t.id === updatedTx.id ? updatedTx : t
           )
-        : [updatedTx, ...state.recentTransactions].slice(0, 5);
+        : [updatedTx, ...state.recentTransactions];
+      const newRecent = dedupeTransactionsById(recentBase).slice(0, 5);
 
       set({
         transactions: newTransactions,

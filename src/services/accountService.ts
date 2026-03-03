@@ -1,6 +1,16 @@
 import finappApi from "../api/finappApi";
 import { Account, AccountSetupMethod } from "../types/account.types";
 
+export type DeleteAccountOptions = {
+  deleteSources?: boolean;
+  deleteIngestionArtifacts?: boolean;
+  deleteOrphanRules?: boolean;
+};
+
+export type DeleteAccountResult = {
+  cleanup?: Record<string, any>;
+};
+
 export const AccountService = {
   getAll: async (): Promise<Account[]> => {
     const response = await finappApi.get("/accounts");
@@ -21,8 +31,18 @@ export const AccountService = {
     return response.data;
   },
 
-  delete: async (id: string): Promise<void> => {
-    await finappApi.delete(`/accounts/${id}`);
+  delete: async (
+    id: string,
+    options: DeleteAccountOptions = {
+      deleteSources: true,
+      deleteIngestionArtifacts: true,
+      deleteOrphanRules: true,
+    },
+  ): Promise<DeleteAccountResult> => {
+    const response = await finappApi.delete(`/accounts/${id}`, {
+      params: options,
+    });
+    return response.data || {};
   },
 
   setSetupSource: async (
@@ -54,6 +74,14 @@ export const AccountService = {
 
   resetSync: async (id: string): Promise<void> => {
     await finappApi.post(`/accounts/${id}/sync/reset`);
+  },
+
+  purgeSync: async (id: string): Promise<void> => {
+    await finappApi.post(`/accounts/${id}/sync/purge`);
+  },
+
+  purgeSyncEvents: async (id: string): Promise<void> => {
+    await finappApi.post(`/accounts/${id}/sync/purge-events`);
   },
 
   getForwardAlias: async (id: string): Promise<{ alias: string }> => {
