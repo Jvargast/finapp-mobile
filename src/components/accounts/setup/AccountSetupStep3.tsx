@@ -8,6 +8,7 @@ import {
   Circle as CircleIcon,
 } from "@tamagui/lucide-icons";
 import { AccountSetupMethod } from "../../../types/account.types";
+import { CurrencyCode } from "../../../types/currency.types";
 import { AccountSetupInstructions } from "../AccountSetupInstructions";
 import { WouButton } from "../../ui/WouButton";
 import { ContinueButton } from "../../ui/ContinueButton";
@@ -19,7 +20,7 @@ type PreviewItem = {
   detail?: string;
   ruleName?: string;
   amount?: number | string;
-  currency?: string;
+  currency?: CurrencyCode;
   date?: string;
   matched?: boolean;
 };
@@ -36,7 +37,7 @@ interface AccountSetupStep3Props {
   onPreviewEmailHistory: () => void;
   isPreviewLoading: boolean;
   previewItems: PreviewItem[];
-  accountCurrency?: string;
+  accountCurrency?: CurrencyCode;
   accountInstitution?: string | null;
   firstSyncedAt?: string | Date | null;
   lastSyncedAt?: string | Date | null;
@@ -139,7 +140,7 @@ export const AccountSetupStep3 = ({
   onContinue,
   onBackToMethods,
 }: AccountSetupStep3Props) => {
-  const formatAmount = (value?: number | string, currency?: string) => {
+  const formatAmount = (value?: number | string, currency?: CurrencyCode) => {
     if (value === undefined || value === null || value === "") return "-";
     if (typeof value === "number") {
       try {

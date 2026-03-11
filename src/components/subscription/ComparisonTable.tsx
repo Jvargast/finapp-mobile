@@ -54,7 +54,7 @@ export const ComparisonTable = ({ planType }: Props) => {
           borderColor={highlightBorder}
         >
           <Text fontSize="$3" color="#F59E0B" fontWeight="800">
-            Wou+
+            WouFinance Pro
           </Text>
         </YStack>
       </XStack>

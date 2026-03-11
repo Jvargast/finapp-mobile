@@ -70,6 +70,17 @@ function DrawerGroup() {
 
 export default function MainNavigator() {
   const theme = useTheme();
+  const stackHeaderTint = String(theme.color?.val ?? theme.appInk?.val ?? "#111827");
+  const stackHeaderBackground = String(
+    theme.background?.val ?? theme.appPage?.val ?? "#FFFFFF"
+  );
+  const stackHeaderTitleStyle = {
+    color: stackHeaderTint,
+    fontFamily: "InstrumentSerif",
+    fontSize: 22,
+    fontWeight: "400" as const,
+  };
+
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="HomeDrawer" component={DrawerGroup} />
@@ -77,11 +88,12 @@ export default function MainNavigator() {
         name="Profile"
         component={ProfileScreen}
         options={{
-          headerShown: true,
           title: "Mi Perfil",
+          headerShown: true,
           headerBackTitle: "Volver",
-          headerTintColor: "$color",
-          headerStyle: { backgroundColor: theme.brand.val },
+          headerTintColor: stackHeaderTint,
+          headerStyle: { backgroundColor: stackHeaderBackground },
+          headerTitleStyle: stackHeaderTitleStyle,
           headerShadowVisible: false,
           animation: "slide_from_right",
         }}
@@ -90,11 +102,12 @@ export default function MainNavigator() {
         name="EditPreference"
         component={EditPreferenceScreen}
         options={{
-          headerShown: true,
           title: "Editar",
+          headerShown: true,
           headerBackTitle: "Atrás",
-          headerTintColor: "$color",
-          headerStyle: { backgroundColor: theme.brand.val },
+          headerTintColor: stackHeaderTint,
+          headerStyle: { backgroundColor: stackHeaderBackground },
+          headerTitleStyle: stackHeaderTitleStyle,
           headerShadowVisible: false,
           presentation: "card",
         }}
@@ -105,8 +118,10 @@ export default function MainNavigator() {
         options={{
           title: "Configuración",
           headerShown: true,
-          headerTintColor: "$color",
-          headerStyle: { backgroundColor: theme.brand.val },
+          headerTintColor: stackHeaderTint,
+          headerStyle: { backgroundColor: stackHeaderBackground },
+          headerTitleStyle: stackHeaderTitleStyle,
+          headerShadowVisible: false,
         }}
       />
       <Stack.Screen
@@ -115,8 +130,10 @@ export default function MainNavigator() {
         options={{
           title: "Apariencia",
           headerShown: true,
-          headerTintColor: "$color",
-          headerStyle: { backgroundColor: theme.brand.val },
+          headerTintColor: stackHeaderTint,
+          headerStyle: { backgroundColor: stackHeaderBackground },
+          headerTitleStyle: stackHeaderTitleStyle,
+          headerShadowVisible: false,
           animation: "slide_from_right",
         }}
       />
@@ -145,8 +162,10 @@ export default function MainNavigator() {
           headerShown: true,
           title: "Cambiar Contraseña",
           headerBackTitle: "Volver",
-          headerTintColor: "$color",
-          headerStyle: { backgroundColor: theme.brand.val },
+          headerTintColor: stackHeaderTint,
+          headerStyle: { backgroundColor: stackHeaderBackground },
+          headerTitleStyle: stackHeaderTitleStyle,
+          headerShadowVisible: false,
         }}
       />
       <Stack.Screen
@@ -156,8 +175,10 @@ export default function MainNavigator() {
           headerShown: true,
           title: "Editar Perfil",
           animation: "slide_from_bottom",
-          headerTintColor: "$color",
-          headerStyle: { backgroundColor: theme.brand.val },
+          headerTintColor: stackHeaderTint,
+          headerStyle: { backgroundColor: stackHeaderBackground },
+          headerTitleStyle: stackHeaderTitleStyle,
+          headerShadowVisible: false,
         }}
       />
       <Stack.Screen

@@ -5,8 +5,8 @@ import { Plus } from "@tamagui/lucide-icons";
 import { useCategoryStore } from "../../stores/useCategoryStore";
 import { CategoryActions } from "../../actions/categoryActions";
 import { getIcon } from "../../utils/iconMap";
-import { useNavigation } from "@react-navigation/native";
 import { NavigationProp } from "@react-navigation/native";
+import { TransactionType } from "../../types/category.types";
 
 interface Props {
   selectedId: string;
@@ -15,6 +15,7 @@ interface Props {
   embedded?: boolean;
   showColors?: boolean;
   onAddCategory?: () => void;
+  transactionType?: TransactionType;
 }
 
 export const CategorySelector = ({
@@ -24,6 +25,7 @@ export const CategorySelector = ({
   embedded = false,
   showColors = false,
   onAddCategory,
+  transactionType,
 }: Props) => {
   const categories = useCategoryStore((state) => state.categories);
   const isLoading = useCategoryStore((state) => state.isLoading);
@@ -36,9 +38,13 @@ export const CategorySelector = ({
 
   const activeCategories = useMemo(() => {
     return categories
-      .filter((c) => c.isActive !== false)
+      .filter(
+        (c) =>
+          c.isActive !== false &&
+          (!transactionType || c.type === transactionType)
+      )
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [categories]);
+  }, [categories, transactionType]);
 
   const headerPadding = embedded ? 0 : "$4";
 

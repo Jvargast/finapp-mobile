@@ -1,5 +1,6 @@
 import React from "react";
 import { YStack, Text, Button } from "tamagui";
+import { DisplayHeading } from "./DisplayHeading";
 
 interface PaywallProps {
   title?: string;
@@ -22,9 +23,14 @@ export const Paywall = ({
       justifyContent="center"
       alignItems="center"
     >
-      <Text fontSize="$7" fontWeight="900" textAlign="center">
+      <DisplayHeading
+        fontSize="$7"
+        fontWeight="400"
+        textAlign="center"
+        lineHeight={30}
+      >
         {title}
-      </Text>
+      </DisplayHeading>
       <Text fontSize="$4" color="$gray10" textAlign="center">
         {description}
       </Text>

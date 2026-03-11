@@ -30,6 +30,7 @@ import { useUserStore } from "../../stores/useUserStore";
 import { useCategoryStore } from "../../stores/useCategoryStore";
 import { CategoryActions } from "../../actions/categoryActions";
 import { CreateCategorySheet } from "../../components/category/CreateCategorySheet";
+import { useSubscription } from "../../hooks/useSubscription";
 import { ScrollView } from "react-native-gesture-handler";
 import DateTimePicker from "@react-native-community/datetimepicker";
 
@@ -47,7 +48,7 @@ export default function CreateBudgetScreen() {
   }, []);
 
   const user = useUserStore((state) => state.user);
-  const isPro = useUserStore((state) => state.isPro());
+  const { isPro } = useSubscription();
   const canShare = isPro;
 
   const [isCreateCategoryOpen, setCreateCategoryOpen] = useState(false);

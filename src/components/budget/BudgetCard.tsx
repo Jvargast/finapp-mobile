@@ -1,12 +1,6 @@
 import React from "react";
-import { YStack, XStack, Text, Progress, Circle, Image } from "tamagui";
-import {
-  AlertTriangle,
-  TrendingUp,
-  CheckCircle2,
-  Users,
-  HeartHandshake,
-} from "@tamagui/lucide-icons";
+import { AlertTriangle, CheckCircle2, HeartHandshake, TrendingUp, Users } from "@tamagui/lucide-icons";
+import { Card, Circle, Image, Progress, Text, Theme, XStack, YStack } from "tamagui";
 import { Budget } from "../../types/budget.types";
 import { getIcon } from "../../utils/iconMap";
 import { creationDate } from "../../utils/formatDate";
@@ -16,24 +10,27 @@ interface BudgetCardProps {
   onPress: () => void;
 }
 
+const getAvatarColors = (isFamily: boolean) => ({
+  bg: isFamily ? "rgba(255,255,255,0.18)" : "rgba(255,255,255,0.22)",
+  text: "white",
+});
+
 export const BudgetCard = ({ budget, onPress }: BudgetCardProps) => {
   const { progress, category } = budget;
   const percent = progress.percentage;
+  const CategoryIcon = getIcon(category.icon || "HelpCircle");
 
   const guests = budget.participants || [];
-
   const ownerAsParticipant = budget.owner ? { user: budget.owner } : null;
-
   const allParticipants = ownerAsParticipant
     ? [
         ownerAsParticipant,
-        ...guests.filter((p) => p.user.id !== ownerAsParticipant.user.id),
+        ...guests.filter((participant) => participant.user.id !== ownerAsParticipant.user.id),
       ]
     : guests;
   const isFamily = allParticipants.length > 2;
   const ShareIcon = isFamily ? Users : HeartHandshake;
   const shareLabel = isFamily ? "FAMILIA" : "PAREJA";
-  const shareColor = isFamily ? "$purple10" : "$pink10";
 
   const maxVisible = 4;
   const hasOverflow = allParticipants.length > maxVisible;
@@ -42,21 +39,16 @@ export const BudgetCard = ({ budget, onPress }: BudgetCardProps) => {
     : allParticipants.slice(0, maxVisible);
   const overflowCount = allParticipants.length - visibleParticipants.length;
 
-  const IconComponent = getIcon(category.icon || "HelpCircle");
-
-  let statusColor = "$green9";
-  let bgColor = "$green2";
+  let statusBg = "$green9";
   let StatusIcon = CheckCircle2;
-  let statusText = "Excelente";
+  let statusText = "En orden";
 
   if (percent >= 100) {
-    statusColor = "$red10";
-    bgColor = "$red2";
+    statusBg = "$red10";
     StatusIcon = AlertTriangle;
     statusText = "Excedido";
   } else if (percent >= budget.warningThreshold) {
-    statusColor = "$orange10";
-    bgColor = "$orange2";
+    statusBg = "$orange10";
     StatusIcon = TrendingUp;
     statusText = "Cuidado";
   }
@@ -68,173 +60,254 @@ export const BudgetCard = ({ budget, onPress }: BudgetCardProps) => {
       maximumFractionDigits: 0,
     }).format(amount);
 
+  const avatarColors = getAvatarColors(isFamily);
+
   return (
-    <YStack
-      backgroundColor="$background"
-      borderRadius="$6"
-      padding="$4"
-      space="$3"
-      borderWidth={1}
-      borderColor="$gray4"
-      shadowColor="$shadowColor"
-      shadowOffset={{ width: 0, height: 2 }}
-      shadowOpacity={0.1}
-      shadowRadius={4}
-      pressStyle={{ scale: 0.98, opacity: 0.9 }}
-      animation="quick"
-      onPress={onPress}
-    >
-      <XStack justifyContent="space-between" alignItems="flex-start">
-        <XStack space="$3" alignItems="center" flex={1} marginRight="$2">
-          <Circle size="$4" backgroundColor={category.color || "$gray5"}>
-            <IconComponent size={20} color="white" />
-          </Circle>
+    <Theme name="dark">
+      <Card
+        backgroundColor={category.color || "$gray9"}
+        borderRadius="$8"
+        padding="$4.5"
+        elevation={10}
+        shadowColor={category.color || "$gray9"}
+        shadowOpacity={0.4}
+        shadowRadius={15}
+        animation="bouncy"
+        pressStyle={{ scale: 0.98, opacity: 0.98 }}
+        overflow="hidden"
+        borderWidth={1}
+        borderColor="rgba(255,255,255,0.15)"
+        onPress={onPress}
+      >
+        <YStack
+          position="absolute"
+          right={-18}
+          bottom={-28}
+          opacity={0.15}
+          rotate="-15deg"
+          pointerEvents="none"
+        >
+          <CategoryIcon size={170} color="white" />
+        </YStack>
 
-          <YStack flex={1}>
-            <Text
-              fontSize="$4"
-              fontWeight="800"
-              color="$color"
-              numberOfLines={1}
-            >
-              {budget.name || category.name}
-            </Text>
+        <YStack space="$4" zIndex={1}>
+          <XStack justifyContent="space-between" alignItems="flex-start" space="$3">
+            <XStack space="$3" alignItems="center" flex={1}>
+              <Circle
+                size="$4"
+                backgroundColor="rgba(255,255,255,0.2)"
+                borderWidth={1}
+                borderColor="rgba(255,255,255,0.3)"
+              >
+                <CategoryIcon size={20} color="white" />
+              </Circle>
 
-            {budget.type === "SHARED" && (
-              <XStack alignItems="center" space="$1.5" marginTop={2}>
-                <ShareIcon size={12} color={shareColor} />
+              <YStack flex={1} space="$1">
                 <Text
-                  fontSize={10}
-                  color={shareColor}
-                  fontWeight="800"
-                  letterSpacing={0.5}
+                  color="white"
+                  fontSize="$5"
+                  fontWeight="900"
+                  numberOfLines={1}
+                  textShadowColor="rgba(0,0,0,0.2)"
+                  textShadowRadius={3}
                 >
-                  {shareLabel}
+                  {budget.name || category.name}
+                </Text>
+
+                <XStack alignItems="center" flexWrap="wrap" space="$2">
+                  <Text
+                    color="rgba(255,255,255,0.86)"
+                    fontSize={11}
+                    fontWeight="700"
+                    textTransform="uppercase"
+                    letterSpacing={0.8}
+                  >
+                    {category.name}
+                  </Text>
+
+                  {budget.type === "SHARED" && (
+                    <XStack
+                      alignItems="center"
+                      space="$1.5"
+                      backgroundColor="rgba(255,255,255,0.18)"
+                      paddingHorizontal="$2"
+                      paddingVertical="$1"
+                      borderRadius="$10"
+                    >
+                      <ShareIcon size={11} color="white" />
+                      <Text
+                        fontSize={10}
+                        color="white"
+                        fontWeight="800"
+                        letterSpacing={0.5}
+                      >
+                        {shareLabel}
+                      </Text>
+                    </XStack>
+                  )}
+                </XStack>
+              </YStack>
+            </XStack>
+
+            <YStack alignItems="flex-end" space="$1.5">
+              <XStack
+                backgroundColor={statusBg}
+                paddingHorizontal="$2.5"
+                paddingVertical="$1.5"
+                borderRadius="$10"
+                space="$1.5"
+                alignItems="center"
+                borderWidth={1}
+                borderColor="rgba(255,255,255,0.2)"
+              >
+                <StatusIcon size={12} color="white" />
+                <Text fontSize={10} color="white" fontWeight="800">
+                  {statusText}
                 </Text>
               </XStack>
-            )}
-          </YStack>
-        </XStack>
-        <YStack alignItems="flex-end" space="$1">
-          <XStack
-            backgroundColor={bgColor}
-            paddingHorizontal="$2"
-            paddingVertical="$1"
-            borderRadius="$4"
-            space="$1.5"
-            alignItems="center"
-          >
-            <StatusIcon size={12} color={statusColor} />
-            <Text fontSize={11} color={statusColor} fontWeight="700">
-              {statusText}
-            </Text>
-          </XStack>
 
-          <Text fontSize={9} fontWeight="600" color="$gray9" textAlign="right">
-            {creationDate(budget)}
-          </Text>
-        </YStack>
-      </XStack>
-
-      <YStack>
-        <Text fontSize="$7" fontWeight="900" color="$color">
-          {formatMoney(progress.remaining)}
-        </Text>
-        <Text fontSize={12} color="$gray10">
-          disponibles de {formatMoney(budget.amount)}
-        </Text>
-      </YStack>
-
-      <YStack space="$2">
-        <Progress value={Math.min(percent, 100)} size="$2" borderRadius="$10">
-          <Progress.Indicator
-            animation="bouncy"
-            backgroundColor={statusColor}
-          />
-        </Progress>
-        <XStack justifyContent="space-between">
-          <Text fontSize={11} color="$gray9" fontWeight="600">
-            {Math.round(percent)}% gastado
-          </Text>
-          {percent >= 100 && (
-            <Text fontSize={11} color="$red10" fontWeight="700">
-              +{formatMoney(progress.spent - budget.amount)}
-            </Text>
-          )}
-        </XStack>
-      </YStack>
-
-      {allParticipants.length > 0 && (
-        <XStack
-          marginTop="$3"
-          paddingTop="$3"
-          borderTopWidth={1}
-          borderColor="$gray3"
-          alignItems="center"
-          justifyContent="space-between"
-        >
-          <Text fontSize={11} color="$gray9" fontWeight="500">
-            Miembros:
-          </Text>
-
-          <XStack flexDirection="row-reverse" paddingRight="$2">
-            {hasOverflow && (
-              <Circle
-                size={28}
-                backgroundColor="$gray5"
-                borderWidth={2}
-                borderColor="$background"
-                marginLeft={-10}
-                zIndex={10}
+              <Text
+                fontSize={10}
+                fontWeight="700"
+                color="rgba(255,255,255,0.72)"
+                textAlign="right"
               >
-                <Text fontSize={10} fontWeight="800" color="$gray11">
-                  +{overflowCount}
-                </Text>
-              </Circle>
-            )}
-
-            {visibleParticipants.map((p, index) => {
-              const fallbackBg = isFamily ? "$purple3" : "$pink3";
-              const fallbackTxt = isFamily ? "$purple11" : "$pink11";
-              const initial =
-                p.user.profile?.firstName?.[0]?.toUpperCase() || "U";
-
-              return (
-                <Circle
-                  key={p.user.id}
-                  size={28}
-                  backgroundColor="$gray4"
-                  borderWidth={2}
-                  borderColor="$background"
-                  marginLeft={index === 0 ? 0 : -10}
-                  zIndex={visibleParticipants.length - index}
-                  overflow="hidden"
-                >
-                  {p.user.profile?.avatarUrl ? (
-                    <Image
-                      source={{ uri: p.user.profile.avatarUrl }}
-                      width="100%"
-                      height="100%"
-                    />
-                  ) : (
-                    <YStack
-                      width="100%"
-                      height="100%"
-                      backgroundColor={fallbackBg}
-                      alignItems="center"
-                      justifyContent="center"
-                    >
-                      <Text fontSize={10} fontWeight="900" color={fallbackTxt}>
-                        {initial}
-                      </Text>
-                    </YStack>
-                  )}
-                </Circle>
-              );
-            })}
+                {creationDate(budget)}
+              </Text>
+            </YStack>
           </XStack>
-        </XStack>
-      )}
-    </YStack>
+
+          <YStack>
+            <Text
+              color="white"
+              fontSize={36}
+              fontWeight="900"
+              letterSpacing={-1.2}
+              lineHeight={42}
+              adjustsFontSizeToFit
+              numberOfLines={1}
+              textShadowColor="rgba(0,0,0,0.2)"
+              textShadowRadius={4}
+            >
+              {formatMoney(progress.remaining)}
+            </Text>
+            <Text color="rgba(255,255,255,0.82)" fontSize={12} fontWeight="600">
+              disponibles de {formatMoney(budget.amount)}
+            </Text>
+          </YStack>
+
+          <YStack space="$2">
+            <XStack justifyContent="space-between" alignItems="flex-end">
+              <Text
+                color="rgba(255,255,255,0.92)"
+                fontSize="$3"
+                fontWeight="600"
+              >
+                Gastado: {formatMoney(progress.spent)}
+              </Text>
+              <Text color="white" fontSize="$5" fontWeight="800">
+                {Math.round(percent)}%
+              </Text>
+            </XStack>
+
+            <Progress
+              value={Math.min(percent, 100)}
+              size="$3"
+              backgroundColor="rgba(0,0,0,0.25)"
+              borderRadius="$10"
+            >
+              <Progress.Indicator
+                animation="lazy"
+                backgroundColor="white"
+                opacity={0.95}
+              />
+            </Progress>
+
+            <XStack justifyContent="space-between" alignItems="center" marginTop="$1">
+              <Text color="rgba(255,255,255,0.74)" fontSize={11}>
+                Meta: {formatMoney(budget.amount)}
+              </Text>
+              {percent >= 100 && (
+                <Text color="white" fontSize={11} fontWeight="800">
+                  +{formatMoney(progress.spent - budget.amount)}
+                </Text>
+              )}
+            </XStack>
+          </YStack>
+
+          {allParticipants.length > 0 && (
+            <XStack
+              paddingTop="$3"
+              borderTopWidth={1}
+              borderColor="rgba(255,255,255,0.16)"
+              alignItems="center"
+              justifyContent="space-between"
+            >
+              <XStack alignItems="center" space="$2">
+                <ShareIcon size={14} color="rgba(255,255,255,0.9)" />
+                <Text color="rgba(255,255,255,0.82)" fontSize={11} fontWeight="700">
+                  {budget.type === "SHARED" ? "Compartido" : "Participantes"}
+                </Text>
+              </XStack>
+
+              <XStack flexDirection="row-reverse" paddingRight="$2">
+                {hasOverflow && (
+                  <Circle
+                    size={28}
+                    backgroundColor="rgba(255,255,255,0.18)"
+                    borderWidth={2}
+                    borderColor="rgba(255,255,255,0.28)"
+                    marginLeft={-10}
+                    zIndex={10}
+                  >
+                    <Text fontSize={10} fontWeight="800" color="white">
+                      +{overflowCount}
+                    </Text>
+                  </Circle>
+                )}
+
+                {visibleParticipants.map((participant, index) => {
+                  const initial =
+                    participant.user.profile?.firstName?.[0]?.toUpperCase() || "U";
+
+                  return (
+                    <Circle
+                      key={participant.user.id}
+                      size={28}
+                      backgroundColor="rgba(255,255,255,0.15)"
+                      borderWidth={2}
+                      borderColor="rgba(255,255,255,0.28)"
+                      marginLeft={index === 0 ? 0 : -10}
+                      zIndex={visibleParticipants.length - index}
+                      overflow="hidden"
+                    >
+                      {participant.user.profile?.avatarUrl ? (
+                        <Image
+                          source={{ uri: participant.user.profile.avatarUrl }}
+                          width="100%"
+                          height="100%"
+                        />
+                      ) : (
+                        <YStack
+                          width="100%"
+                          height="100%"
+                          backgroundColor={avatarColors.bg}
+                          alignItems="center"
+                          justifyContent="center"
+                        >
+                          <Text fontSize={10} fontWeight="900" color={avatarColors.text}>
+                            {initial}
+                          </Text>
+                        </YStack>
+                      )}
+                    </Circle>
+                  );
+                })}
+              </XStack>
+            </XStack>
+          )}
+        </YStack>
+      </Card>
+    </Theme>
   );
 };

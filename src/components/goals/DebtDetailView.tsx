@@ -9,13 +9,13 @@ import {
   AlertTriangle,
   CheckCircle2,
 } from "@tamagui/lucide-icons";
-import { DebtAnalysis, GoalTransaction } from "../../types/goal.types";
+import { Currency, DebtAnalysis, GoalTransaction } from "../../types/goal.types";
 import { formatGoalAmount } from "../../utils/formatMoney";
 import { isSameMonth, isSameYear } from "date-fns";
 
 interface DebtDetailViewProps {
   analysis: DebtAnalysis;
-  currency: string;
+  currency: Currency;
   transactions?: GoalTransaction[];
   deadline?: string | Date;
 }

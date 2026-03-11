@@ -21,6 +21,7 @@ import {
 } from "@tamagui/lucide-icons";
 import { useNavigation } from "@react-navigation/native";
 import { AuthActions } from "../../actions/authActions";
+import { DisplayHeading } from "../../components/ui/DisplayHeading";
 
 const { width, height } = Dimensions.get("window");
 
@@ -161,7 +162,6 @@ export default function OnboardingScreen() {
                   shadowRadius={40}
                   shadowOffset={{ width: 0, height: 20 }}
                   shadowOpacity={0.2}
-                  elevation={10}
                   transform={[{ rotate: "-6deg" }]}
                   marginBottom="$6"
                 >
@@ -201,15 +201,15 @@ export default function OnboardingScreen() {
         justifyContent="space-between"
       >
         <YStack space="$3">
-          <Text
+          <DisplayHeading
             fontSize={38}
-            lineHeight={42}
-            fontWeight="900"
+            lineHeight={44}
+            fontWeight="400"
             color="#0F172A"
             animation="quick"
           >
             {SLIDES[currentIndex].title}
-          </Text>
+          </DisplayHeading>
           <Text fontSize="$5" color="#64748B" lineHeight={26} animation="quick">
             {SLIDES[currentIndex].description}
           </Text>

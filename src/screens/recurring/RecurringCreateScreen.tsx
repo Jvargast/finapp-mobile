@@ -22,6 +22,7 @@ import { AccountActions } from "../../actions/accountActions";
 import { CategoryActions } from "../../actions/categoryActions";
 import { RecurringActions } from "../../actions/recurringActions";
 import { useAccountStore } from "../../stores/useAccountStore";
+import { DisplayHeading } from "../../components/ui/DisplayHeading";
 import { useCategoryStore } from "../../stores/useCategoryStore";
 import { useToastStore } from "../../stores/useToastStore";
 import {
@@ -30,6 +31,7 @@ import {
   RecurrenceUnit,
   RecurringTransactionType,
 } from "../../types/recurring.types";
+import { ExpenseModel } from "../../types/expense.types";
 
 const WEEKDAYS = [
   { label: "D", value: 0 },
@@ -151,6 +153,7 @@ export default function RecurringCreateScreen() {
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
   const [type, setType] = useState<RecurringTransactionType>("EXPENSE");
+  const [expenseModel, setExpenseModel] = useState<ExpenseModel>("VARIABLE");
   const [description, setDescription] = useState("");
   const [merchant, setMerchant] = useState("");
   const [selectedAccountId, setSelectedAccountId] = useState("");
@@ -171,6 +174,13 @@ export default function RecurringCreateScreen() {
   const [isEndPickerOpen, setEndPickerOpen] = useState(false);
   const [showHeavySelectors, setShowHeavySelectors] = useState(
     () => accounts.length > 0 || categories.length > 0,
+  );
+  const availableCategories = useMemo(
+    () =>
+      categories.filter(
+        (cat) => cat.isActive !== false && cat.type === type,
+      ),
+    [categories, type],
   );
 
   useEffect(() => {
@@ -204,11 +214,20 @@ export default function RecurringCreateScreen() {
   }, [accounts, selectedAccountId]);
 
   useEffect(() => {
-    if (!selectedCategoryId && categories.length > 0) {
-      const firstActive = categories.find((cat) => cat.isActive !== false);
-      if (firstActive) setSelectedCategoryId(firstActive.id);
+    if (categories.length === 0) return;
+
+    if (availableCategories.length === 0) {
+      if (selectedCategoryId) setSelectedCategoryId("");
+      return;
     }
-  }, [categories, selectedCategoryId]);
+
+    const hasValidSelection = availableCategories.some(
+      (cat) => cat.id === selectedCategoryId,
+    );
+    if (!hasValidSelection) {
+      setSelectedCategoryId(availableCategories[0].id);
+    }
+  }, [availableCategories, categories.length, selectedCategoryId]);
 
   const accountCurrency = useMemo(() => {
     const match = accounts.find((acc) => acc.id === selectedAccountId);
@@ -259,6 +278,7 @@ export default function RecurringCreateScreen() {
         amount: amountValue,
         currency: accountCurrency,
         type,
+        expenseModel: type === "EXPENSE" ? expenseModel : undefined,
         accountId: selectedAccountId,
         categoryId: selectedCategoryId,
         description: description.trim() || null,
@@ -307,6 +327,7 @@ export default function RecurringCreateScreen() {
     selectedCategoryId,
     showToast,
     startsAt,
+    expenseModel,
     type,
     weekday,
   ]);
@@ -324,9 +345,14 @@ export default function RecurringCreateScreen() {
               onPress={() => navigation.goBack()}
             />
             <YStack flex={1}>
-              <Text fontSize="$6" fontWeight="900" color="$color">
+              <DisplayHeading
+                fontSize="$6"
+                fontWeight="400"
+                color="$color"
+                lineHeight={26}
+              >
                 Nueva recurrente
-              </Text>
+              </DisplayHeading>
               <Text fontSize="$3" color="$gray10">
                 Configura una regla automática con el estilo del resto de la app.
               </Text>
@@ -380,6 +406,28 @@ export default function RecurringCreateScreen() {
                   paddingHorizontal="$3"
                 />
               </YStack>
+
+              {type === "EXPENSE" && (
+                <YStack space="$2">
+                  <Text fontSize="$2" color="$gray10" fontWeight="700">
+                    Modelo de gasto
+                  </Text>
+                  <XStack space="$2.5">
+                    <SegmentButton
+                      label="Fijo"
+                      active={expenseModel === "FIXED"}
+                      onPress={() => setExpenseModel("FIXED")}
+                      tone="expense"
+                    />
+                    <SegmentButton
+                      label="Variable"
+                      active={expenseModel === "VARIABLE"}
+                      onPress={() => setExpenseModel("VARIABLE")}
+                      tone="expense"
+                    />
+                  </XStack>
+                </YStack>
+              )}
             </Section>
 
             <Section title="Detalles" subtitle="Nombre y contexto de la regla">
@@ -459,6 +507,7 @@ export default function RecurringCreateScreen() {
                     navigation={navigation}
                     embedded
                     showColors
+                    transactionType={type}
                   />
                 </>
               ) : (

@@ -4,6 +4,7 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import { Link2, CheckCircle2 } from "@tamagui/lucide-icons";
 import { MainLayout } from "../../components/layout/MainLayout";
 import { GoBackButton } from "../../components/ui/GoBackButton";
+import { DisplayHeading } from "../../components/ui/DisplayHeading";
 
 export default function EmailRuleAttachScreen() {
   const insets = useSafeAreaInsets();
@@ -29,9 +30,9 @@ export default function EmailRuleAttachScreen() {
         <XStack alignItems="center" space="$3">
           <GoBackButton fallbackRouteName="EmailRuleSelect" />
           <YStack>
-            <Text fontSize="$6" fontWeight="900">
+            <DisplayHeading fontSize="$6" fontWeight="400" lineHeight={26}>
               Adjuntar regla
-            </Text>
+            </DisplayHeading>
             <Text fontSize="$3" color="$gray10">
               Confirma antes de conectar tu correo.
             </Text>

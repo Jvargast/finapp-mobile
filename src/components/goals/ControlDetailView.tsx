@@ -7,12 +7,12 @@ import {
   Wallet,
   AlertTriangle,
 } from "@tamagui/lucide-icons";
-import { ControlAnalysis } from "../../types/goal.types";
+import { Currency, ControlAnalysis } from "../../types/goal.types";
 import { formatGoalAmount } from "../../utils/formatMoney";
 
 interface ControlDetailViewProps {
   analysis: ControlAnalysis;
-  currency: string;
+  currency: Currency;
 }
 
 export const ControlDetailView = ({

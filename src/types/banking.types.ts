@@ -1,6 +1,10 @@
+import { ExpenseModel } from "./expense.types";
+import { CurrencyCode } from "./currency.types";
+
 export type BankingCandidate = {
   id: string;
   amount: number;
+  currency?: CurrencyCode | null;
   direction?: string | null;
   occurredAt?: string | null;
   merchant?: string | null;
@@ -11,10 +15,13 @@ export type BankingCandidate = {
     id?: string | null;
     name?: string | null;
     last4?: string | null;
+    currency?: CurrencyCode | null;
   } | null;
   categoryId?: string | null;
+  expenseModel?: ExpenseModel | null;
   suggestedCategoryId?: string | null;
   suggestedBudgetId?: string | null;
+  suggestedExpenseModel?: ExpenseModel | null;
   suggestedCategory?: {
     id?: string;
     name?: string;
@@ -33,6 +40,7 @@ export type BankingCandidate = {
 export type BankingCandidateOverrides = {
   accountId?: string | null;
   categoryId?: string | null;
+  expenseModel?: ExpenseModel | null;
   amount?: number | null;
   occurredAt?: string | null;
   description?: string | null;

@@ -1,6 +1,6 @@
 import React from "react";
-import { YStack, XStack, Text, Separator } from "tamagui";
-import { Lock, Bell, Star, Check } from "@tamagui/lucide-icons";
+import { YStack, XStack, Text } from "tamagui";
+import { Check } from "@tamagui/lucide-icons";
 
 interface SubscriptionCardProps {
   title: string;
@@ -10,6 +10,9 @@ interface SubscriptionCardProps {
   isSelected: boolean;
   onSelect: () => void;
   isBestValue?: boolean;
+  badgeText?: string;
+  highlights?: string[];
+  footnote?: string | null;
 }
 
 export const SubscriptionCard = ({
@@ -21,6 +24,8 @@ export const SubscriptionCard = ({
   onSelect,
   isBestValue,
   badgeText,
+  highlights = [],
+  footnote,
 }: SubscriptionCardProps) => {
   return (
     <YStack
@@ -54,7 +59,7 @@ export const SubscriptionCard = ({
         alignItems="center"
         marginBottom="$2"
       >
-        <Text fontSize="$6" fontWeight="800" color="white">
+        <Text fontSize="$6" fontWeight="800" color="$color">
           {title}
         </Text>
         {isSelected && (
@@ -68,59 +73,31 @@ export const SubscriptionCard = ({
         {description}
       </Text>
 
-      <Text color="$gray11" fontSize={12} marginBottom="$4">
-        7 días gratis. Después {price}
+      <Text color="$gray11" fontSize={12} marginBottom="$3">
+        {price}
         {period}
       </Text>
 
-      {isSelected && (
-        <YStack marginTop="$2" paddingLeft="$2">
-          <TimelineItem
-            icon={Lock}
-            text="Hoy: Inicio del periodo de prueba gratis"
-            isFirst
-          />
-          <TimelineItem icon={Bell} text="Día 5: Obtendrá un recordatorio" />
-          <TimelineItem
-            icon={Star}
-            text={`Día 7: Se le cobrará ${price}${period}`}
-            isLast
-          />
+      {highlights.length > 0 && (
+        <YStack marginTop="$2" space="$2">
+          {highlights.map((highlight) => (
+            <XStack key={highlight} space="$2" alignItems="center">
+              <YStack backgroundColor="#F59E0B" borderRadius={20} padding={4}>
+                <Check size={10} color="#111827" />
+              </YStack>
+              <Text color="$gray11" fontSize={13} flex={1}>
+                {highlight}
+              </Text>
+            </XStack>
+          ))}
         </YStack>
       )}
-    </YStack>
-  );
-};
 
-const TimelineItem = ({
-  icon: Icon,
-  text,
-  isFirst,
-  isLast,
-}: {
-  icon: any;
-  text: string;
-  isFirst?: boolean;
-  isLast?: boolean;
-}) => {
-  return (
-    <XStack space="$3" position="relative" paddingBottom={isLast ? 0 : "$4"}>
-      {!isLast && (
-        <YStack
-          position="absolute"
-          left={9}
-          top={20}
-          bottom={0}
-          width={2}
-          backgroundColor="rgba(255,255,255,0.1)"
-        />
-      )}
-      <YStack width={20} alignItems="center" justifyContent="center" zIndex={1}>
-        <Icon size={16} color="#8B5CF6" />
-      </YStack>
-      <Text color="white" fontSize={13} flex={1}>
-        {text}
-      </Text>
-    </XStack>
+      {footnote ? (
+        <Text color="$gray9" fontSize={11} marginTop="$3">
+          {footnote}
+        </Text>
+      ) : null}
+    </YStack>
   );
 };

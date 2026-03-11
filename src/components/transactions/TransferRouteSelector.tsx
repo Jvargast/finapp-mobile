@@ -8,6 +8,7 @@ import {
   Wallet,
 } from "@tamagui/lucide-icons";
 import { Account } from "../../types/account.types";
+import { formatCurrencyAmount } from "../../utils/currency";
 
 interface Props {
   originAccount?: Account;
@@ -67,8 +68,11 @@ export const TransferRouteSelector = ({
                   {originAccount?.name || "Seleccionar cuenta"}
                 </Text>
                 <Text fontSize={11} color="$gray10">
-                  Saldo: $
-                  {Number(originAccount?.balance || 0).toLocaleString("es-CL")}
+                  Saldo:{" "}
+                  {formatCurrencyAmount(
+                    Number(originAccount?.balance || 0),
+                    originAccount?.currency
+                  )}
                 </Text>
               </YStack>
             </XStack>

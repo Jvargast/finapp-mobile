@@ -1,3 +1,5 @@
+import { CurrencyCode } from "./currency.types";
+
 export enum GoalRole {
   OWNER = "OWNER",
   EDITOR = "EDITOR",
@@ -54,7 +56,7 @@ export enum GoalType {
   RETIREMENT = "RETIREMENT",
 }
 
-export type Currency = "CLP" | "USD" | "EUR" | "UF" | "CAD" | "BTC";
+export type Currency = CurrencyCode;
 
 export interface BaseAnalysis {
   status:

@@ -1,6 +1,7 @@
 import React from "react";
 import { YStack, Text, Button, Circle, XStack } from "tamagui";
 import { Crown, Star, Calendar } from "@tamagui/lucide-icons";
+import { DisplayHeading } from "../ui/DisplayHeading";
 
 export const CurrentPlanView = () => {
   return (
@@ -23,9 +24,14 @@ export const CurrentPlanView = () => {
         shadowOpacity={0.3}
       >
         <XStack justifyContent="space-between" alignItems="flex-start">
-          <Text fontSize="$8" fontWeight="900" color="#1E293B">
+          <DisplayHeading
+            fontSize="$8"
+            fontWeight="400"
+            color="#1E293B"
+            lineHeight={36}
+          >
             WOU+
-          </Text>
+          </DisplayHeading>
           <Crown size={32} color="#1E293B" />
         </XStack>
 

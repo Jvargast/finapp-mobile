@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { type BackendSubscriptionState } from "../types/subscription.types";
 import { SubscriptionPlan, User } from "../types/user.types";
 
 interface UserState {
@@ -8,6 +9,9 @@ interface UserState {
   updateSubscriptionStatus: (
     plan: SubscriptionPlan,
     expiresAt?: string
+  ) => void;
+  syncSubscriptionState: (
+    subscription: BackendSubscriptionState | null
   ) => void;
   isPro: () => boolean;
 }
@@ -24,6 +28,18 @@ export const useUserStore = create<UserState>((set, get) => ({
           ...state.user,
           plan: plan,
           subscriptionExpiresAt: expiresAt || state.user.subscriptionExpiresAt,
+        },
+      };
+    }),
+  syncSubscriptionState: (subscription) =>
+    set((state) => {
+      if (!state.user) return {};
+
+      return {
+        user: {
+          ...state.user,
+          plan: subscription?.plan ?? SubscriptionPlan.FREE,
+          subscriptionExpiresAt: subscription?.expiresAt ?? null,
         },
       };
     }),

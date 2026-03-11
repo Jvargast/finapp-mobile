@@ -22,6 +22,7 @@ import {
 import { useToastStore } from "../../stores/useToastStore";
 import { TextInput } from "react-native-gesture-handler";
 import { UserActions } from "../../actions/userActions";
+import { DisplayHeading } from "../../components/ui/DisplayHeading";
 import {
   PASSWORD_REGEX_VALIDATOR,
   PasswordRequirements,
@@ -96,9 +97,14 @@ export default function ChangePasswordScreen() {
             keyboardShouldPersistTaps="handled"
           >
             <YStack marginBottom="$6">
-              <Text fontSize={24} fontWeight="800" color="#1E293B">
+              <DisplayHeading
+                fontSize={24}
+                fontWeight="400"
+                color="#1E293B"
+                lineHeight={30}
+              >
                 Seguridad
-              </Text>
+              </DisplayHeading>
               <Text fontSize={14} color="#64748B">
                 Protege tu cuenta con una clave fuerte.
               </Text>

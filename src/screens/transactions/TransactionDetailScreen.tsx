@@ -18,6 +18,7 @@ import {
   Calendar,
   FileText,
   Wallet,
+  Tag,
 } from "@tamagui/lucide-icons";
 import { useTransactionStore } from "../../stores/useTransactionStore";
 import { TransactionActions } from "../../actions/transactionActions";
@@ -26,6 +27,10 @@ import { DetailRow } from "../../components/transactions/DetailRow";
 import { TransactionInsights } from "../../components/transactions/TransactionInsights";
 import { EditTransactionSheet } from "../../components/transactions/EditTransactionSheet";
 import { DangerModal } from "../../components/ui/DangerModal";
+import {
+  formatCurrencyAmount,
+  resolveTransactionCurrency,
+} from "../../utils/currency";
 
 export default function TransactionDetailScreen() {
   const insets = useSafeAreaInsets();
@@ -78,13 +83,22 @@ export default function TransactionDetailScreen() {
 
   const isExpense =
     transaction.type === "EXPENSE" || transaction.type === "TRANSFER";
+  const showExpenseModel = transaction.type === "EXPENSE";
+  const expenseModelLabel =
+    transaction.expenseModel === "FIXED" ? "FIJO" : "VARIABLE";
   const Icon = getIcon(transaction.category?.icon || "HelpCircle");
   const categoryColor = transaction.category?.color || "$gray8";
+  const transactionCurrency = resolveTransactionCurrency(transaction);
+  const accountCurrency = transaction.account?.currency || transactionCurrency;
+  const currencySubValue =
+    accountCurrency !== transactionCurrency
+      ? `Cuenta: ${accountCurrency}`
+      : undefined;
 
-  const formattedAmount = new Intl.NumberFormat("es-CL", {
-    style: "currency",
-    currency: "CLP",
-  }).format(Number(transaction.amount));
+  const formattedAmount = formatCurrencyAmount(
+    Number(transaction.amount),
+    transactionCurrency
+  );
 
   const dateObj = new Date(transaction.date);
   const formattedDate = dateObj.toLocaleDateString("es-CL", {
@@ -179,6 +193,29 @@ export default function TransactionDetailScreen() {
               <Text fontSize="$5" color="$gray11" fontWeight="600">
                 {transaction.category?.name}
               </Text>
+              {showExpenseModel && (
+                <XStack
+                  marginTop="$1"
+                  paddingHorizontal="$2.5"
+                  paddingVertical={2}
+                  borderRadius="$8"
+                  backgroundColor={
+                    expenseModelLabel === "FIJO" ? "$blue3" : "$orange3"
+                  }
+                  borderWidth={1}
+                  borderColor={
+                    expenseModelLabel === "FIJO" ? "$blue8" : "$orange8"
+                  }
+                >
+                  <Text
+                    fontSize={10}
+                    fontWeight="800"
+                    color={expenseModelLabel === "FIJO" ? "$blue11" : "$orange11"}
+                  >
+                    {expenseModelLabel}
+                  </Text>
+                </XStack>
+              )}
             </YStack>
           </YStack>
 
@@ -199,8 +236,19 @@ export default function TransactionDetailScreen() {
               icon={Wallet}
               label={isExpense ? "Pagado con" : "Depositado en"}
               value={transaction.account?.name || "Cuenta desconocida"}
-              subValue={transaction.account?.currency}
+              subValue={
+                currencySubValue
+                  ? `${transactionCurrency} • ${currencySubValue}`
+                  : transactionCurrency
+              }
             />
+            {showExpenseModel ? (
+              <DetailRow
+                icon={Tag}
+                label="Modelo de gasto"
+                value={expenseModelLabel}
+              />
+            ) : null}
             {transaction.description ? (
               <DetailRow
                 icon={FileText}

@@ -16,7 +16,7 @@ import {
   TrendingDown,
   TrendingUp,
 } from "@tamagui/lucide-icons";
-import { GoalTransaction, SavingsAnalysis } from "../../types/goal.types";
+import { Currency, GoalTransaction, SavingsAnalysis } from "../../types/goal.types";
 import { formatGoalAmount } from "../../utils/formatMoney";
 import { isSameMonth, isSameYear, format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -28,7 +28,7 @@ interface SavingsDetailViewProps {
   goalId: string;
   onGoalUpdate: () => void;
   analysis: SavingsAnalysis;
-  currency: string;
+  currency: Currency;
   isHousing?: boolean;
   transactions?: GoalTransaction[];
   deadline: string | Date;

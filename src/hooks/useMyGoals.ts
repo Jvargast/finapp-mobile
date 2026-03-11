@@ -1,10 +1,12 @@
+import axios from "axios";
 import { useState, useCallback } from "react";
 import { GoalService } from "../services/goalService";
 import { FinancialGoal, GoalType } from "../types/goal.types";
 import { useFocusEffect } from "@react-navigation/native";
 import { useUserStore } from "../stores/useUserStore";
+import { ExpenseModel } from "../types/expense.types";
 
-export const useMyGoals = () => {
+export const useMyGoals = (expenseModel?: ExpenseModel) => {
   const [goals, setGoals] = useState<FinancialGoal[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -14,7 +16,7 @@ export const useMyGoals = () => {
   const fetchGoals = async () => {
     try {
       setIsLoading(true);
-      const data = await GoalService.getAll();
+      const data = await GoalService.getAll({ expenseModel });
 
       const sortedData = data.sort((a, b) => {
         const priority = getPriority(mainGoal);
@@ -29,7 +31,17 @@ export const useMyGoals = () => {
 
       setGoals(sortedData);
     } catch (err) {
-      console.error(err);
+      if (axios.isAxiosError(err)) {
+        console.error("[useMyGoals.fetchGoals] failed", {
+          status: err.response?.status,
+          code: err.code,
+          message: err.message,
+          expenseModel,
+          mainGoal,
+        });
+      } else {
+        console.error("[useMyGoals.fetchGoals] failed", err);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -38,7 +50,7 @@ export const useMyGoals = () => {
   useFocusEffect(
     useCallback(() => {
       fetchGoals();
-    }, [mainGoal])
+    }, [mainGoal, expenseModel])
   );
 
   return { goals, isLoading, refetch: fetchGoals };

@@ -22,6 +22,7 @@ import {
 } from "react-native";
 import { Mail, Lock, LogIn, Eye, EyeOff, Wallet } from "@tamagui/lucide-icons";
 import { useToastStore } from "../../stores/useToastStore";
+import { DisplayHeading } from "../../components/ui/DisplayHeading";
 import { AuthActions } from "../../actions/authActions";
 
 const COLORS = {
@@ -106,15 +107,16 @@ export default function LoginScreen() {
                   />
                 </Stack>
 
-                <Text
+                <DisplayHeading
                   fontSize={36}
-                  fontWeight="900"
+                  fontWeight="400"
                   color={COLORS.textMain}
                   letterSpacing={-1}
                   textAlign="center"
+                  lineHeight={40}
                 >
                   Wou Finance
-                </Text>
+                </DisplayHeading>
                 <Text
                   fontSize="$4"
                   color={COLORS.textMuted}

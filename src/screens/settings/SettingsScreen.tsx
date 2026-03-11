@@ -29,6 +29,7 @@ import { useNavigation } from "@react-navigation/native";
 import { useUserStore } from "../../stores/useUserStore";
 import { AuthActions } from "../../actions/authActions";
 import { UserActions } from "../../actions/userActions";
+import { useSubscription } from "../../hooks/useSubscription";
 import { registerForPushNotificationsAsync } from "../../utils/notifications";
 import { useToastStore } from "../../stores/useToastStore";
 import { UserService } from "../../services/userService";
@@ -75,6 +76,7 @@ export default function SettingsScreen() {
   const user = useUserStore((state) => state.user);
   const navigation = useNavigation<any>();
   const { showToast } = useToastStore();
+  const { plan: subscriptionPlan } = useSubscription();
 
   const [showJoinSheet, setShowJoinSheet] = useState(false);
   const [notifications, setNotifications] = useState(false);
@@ -93,7 +95,7 @@ export default function SettingsScreen() {
   const goalKey = user?.preferences?.mainGoal || "save";
   const currentGoal = GOAL_CONFIG[goalKey] || GOAL_CONFIG["save"];
 
-  const userPlan = user?.plan || "FREE";
+  const userPlan = subscriptionPlan || user?.plan || "FREE";
   const [leaveFamilyModalVisible, setLeaveFamilyModalVisible] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -221,20 +223,37 @@ export default function SettingsScreen() {
             )}
 
             {userPlan === "FAMILY_ADMIN" && (
-              <SettingItem
-                icon={Users}
-                color="#F59E0B"
-                label="Grupo Familiar"
-                value="Gestionar Miembros"
-                onPress={() => navigation.navigate("FamilyGroup")}
-              />
+              <>
+                <SettingItem
+                  icon={Crown}
+                  color="#F59E0B"
+                  label="Suscripcion Familiar"
+                  value="Facturacion"
+                  onPress={() => navigation.navigate("SubscriptionDetails")}
+                />
+
+                <SettingItem
+                  icon={Users}
+                  color="#0EA5E9"
+                  label="Grupo Familiar"
+                  value="Gestionar Miembros"
+                  onPress={() => navigation.navigate("FamilyGroup")}
+                />
+              </>
             )}
 
             {userPlan === "FAMILY_MEMBER" && (
               <>
                 <SettingItem
-                  icon={HeartHandshake}
+                  icon={Crown}
                   color="#F59E0B"
+                  label="Tu Suscripcion"
+                  value="Detalles"
+                  onPress={() => navigation.navigate("SubscriptionDetails")}
+                />
+                <SettingItem
+                  icon={HeartHandshake}
+                  color="#10B981"
                   label="Plan Familiar"
                   value="Ver Miembros"
                   onPress={() => navigation.navigate("FamilyGroup")}

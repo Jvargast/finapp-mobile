@@ -20,6 +20,8 @@ import { ScrollView } from "react-native-gesture-handler";
 import { BudgetActions } from "../../actions/budgetActions";
 import { TransactionDatePicker } from "../../components/transactions/TransactionDatePicker";
 import { InteractionManager } from "react-native";
+import { ExpenseModel } from "../../types/expense.types";
+import { DisplayHeading } from "../../components/ui/DisplayHeading";
 
 export default function AddExpenseScreen() {
   const insets = useSafeAreaInsets();
@@ -49,7 +51,8 @@ export default function AddExpenseScreen() {
 
   const [amount, setAmount] = useState("0");
   const [description, setDescription] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("1");
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [expenseModel, setExpenseModel] = useState<ExpenseModel>("VARIABLE");
   const [date, setDate] = useState(new Date());
 
   const selectedBudget = useMemo(() => {
@@ -96,6 +99,10 @@ export default function AddExpenseScreen() {
       showToast("Selecciona una cuenta de pago", "error");
       return;
     }
+    if (!selectedCategory) {
+      showToast("Selecciona una categoría", "error");
+      return;
+    }
 
     try {
       await TransactionActions.createTransaction({
@@ -103,6 +110,7 @@ export default function AddExpenseScreen() {
         type: "EXPENSE",
         accountId: selectedAccountId,
         categoryId: selectedCategory,
+        expenseModel,
         budgetId: selectedBudget?.id,
         description: description,
         date: date.toISOString(),
@@ -125,9 +133,14 @@ export default function AddExpenseScreen() {
           icon={<ChevronLeft size={28} color="$color" />}
           onPress={() => navigation.goBack()}
         />
-        <Text fontSize="$4" fontWeight="800" color="$gray11">
+        <DisplayHeading
+          fontSize="$5"
+          fontWeight="400"
+          color="$gray11"
+          lineHeight={24}
+        >
           Nuevo Gasto
-        </Text>
+        </DisplayHeading>
         <Button size="$3" chromeless width={40} />
       </XStack>
 
@@ -192,6 +205,53 @@ export default function AddExpenseScreen() {
             />
           </XStack>
 
+          <YStack paddingHorizontal="$4" space="$2" marginTop="$2">
+            <Text
+              fontSize={11}
+              color="$gray9"
+              fontWeight="700"
+              textTransform="uppercase"
+            >
+              Modelo de gasto
+            </Text>
+            <XStack space="$2">
+              <Button
+                flex={1}
+                height={42}
+                borderRadius="$4"
+                backgroundColor={expenseModel === "FIXED" ? "$brand" : "$gray2"}
+                borderWidth={1}
+                borderColor={expenseModel === "FIXED" ? "$brand" : "$gray5"}
+                onPress={() => setExpenseModel("FIXED")}
+              >
+                <Text
+                  fontSize="$3"
+                  fontWeight="800"
+                  color={expenseModel === "FIXED" ? "white" : "$gray11"}
+                >
+                  FIJO
+                </Text>
+              </Button>
+              <Button
+                flex={1}
+                height={42}
+                borderRadius="$4"
+                backgroundColor={expenseModel === "VARIABLE" ? "$brand" : "$gray2"}
+                borderWidth={1}
+                borderColor={expenseModel === "VARIABLE" ? "$brand" : "$gray5"}
+                onPress={() => setExpenseModel("VARIABLE")}
+              >
+                <Text
+                  fontSize="$3"
+                  fontWeight="800"
+                  color={expenseModel === "VARIABLE" ? "white" : "$gray11"}
+                >
+                  VARIABLE
+                </Text>
+              </Button>
+            </XStack>
+          </YStack>
+
           <YStack space="$2" marginBottom="$3">
             <XStack paddingHorizontal="$4" zIndex={0}>
               <Text
@@ -214,6 +274,7 @@ export default function AddExpenseScreen() {
             selectedId={selectedCategory}
             onSelect={setSelectedCategory}
             navigation={navigation}
+            transactionType="EXPENSE"
           />
 
           {selectedBudget && (

@@ -30,6 +30,13 @@ import { CategorySelector } from "../transactions/CategorySelector";
 import { AccountSelector } from "../transactions/AccountSelector";
 import { sanitizeEmailSnippet } from "../../utils/sanitizeEmailSnippet";
 import { useBudgetStore } from "../../stores/useBudgetStore";
+import { useToastStore } from "../../stores/useToastStore";
+import { ExpenseModel } from "../../types/expense.types";
+import {
+  isExpenseCandidate,
+  normalizeExpenseModel,
+} from "../../utils/expenseModel";
+import { formatCurrencyAmount, resolveCurrency } from "../../utils/currency";
 
 interface PendingCandidateSheetProps {
   open: boolean;
@@ -73,8 +80,10 @@ export const PendingCandidateSheet = ({
   const [merchant, setMerchant] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [accountId, setAccountId] = useState("");
+  const [expenseModel, setExpenseModel] = useState<ExpenseModel>("VARIABLE");
   const [date, setDate] = useState(new Date());
   const budgets = useBudgetStore((state) => state.budgets);
+  const showToast = useToastStore((state) => state.showToast);
 
   const [isDatePickerOpen, setDatePickerOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -92,6 +101,21 @@ export const PendingCandidateSheet = ({
     if (accountId) return accountId;
     return defaultAccountId;
   }, [accountId, defaultAccountId]);
+  const selectedAccount = useMemo(
+    () => accounts.find((item) => item.id === resolvedAccountId) || null,
+    [accounts, resolvedAccountId]
+  );
+  const candidateCurrency = candidate?.currency
+    ? resolveCurrency(candidate.currency)
+    : null;
+  const selectedAccountCurrency = selectedAccount?.currency
+    ? resolveCurrency(selectedAccount.currency)
+    : null;
+  const hasCurrencyMismatch = Boolean(
+    candidateCurrency &&
+      selectedAccountCurrency &&
+      candidateCurrency !== selectedAccountCurrency
+  );
 
   const selectedBudget = useMemo(() => {
     if (!categoryId) return null;
@@ -108,6 +132,17 @@ export const PendingCandidateSheet = ({
       ) || null
     );
   }, [budgets, categoryId, date]);
+  const candidateIsExpense = useMemo(
+    () =>
+      isExpenseCandidate(candidate?.direction, candidate?.amount) ||
+      Boolean(candidate?.expenseModel || candidate?.suggestedExpenseModel),
+    [
+      candidate?.direction,
+      candidate?.amount,
+      candidate?.expenseModel,
+      candidate?.suggestedExpenseModel,
+    ],
+  );
 
   useEffect(() => {
     if (!open) {
@@ -130,12 +165,31 @@ export const PendingCandidateSheet = ({
         candidate.suggestedCategoryId ||
         ""
     );
-    setAccountId(candidate.accountId || candidate.account?.id || defaultAccountId);
+    const suggestedAccountId = candidate.accountId || candidate.account?.id || "";
+    const matchedCurrencyAccount = candidate.currency
+      ? accounts.find(
+          (account) =>
+            resolveCurrency(account.currency) === resolveCurrency(candidate.currency)
+        )?.id
+      : "";
+    setAccountId(suggestedAccountId || matchedCurrencyAccount || defaultAccountId);
+    setExpenseModel(
+      normalizeExpenseModel(
+        candidate.expenseModel || candidate.suggestedExpenseModel,
+      ),
+    );
     setDate(candidate.occurredAt ? new Date(candidate.occurredAt) : new Date());
-  }, [open, candidate?.id, accounts]);
+  }, [open, candidate?.id, accounts, defaultAccountId]);
 
   const handleConfirm = async () => {
     if (!candidate) return;
+    if (hasCurrencyMismatch && candidateCurrency && selectedAccountCurrency) {
+      showToast(
+        `Moneda inconsistente: movimiento ${candidateCurrency}, cuenta ${selectedAccountCurrency}`,
+        "error"
+      );
+      return;
+    }
     setIsSaving(true);
     try {
       const overrides: BankingCandidateOverrides = {};
@@ -169,6 +223,9 @@ export const PendingCandidateSheet = ({
       }
       if ((candidate.merchant ?? "") !== merchant) {
         overrides.merchant = merchant || null;
+      }
+      if (candidateIsExpense) {
+        overrides.expenseModel = expenseModel;
       }
 
       await onConfirm(candidate.id, overrides);
@@ -288,6 +345,58 @@ export const PendingCandidateSheet = ({
                   />
                 </YStack>
 
+                {candidateIsExpense && (
+                  <YStack>
+                    <Text
+                      fontSize={11}
+                      color="$gray9"
+                      fontWeight="700"
+                      textTransform="uppercase"
+                      marginBottom="$2"
+                    >
+                      Modelo de gasto
+                    </Text>
+                    <XStack space="$2">
+                      <Button
+                        flex={1}
+                        height={40}
+                        borderRadius="$4"
+                        backgroundColor={expenseModel === "FIXED" ? "$brand" : "$gray2"}
+                        borderWidth={1}
+                        borderColor={expenseModel === "FIXED" ? "$brand" : "$gray5"}
+                        onPress={() => setExpenseModel("FIXED")}
+                      >
+                        <Text
+                          fontSize="$3"
+                          fontWeight="800"
+                          color={expenseModel === "FIXED" ? "white" : "$gray11"}
+                        >
+                          FIJO
+                        </Text>
+                      </Button>
+                      <Button
+                        flex={1}
+                        height={40}
+                        borderRadius="$4"
+                        backgroundColor={
+                          expenseModel === "VARIABLE" ? "$brand" : "$gray2"
+                        }
+                        borderWidth={1}
+                        borderColor={expenseModel === "VARIABLE" ? "$brand" : "$gray5"}
+                        onPress={() => setExpenseModel("VARIABLE")}
+                      >
+                        <Text
+                          fontSize="$3"
+                          fontWeight="800"
+                          color={expenseModel === "VARIABLE" ? "white" : "$gray11"}
+                        >
+                          VARIABLE
+                        </Text>
+                      </Button>
+                    </XStack>
+                  </YStack>
+                )}
+
                 <YStack>
                   <Text
                     fontSize={11}
@@ -364,6 +473,15 @@ export const PendingCandidateSheet = ({
                     selectedId={resolvedAccountId}
                     onSelect={setAccountId}
                   />
+                  {hasCurrencyMismatch && candidateCurrency && selectedAccountCurrency && (
+                    <XStack marginTop="$2" space="$2" alignItems="center">
+                      <AlertCircle size={13} color="$red10" />
+                      <Text fontSize={10} color="$red10" flex={1}>
+                        Movimiento en {candidateCurrency} y cuenta en{" "}
+                        {selectedAccountCurrency}. Selecciona una cuenta compatible.
+                      </Text>
+                    </XStack>
+                  )}
                 </YStack>
 
                 <YStack space="$2">
@@ -373,6 +491,7 @@ export const PendingCandidateSheet = ({
                     navigation={navigation}
                     embedded
                     showColors
+                    transactionType={candidateIsExpense ? "EXPENSE" : "INCOME"}
                     onAddCategory={() => {
                       onOpenChange(false);
                       InteractionManager.runAfterInteractions(() => {
@@ -439,11 +558,12 @@ export const PendingCandidateSheet = ({
                             "Presupuesto"}
                         </Text>
                         <Text fontSize={10} color="$gray10">
-                          Quedan $
-                          {(
+                          Quedan{" "}
+                          {formatCurrencyAmount(
                             selectedBudget.amount -
-                            (selectedBudget.progress?.spent || 0)
-                          ).toLocaleString()}
+                              (selectedBudget.progress?.spent || 0),
+                            selectedBudget.currency
+                          )}
                         </Text>
                       </XStack>
                     </Button>
@@ -513,8 +633,8 @@ export const PendingCandidateSheet = ({
                 backgroundColor={ACTION_STYLES.confirm.bg}
                 borderWidth={1}
                 borderColor={ACTION_STYLES.confirm.border}
-                disabled={isSaving}
-                opacity={isSaving ? 0.7 : 1}
+                disabled={isSaving || hasCurrencyMismatch}
+                opacity={isSaving || hasCurrencyMismatch ? 0.7 : 1}
                 pressStyle={{ opacity: 0.9 }}
                 onPress={handleConfirm}
               >

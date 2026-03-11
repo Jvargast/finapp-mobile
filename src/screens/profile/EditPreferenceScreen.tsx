@@ -112,6 +112,14 @@ const OPTIONS: Record<PreferenceType, OptionItem[]> = {
       desc: "Para viajes o proyectos en Canadá.",
     },
     {
+      id: "GBP",
+      label: "Libra Esterlina",
+      symbol: "GBP",
+      icon: Building,
+      color: "#0F766E",
+      desc: "Para cuentas y gastos en Reino Unido.",
+    },
+    {
       id: "EUR",
       label: "Euro",
       symbol: "EUR",

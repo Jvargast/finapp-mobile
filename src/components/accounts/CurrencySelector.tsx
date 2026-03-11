@@ -1,17 +1,18 @@
 import React from "react";
 import { XStack, Button, Text } from "tamagui";
 import { Currency } from "../../types/goal.types";
+import { CURRENCY_CODES } from "../../types/currency.types";
 
 interface CurrencySelectorProps {
   value: Currency;
-  onChange: (value: string) => void;
+  onChange: (value: Currency) => void;
 }
 
 export const CurrencySelector = ({
   value,
   onChange,
 }: CurrencySelectorProps) => {
-  const CURRENCIES: Currency[] = ["CLP", "USD", "EUR"];
+  const CURRENCIES: Currency[] = [...CURRENCY_CODES];
 
   return (
     <XStack space="$2" marginTop="$2">

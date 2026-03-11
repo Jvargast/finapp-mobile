@@ -6,6 +6,7 @@ import { MainLayout } from "../../components/layout/MainLayout";
 import { GoBackButton } from "../../components/ui/GoBackButton";
 import AllTransactionsScreen from "./AllTransactionsScreen";
 import PendingMovementsScreen from "../banking/PendingMovementsScreen";
+import { DisplayHeading } from "../../components/ui/DisplayHeading";
 
 type MovementsTab = "HISTORY" | "PENDING";
 
@@ -55,9 +56,14 @@ export default function MovementsScreen() {
               iconColor={pastel.ink}
             />
             <YStack>
-              <Text fontSize="$6" fontWeight="900" color={pastel.ink}>
+              <DisplayHeading
+                fontSize="$6"
+                fontWeight="400"
+                color={pastel.ink}
+                lineHeight={26}
+              >
                 Movimientos
-              </Text>
+              </DisplayHeading>
               <Text fontSize="$3" color={pastel.muted}>
                 Historial y pendientes en un solo lugar.
               </Text>

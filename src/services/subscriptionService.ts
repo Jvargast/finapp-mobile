@@ -1,26 +1,97 @@
 import finappApi from "../api/finappApi";
+import {
+  type BackendSubscriptionState,
+  type SubscriptionFamilyRole,
+} from "../types/subscription.types";
 import { SubscriptionPlan } from "../types/user.types";
 
+const normalizePlan = (value: unknown): SubscriptionPlan => {
+  switch (value) {
+    case SubscriptionPlan.PRO:
+    case SubscriptionPlan.FAMILY_ADMIN:
+    case SubscriptionPlan.FAMILY_MEMBER:
+    case SubscriptionPlan.FREE:
+      return value;
+    default:
+      return SubscriptionPlan.FREE;
+  }
+};
+
+const normalizeFamilyRole = (
+  value: unknown,
+  plan: SubscriptionPlan
+): SubscriptionFamilyRole => {
+  switch (value) {
+    case "ADMIN":
+    case "MEMBER":
+    case "NONE":
+      return value;
+    default:
+      if (plan === SubscriptionPlan.FAMILY_ADMIN) {
+        return "ADMIN";
+      }
+
+      if (plan === SubscriptionPlan.FAMILY_MEMBER) {
+        return "MEMBER";
+      }
+
+      return "NONE";
+  }
+};
+
+const normalizeNullableString = (value: unknown): string | null => {
+  return typeof value === "string" ? value : null;
+};
+
+const normalizeSubscription = (payload: unknown): BackendSubscriptionState => {
+  const source =
+    typeof payload === "object" &&
+    payload !== null &&
+    "subscription" in payload &&
+    payload.subscription
+      ? payload.subscription
+      : payload;
+
+  const data =
+    typeof source === "object" && source !== null
+      ? (source as Record<string, unknown>)
+      : {};
+  const plan = normalizePlan(
+    "plan" in data ? (data.plan as unknown) : SubscriptionPlan.FREE
+  );
+  const familySource =
+    "family" in data && typeof data.family === "object" && data.family !== null
+      ? (data.family as Record<string, unknown>)
+      : null;
+
+  return {
+    plan,
+    isActive: Boolean("isActive" in data ? data.isActive : false),
+    expiresAt: normalizeNullableString(data.expiresAt),
+    willRenew: Boolean("willRenew" in data ? data.willRenew : false),
+    isCanceled: Boolean("isCanceled" in data ? data.isCanceled : false),
+    canceledAt: normalizeNullableString(data.canceledAt),
+    productId: normalizeNullableString(data.productId),
+    entitlement: normalizeNullableString(data.entitlement),
+    environment: normalizeNullableString(data.environment),
+    store: normalizeNullableString(data.store),
+    purchasedAt: normalizeNullableString(data.purchasedAt),
+    family: {
+      role: normalizeFamilyRole(
+        familySource && "role" in familySource ? familySource.role : null,
+        plan
+      ),
+    },
+  };
+};
+
 export const SubscriptionService = {
-  purchaseSubscription: async (
-    productId: string
-  ): Promise<{ plan: SubscriptionPlan; expiresAt: string }> => {
-    console.log(
-      `💳 Enviando solicitud de suscripción al Backend: ${productId}`
-    );
+  getMySubscription: async (): Promise<BackendSubscriptionState> => {
+    const { data } = await finappApi.get("/subscription/me");
+    return normalizeSubscription(data);
+  },
 
-    const response = await finappApi.post("/subscription/subscribe", {
-      productId: productId,
-    });
-
-    const backendData = response.data;
-
-    const estimatedExpiry = new Date();
-    estimatedExpiry.setMonth(estimatedExpiry.getMonth() + 1);
-
-    return {
-      plan: backendData.plan,
-      expiresAt: estimatedExpiry.toISOString(),
-    };
+  reconcile: async (): Promise<void> => {
+    await finappApi.post("/subscription/reconcile", {});
   },
 };

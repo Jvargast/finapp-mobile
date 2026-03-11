@@ -40,6 +40,7 @@ import {
   PasswordRequirements,
 } from "../../components/shared/PasswordRequirements";
 import { PasswordInput } from "../../components/shared/PasswordInput";
+import { DisplayHeading } from "../../components/ui/DisplayHeading";
 
 const COLORS = {
   primary: "#4F46E5",
@@ -230,16 +231,17 @@ export default function RegisterScreen() {
                     enterStyle={{ opacity: 0, x: -20 }}
                     key={`title-${currentStep}`}
                   >
-                    <Text
+                    <DisplayHeading
                       fontSize={32}
-                      fontWeight="900"
+                      fontWeight="400"
                       color={COLORS.textMain}
                       letterSpacing={-1}
+                      lineHeight={36}
                     >
                       {currentStep === 1
                         ? "¿Cómo te llamas?"
                         : "Protege tu cuenta"}
-                    </Text>
+                    </DisplayHeading>
                     <Text fontSize="$4" color={COLORS.textMuted} marginTop="$2">
                       {currentStep === 1
                         ? "Tu nombre nos ayuda a personalizar tu experiencia."

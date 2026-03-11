@@ -29,6 +29,7 @@ import {
 import { useUserStore } from "../../stores/useUserStore";
 import { UserActions } from "../../actions/userActions";
 import LoadingScreen from "../LoadingScreen";
+import { DisplayHeading } from "../../components/ui/DisplayHeading";
 
 const CURRENCIES = [
   {
@@ -145,14 +146,14 @@ export default function InitialSetupScreen() {
                 </Stack>
 
                 <YStack>
-                  <Text
+                  <DisplayHeading
                     fontSize={28}
-                    fontWeight="900"
+                    fontWeight="400"
                     color="#1E293B"
                     lineHeight={34}
                   >
                     Hola, {user?.firstName} 👋
-                  </Text>
+                  </DisplayHeading>
                   <Text fontSize="$4" color="#64748B" marginTop="$3">
                     Configuremos tu espacio financiero.
                   </Text>

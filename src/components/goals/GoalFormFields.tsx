@@ -21,7 +21,10 @@ interface GoalFormFieldsProps {
   isEditing?: boolean;
 }
 
-const formatInputByCurrency = (value: string, currency: string) => {
+const formatInputByCurrency = (
+  value: string,
+  currency: CreateGoalFormInputs["currency"]
+) => {
   if (!value) return "";
   if (currency === "CLP") {
     const cleanNumber = value.replace(/\D/g, "");

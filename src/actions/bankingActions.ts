@@ -1,5 +1,6 @@
 import { BankingService } from "../services/bankingService";
 import { useToastStore } from "../stores/useToastStore";
+import { BankingCandidateOverrides } from "../types/banking.types";
 
 export const BankingActions = {
   listSources: async () => {
@@ -305,7 +306,7 @@ export const BankingActions = {
     }
   },
 
-  confirmCandidate: async (id: string, overrides?: any) => {
+  confirmCandidate: async (id: string, overrides?: BankingCandidateOverrides) => {
     try {
       const res = await BankingService.confirmCandidate(id, overrides);
       useToastStore.getState().showToast("Movimiento confirmado", "success");
@@ -319,7 +320,9 @@ export const BankingActions = {
     }
   },
 
-  confirmCandidates: async (items: any[]) => {
+  confirmCandidates: async (
+    items: Array<{ id: string } & BankingCandidateOverrides>,
+  ) => {
     try {
       const res = await BankingService.confirmCandidates(items);
       useToastStore

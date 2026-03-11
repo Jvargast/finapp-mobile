@@ -4,16 +4,21 @@ import {
   CreateBudgetParams,
   UpdateBudgetParams,
 } from "../types/budget.types";
+import { ExpenseModel } from "../types/expense.types";
 
 export const BudgetService = {
   /**
    * @param month
    * @param year
    */
-  getBudgets: async (month: number, year: number): Promise<Budget[]> => {
+  getBudgets: async (
+    month: number,
+    year: number,
+    expenseModel?: ExpenseModel
+  ): Promise<Budget[]> => {
     try {
       const response = await finappApi.get<Budget[]>("/budgets", {
-        params: { month, year },
+        params: { month, year, expenseModel },
       });
       return response.data;
     } catch (error) {
@@ -32,9 +37,14 @@ export const BudgetService = {
     }
   },
 
-  getBudgetById: async (id: string): Promise<Budget> => {
+  getBudgetById: async (
+    id: string,
+    expenseModel?: ExpenseModel
+  ): Promise<Budget> => {
     try {
-      const response = await finappApi.get<Budget>(`/budgets/${id}`);
+      const response = await finappApi.get<Budget>(`/budgets/${id}`, {
+        params: { expenseModel },
+      });
       return response.data;
     } catch (error) {
       console.error(`❌ Error obteniendo presupuesto ${id}:`, error);

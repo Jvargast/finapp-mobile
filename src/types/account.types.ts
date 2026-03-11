@@ -30,6 +30,7 @@ export interface Account {
   setupStatus?: AccountSetupStatus | null;
   setupMethod?: AccountSetupMethod | null;
   firstSyncedAt?: string | Date | null;
+  lastSyncedAt?: string | Date | null;
 
   userId?: string;
   createdAt?: string | Date;

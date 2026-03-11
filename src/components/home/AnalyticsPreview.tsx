@@ -21,7 +21,12 @@ import { TransactionService } from "../../services/transactionService";
 import { BudgetService } from "../../services/budgetService";
 import { Transaction } from "../../types/transaction.types";
 import { useUserStore } from "../../stores/useUserStore";
-import { formatMoney } from "../../utils/formatMoney";
+import {
+  convertAmount,
+  formatCurrencyAmount,
+  resolveTransactionCurrency,
+} from "../../utils/currency";
+import { DisplayHeading } from "../ui/DisplayHeading";
 
 const PAGE_SIZE = 100;
 
@@ -51,13 +56,26 @@ const getPreviousMonthParts = (date: Date) => {
 
 const clampPercent = (value: number) => Math.min(100, Math.max(0, value));
 
-const sumExpenseLike = (transactions: Transaction[]) =>
+const sumExpenseLike = (
+  transactions: Transaction[],
+  displayCurrency: string
+) =>
   transactions.reduce((acc, tx) => {
-    if (tx.type !== "EXPENSE" && tx.type !== "TRANSFER") return acc;
-    return acc + Math.abs(Number(tx.amount || 0));
+    if (tx.type !== "EXPENSE") return acc;
+    const sourceCurrency = resolveTransactionCurrency(tx);
+    return (
+      acc +
+      Math.abs(
+        convertAmount(Number(tx.amount || 0), sourceCurrency, displayCurrency)
+      )
+    );
   }, 0);
 
-const fetchMonthlyExpenseTotal = async (month: number, year: number) => {
+const fetchMonthlyExpenseTotal = async (
+  month: number,
+  year: number,
+  displayCurrency: string
+) => {
   let page = 1;
   let offset = 0;
   let total = 0;
@@ -71,7 +89,7 @@ const fetchMonthlyExpenseTotal = async (month: number, year: number) => {
       offset,
     });
 
-    total += sumExpenseLike(response.data || []);
+    total += sumExpenseLike(response.data || [], displayCurrency);
 
     const lastPage = response.meta?.lastPage || page;
     const reachedLastPage = page >= lastPage;
@@ -109,17 +127,29 @@ export const AnalyticsPreview = () => {
         const { month: prevMonth, year: prevYear } = getPreviousMonthParts(now);
 
         const [currentExpense, previousExpense, budgets] = await Promise.all([
-          fetchMonthlyExpenseTotal(month, year),
-          fetchMonthlyExpenseTotal(prevMonth, prevYear),
+          fetchMonthlyExpenseTotal(month, year, currency),
+          fetchMonthlyExpenseTotal(prevMonth, prevYear, currency),
           BudgetService.getBudgets(month, year),
         ]);
 
         const totalBudgeted = budgets.reduce(
-          (acc, budget) => acc + Number(budget.amount || 0),
+          (acc, budget) =>
+            acc +
+            convertAmount(
+              Number(budget.amount || 0),
+              budget.currency,
+              currency
+            ),
           0,
         );
         const totalSpent = budgets.reduce(
-          (acc, budget) => acc + Number(budget.progress?.spent || 0),
+          (acc, budget) =>
+            acc +
+            convertAmount(
+              Number(budget.progress?.spent || 0),
+              budget.currency,
+              currency
+            ),
           0,
         );
         const spentPercentage =
@@ -148,7 +178,7 @@ export const AnalyticsPreview = () => {
     return () => {
       isActive = false;
     };
-  }, []);
+  }, [currency]);
 
   useFocusEffect(loadPreview);
 
@@ -201,7 +231,6 @@ export const AnalyticsPreview = () => {
         <Stack
           borderRadius="$6"
           overflow="hidden"
-          elevation={2}
           shadowColor={isDark ? "#000000" : "#E2E8F0"}
           shadowRadius={isDark ? 14 : 10}
           shadowOpacity={isDark ? 0.35 : 0.1}
@@ -249,14 +278,15 @@ export const AnalyticsPreview = () => {
                 >
                   <Sparkles size={16} color={pastel.accent} />
                 </Stack>
-                <Text
+                <DisplayHeading
                   color={pastel.ink}
-                  fontWeight="700"
-                  fontSize={14}
+                  fontWeight="400"
+                  fontSize={18}
+                  lineHeight={24}
                   textTransform="capitalize"
                 >
                   Análisis de {monthName}
-                </Text>
+                </DisplayHeading>
               </XStack>
               <ChevronRight size={16} color={pastel.muted} />
             </XStack>
@@ -265,7 +295,7 @@ export const AnalyticsPreview = () => {
               <YStack>
                 <Text
                   color={pastel.muted}
-                  fontSize={11}
+                  fontSize={12}
                   fontWeight="500"
                   marginBottom={2}
                 >
@@ -275,7 +305,7 @@ export const AnalyticsPreview = () => {
                   <Spinner size="small" color={pastel.accent} />
                 ) : (
                   <Text color={pastel.ink} fontSize={22} fontWeight="800">
-                    {formatMoney(metrics.currentExpense, currency)}
+                    {formatCurrencyAmount(metrics.currentExpense, currency)}
                   </Text>
                 )}
               </YStack>
@@ -284,6 +314,10 @@ export const AnalyticsPreview = () => {
                 <XStack
                   backgroundColor={
                     spendingImproved ? pastel.trendUpBg : pastel.trendDownBg
+                  }
+                  borderWidth={1}
+                  borderColor={
+                    spendingImproved ? pastel.trendUpText : pastel.trendDownText
                   }
                   paddingHorizontal={8}
                   paddingVertical={4}
@@ -302,13 +336,13 @@ export const AnalyticsPreview = () => {
                         ? pastel.trendUpText
                         : pastel.trendDownText
                     }
-                    fontSize={11}
+                    fontSize={12}
                     fontWeight="700"
                   >
                     {deltaLabel}
                   </Text>
                 </XStack>
-                <Text color={pastel.muted} fontSize={10}>
+                <Text color={pastel.ink} fontSize={12}>
                   vs mes anterior
                 </Text>
               </YStack>
@@ -316,10 +350,10 @@ export const AnalyticsPreview = () => {
 
             <YStack space="$1.5">
               <XStack justifyContent="space-between">
-                <Text color={pastel.muted} fontSize={10}>
+                <Text color={pastel.ink} fontSize={12}>
                   Presupuesto usado
                 </Text>
-                <Text color={pastel.muted} fontSize={10}>
+                <Text color={pastel.ink} fontSize={12} fontWeight="700">
                   {budgetLabel}
                 </Text>
               </XStack>

@@ -26,6 +26,7 @@ import {
 } from "@tamagui/lucide-icons";
 import { MainLayout } from "../../components/layout/MainLayout";
 import { GoBackButton } from "../../components/ui/GoBackButton";
+import { DisplayHeading } from "../../components/ui/DisplayHeading";
 import { RecurringGlyph } from "../../components/recurring/RecurringGlyph";
 import { getIcon } from "../../utils/iconMap";
 import { RecurringActions } from "../../actions/recurringActions";
@@ -288,9 +289,14 @@ export default function RecurringScreen() {
         <XStack alignItems="center" space="$3">
           <GoBackButton fallbackRouteName="HomeDrawer" />
           <YStack>
-            <Text fontSize="$6" fontWeight="900" color={styles.ink}>
+            <DisplayHeading
+              fontSize="$6"
+              fontWeight="400"
+              color={styles.ink}
+              lineHeight={26}
+            >
               Recurrentes
-            </Text>
+            </DisplayHeading>
             <Text fontSize="$3" color={styles.muted}>
               Controla tus PAC/PAT en un solo lugar.
             </Text>

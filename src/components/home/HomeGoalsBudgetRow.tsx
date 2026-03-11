@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  LayoutChangeEvent,
   NativeScrollEvent,
   NativeSyntheticEvent,
   Pressable,
@@ -25,14 +26,17 @@ import {
 } from "@tamagui/lucide-icons";
 import { LinearGradient } from "@tamagui/linear-gradient";
 import { useMyGoals } from "../../hooks/useMyGoals";
-import { GoalType } from "../../types/goal.types";
+import { Currency, GoalType } from "../../types/goal.types";
 import { useUserStore } from "../../stores/useUserStore";
 import { formatGoalAmount } from "../../utils/formatMoney";
+import { formatCurrencyAmount } from "../../utils/currency";
 import { useBudgetStore } from "../../stores/useBudgetStore";
 import { BudgetActions } from "../../actions/budgetActions";
 import { getIcon } from "../../utils/iconMap";
+import { DisplayHeading } from "../ui/DisplayHeading";
 
 const MAX_GOAL_SLIDES = 6;
+const FOLDER_TAB_HEIGHT = 28;
 
 const MAIN_GOAL_TO_TYPE: Record<string, GoalType> = {
   save: GoalType.SAVING,
@@ -112,6 +116,99 @@ const hexToRgba = (hex: string, alpha: number, fallback: string) => {
   const b = parseInt(clean.slice(4, 6), 16);
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 };
+
+const WidgetTitle = ({
+  title,
+  titleColor,
+}: {
+  title: string;
+  titleColor: string;
+}) => (
+  <YStack minHeight={28} justifyContent="center">
+    <DisplayHeading
+      minWidth={0}
+      numberOfLines={1}
+      fontSize="$6"
+      fontWeight="400"
+      color={titleColor}
+    >
+      {title}
+    </DisplayHeading>
+  </YStack>
+);
+
+const WidgetFolderFrame = ({
+  actionLabel,
+  onPress,
+  onLayout,
+  tabBg,
+  tabBorder,
+  tabText,
+  bodyBg,
+  children,
+}: {
+  actionLabel: string;
+  onPress: () => void;
+  onLayout: (event: LayoutChangeEvent) => void;
+  tabBg: string;
+  tabBorder: string;
+  tabText: string;
+  bodyBg: string;
+  children: React.ReactNode;
+}) => (
+  <Stack position="relative" height={160 + FOLDER_TAB_HEIGHT} onLayout={onLayout}>
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => ({
+        position: "absolute",
+        top: 0,
+        left: 6,
+        zIndex: 2,
+        opacity: pressed ? 0.88 : 1,
+        transform: [{ translateY: pressed ? 1 : 0 }],
+      })}
+    >
+      <Stack
+        minHeight={FOLDER_TAB_HEIGHT}
+        minWidth={78}
+        justifyContent="center"
+        paddingHorizontal="$3.5"
+        borderWidth={1}
+        borderColor={tabBorder}
+        backgroundColor={tabBg}
+        borderTopLeftRadius="$4"
+        borderTopRightRadius="$4"
+        borderBottomLeftRadius="$1"
+        borderBottomRightRadius="$1"
+        borderBottomWidth={0}
+      >
+        <Text
+          fontSize={10}
+          fontWeight="800"
+          color={tabText}
+          letterSpacing={0.35}
+        >
+          {actionLabel}
+        </Text>
+      </Stack>
+    </Pressable>
+    <Stack
+      position="absolute"
+      top={FOLDER_TAB_HEIGHT - 1}
+      left={0}
+      right={0}
+      bottom={0}
+      backgroundColor={bodyBg}
+      borderWidth={1}
+      borderColor={tabBorder}
+      borderRadius="$8"
+      borderTopLeftRadius="$2"
+      overflow="hidden"
+    >
+      {children}
+    </Stack>
+  </Stack>
+);
 
 export const HomeGoalsBudgetRow = () => {
   const navigation = useNavigation<any>();
@@ -207,46 +304,40 @@ export const HomeGoalsBudgetRow = () => {
     };
   };
 
-  const formatBudgetMoney = (amount: number, currency: string) =>
-    new Intl.NumberFormat("es-CL", {
-      style: "currency",
-      currency,
-      maximumFractionDigits: currency === "CLP" ? 0 : 2,
-    }).format(amount);
+  const formatBudgetMoney = (amount: number, currency: Currency) =>
+    formatCurrencyAmount(amount, currency);
 
   const subtitleColor = isDark ? "#CBD5E1" : "#6B7280";
+  const sharedTitleColor = isDark ? "#F8FAFC" : "#0F172A";
+  const goalsTabColors = {
+    bg: isDark ? "#251A37" : "#F5F3FF",
+    border: isDark ? "rgba(196,181,253,0.3)" : "#D8B4FE",
+    text: isDark ? "#DDD6FE" : "#6D28D9",
+    bodyBg: isDark ? "#1A1327" : "#FCFAFF",
+  };
+  const budgetsTabColors = {
+    bg: isDark ? "#15263C" : "#EFF6FF",
+    border: isDark ? "rgba(147,197,253,0.3)" : "#93C5FD",
+    text: isDark ? "#BFDBFE" : "#2563EB",
+    bodyBg: isDark ? "#101B2C" : "#FAFCFF",
+  };
 
   return (
     <YStack marginBottom="$5" space="$3">
       <XStack space="$3" alignItems="flex-start">
         <YStack flex={1} space="$2">
-          <XStack justifyContent="space-between" alignItems="center">
-            <Text
-              flex={1}
-              minWidth={0}
-              numberOfLines={1}
-              paddingRight="$2"
-              fontSize="$4"
-              fontWeight="800"
-              color={isDark ? "#DDD6FE" : "#6D28D9"}
-            >
-              Metas
-            </Text>
-            <Pressable onPress={() => navigation.navigate("Goals")}>
-              <Text
-                fontSize={11}
-                fontWeight="700"
-                color={isDark ? "#C4B5FD" : "#7C3AED"}
-              >
-                Ver todas
-              </Text>
-            </Pressable>
-          </XStack>
+          <WidgetTitle
+            title="Metas"
+            titleColor={sharedTitleColor}
+          />
 
-          <Stack
-            height={160}
-            borderRadius="$8"
-            overflow="hidden"
+          <WidgetFolderFrame
+            actionLabel="Ver todas"
+            onPress={() => navigation.navigate("Goals")}
+            tabBg={goalsTabColors.bg}
+            tabBorder={goalsTabColors.border}
+            tabText={goalsTabColors.text}
+            bodyBg={goalsTabColors.bodyBg}
             onLayout={(event) =>
               setGoalsCardWidth(Math.round(event.nativeEvent.layout.width))
             }
@@ -437,7 +528,7 @@ export const HomeGoalsBudgetRow = () => {
                 })}
               </RNScrollView>
             )}
-          </Stack>
+          </WidgetFolderFrame>
 
           {goalSlides.length > 1 && !isLoading && (
             <XStack justifyContent="center" space="$1.5" paddingTop="$0.5">
@@ -463,33 +554,18 @@ export const HomeGoalsBudgetRow = () => {
         </YStack>
 
         <YStack flex={1} space="$2">
-          <XStack justifyContent="space-between" alignItems="center">
-            <Text
-              flex={1}
-              minWidth={0}
-              numberOfLines={1}
-              paddingRight="$2"
-              fontSize="$4"
-              fontWeight="800"
-              color={isDark ? "#BFDBFE" : "#1D4ED8"}
-            >
-              Presupuestos
-            </Text>
-            <Pressable onPress={() => navigation.navigate("Budgets")}>
-              <Text
-                fontSize={11}
-                fontWeight="700"
-                color={isDark ? "#93C5FD" : "#2563EB"}
-              >
-                Ver todos
-              </Text>
-            </Pressable>
-          </XStack>
+          <WidgetTitle
+            title="Presupuestos"
+            titleColor={sharedTitleColor}
+          />
 
-          <Stack
-            height={160}
-            borderRadius="$8"
-            overflow="hidden"
+          <WidgetFolderFrame
+            actionLabel="Ver todos"
+            onPress={() => navigation.navigate("Budgets")}
+            tabBg={budgetsTabColors.bg}
+            tabBorder={budgetsTabColors.border}
+            tabText={budgetsTabColors.text}
+            bodyBg={budgetsTabColors.bodyBg}
             onLayout={(event) =>
               setBudgetsCardWidth(Math.round(event.nativeEvent.layout.width))
             }
@@ -691,7 +767,7 @@ export const HomeGoalsBudgetRow = () => {
                 })}
               </RNScrollView>
             )}
-          </Stack>
+          </WidgetFolderFrame>
 
           {budgetSlides.length > 1 && !isBudgetsLoading && (
             <XStack justifyContent="center" space="$1.5" paddingTop="$0.5">

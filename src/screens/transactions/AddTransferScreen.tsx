@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { ScrollView } from "react-native";
 import { YStack, XStack, Text, Input, Button, Sheet } from "tamagui";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -12,6 +12,8 @@ import { useToastStore } from "../../stores/useToastStore";
 import { useAccountStore } from "../../stores/useAccountStore";
 import { TransactionActions } from "../../actions/transactionActions";
 import { useCategoryStore } from "../../stores/useCategoryStore";
+import { formatCurrencyAmount, resolveCurrency } from "../../utils/currency";
+import { DisplayHeading } from "../../components/ui/DisplayHeading";
 
 export default function AddTransferScreen() {
   const insets = useSafeAreaInsets();
@@ -50,6 +52,10 @@ export default function AddTransferScreen() {
     () => accounts.find((a) => a.id === destinationAccountId),
     [destinationAccountId, accounts]
   );
+  const originCurrency = resolveCurrency(originAccount?.currency || "CLP");
+  const destinationCurrency = resolveCurrency(
+    destinationAccount?.currency || "CLP"
+  );
 
   const handleKeyPress = (val: string) => {
     if (val === "." && amount.includes(".")) return;
@@ -81,6 +87,13 @@ export default function AddTransferScreen() {
       showToast("La cuenta de destino debe ser diferente", "error");
       return;
     }
+    if (originCurrency !== destinationCurrency) {
+      showToast(
+        `Transferencias entre ${originCurrency} y ${destinationCurrency} requieren conversión explícita`,
+        "error"
+      );
+      return;
+    }
 
     const transferCategory =
       categories.find((c) => c.type === "TRANSFER") || categories[0];
@@ -99,6 +112,7 @@ export default function AddTransferScreen() {
         accountId: originAccountId,
         destinationAccountId: destinationAccountId,
         categoryId: transferCategory.id,
+        currency: originCurrency,
         description: description.trim() || "Transferencia",
         date: date.toISOString(),
       });
@@ -122,9 +136,14 @@ export default function AddTransferScreen() {
           icon={<ChevronLeft size={28} color="$color" />}
           onPress={() => navigation.goBack()}
         />
-        <Text fontSize="$4" fontWeight="800" color="$gray11">
+        <DisplayHeading
+          fontSize="$5"
+          fontWeight="400"
+          color="$gray11"
+          lineHeight={24}
+        >
           Transferir
-        </Text>
+        </DisplayHeading>
         <Button size="$3" chromeless width={40} />
       </XStack>
 
@@ -135,7 +154,7 @@ export default function AddTransferScreen() {
         space="$2"
       >
         <Text fontSize="$9" fontWeight="900" color="$blue10" textAlign="center">
-          ${Number(amount).toLocaleString("es-CL")}
+          {formatCurrencyAmount(Number(amount || 0), originCurrency)}
         </Text>
         <Button
           size="$2"

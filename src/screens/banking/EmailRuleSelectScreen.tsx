@@ -6,6 +6,7 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import { Pressable } from "react-native";
 import { MainLayout } from "../../components/layout/MainLayout";
 import { GoBackButton } from "../../components/ui/GoBackButton";
+import { DisplayHeading } from "../../components/ui/DisplayHeading";
 
 type RuleMock = {
   id: string;
@@ -62,9 +63,9 @@ export default function EmailRuleSelectScreen() {
         <XStack alignItems="center" space="$3">
           <GoBackButton fallbackRouteName="EmailSourceCreate" />
           <YStack>
-            <Text fontSize="$6" fontWeight="900">
+            <DisplayHeading fontSize="$6" fontWeight="400" lineHeight={26}>
               Reglas de correo
-            </Text>
+            </DisplayHeading>
             <Text fontSize="$3" color="$gray10">
               Selecciona una regla o crea una nueva.
             </Text>

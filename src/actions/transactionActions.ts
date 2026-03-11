@@ -2,6 +2,7 @@ import { TransactionService } from "../services/transactionService";
 import { useTransactionStore } from "../stores/useTransactionStore";
 import {
   CreateTransactionParams,
+  TransactionFilters,
   UpdateTransactionParams,
 } from "../types/transaction.types";
 import { useToastStore } from "../stores/useToastStore";
@@ -10,7 +11,7 @@ import { AccountActions } from "./accountActions";
 import { useAccountStore } from "../stores/useAccountStore";
 
 export const TransactionActions = {
-  loadTransactions: async () => {
+  loadTransactions: async (filters: Partial<TransactionFilters> = {}) => {
     const store = useTransactionStore.getState();
     const { selectedMonth, selectedYear } = store;
 
@@ -20,6 +21,7 @@ export const TransactionActions = {
         month: selectedMonth,
         year: selectedYear,
         limit: 100,
+        ...filters,
       });
 
       console.log(
@@ -78,10 +80,14 @@ export const TransactionActions = {
     }
   },
 
-  changeDate: (month: number, year: number) => {
+  changeDate: (
+    month: number,
+    year: number,
+    filters: Partial<TransactionFilters> = {},
+  ) => {
     const store = useTransactionStore.getState();
     store.setDateContext(month, year);
-    TransactionActions.loadTransactions();
+    TransactionActions.loadTransactions(filters);
   },
 
   getTransactionDetail: async (id: string) => {

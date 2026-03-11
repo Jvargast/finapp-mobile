@@ -1,5 +1,6 @@
 import * as SecureStore from "expo-secure-store";
 import { AuthService } from "../services/authService";
+import { useFamilyStore } from "../stores/useFamilyStore";
 import { useAuthStore } from "../stores/useAuthStore";
 import { useUserStore } from "../stores/useUserStore";
 import { useToastStore } from "../stores/useToastStore";
@@ -98,6 +99,8 @@ export const AuthActions = {
     await SecureStore.deleteItemAsync("refresh_token");
 
     useUserStore.getState().clearUser();
+    useFamilyStore.getState().resetFamily();
+    useAuthStore.getState().setAuthenticated(false);
   },
 
   checkAuth: async () => {

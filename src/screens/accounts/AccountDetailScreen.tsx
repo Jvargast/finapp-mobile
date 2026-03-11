@@ -1,6 +1,13 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { ScrollView } from "react-native";
-import { YStack, XStack, Text, Spinner, Input, Circle, useThemeName } from "tamagui";
+import {
+  Pressable,
+  Platform,
+  ScrollView,
+} from "react-native";
+import DateTimePicker, {
+  DateTimePickerEvent,
+} from "@react-native-community/datetimepicker";
+import { YStack, XStack, Text, Spinner, Circle, useThemeName } from "tamagui";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Check, Plus, Calendar } from "@tamagui/lucide-icons";
@@ -10,6 +17,7 @@ import { AccountService } from "../../services/accountService";
 import { WouLoader } from "../../components/ui/WouLoader";
 import { GoBackButton } from "../../components/ui/GoBackButton";
 import { WouButton } from "../../components/ui/WouButton";
+import { DisplayHeading } from "../../components/ui/DisplayHeading";
 import {
   Account,
   AccountSetupMethod,
@@ -238,6 +246,7 @@ export default function AccountDetailScreen() {
   const [toDate, setToDate] = useState("");
   const [isRangeSyncing, setIsRangeSyncing] = useState(false);
   const [rangeError, setRangeError] = useState<string | null>(null);
+  const [pickerTarget, setPickerTarget] = useState<"from" | "to" | null>(null);
 
   useEffect(() => {
     if (!accountId) return;
@@ -310,6 +319,55 @@ export default function AccountDetailScreen() {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
     const parsed = new Date(`${value}T00:00:00`);
     return Number.isNaN(parsed.getTime()) ? null : parsed;
+  };
+
+  const normalizeDate = (date: Date) => {
+    const normalized = new Date(date);
+    normalized.setHours(0, 0, 0, 0);
+    return normalized;
+  };
+
+  const today = useMemo(() => normalizeDate(new Date()), []);
+
+  const activePickerDate = useMemo(() => {
+    if (pickerTarget === "from") {
+      return parseYmd(fromDate) || parseYmd(toDate) || today;
+    }
+    if (pickerTarget === "to") {
+      return parseYmd(toDate) || parseYmd(fromDate) || today;
+    }
+    return today;
+  }, [pickerTarget, fromDate, toDate, today]);
+
+  const handleDatePick = (target: "from" | "to") => {
+    if (!canEmailHistorySync) return;
+    setPickerTarget(target);
+  };
+
+  const handleDatePickerChange = (
+    event: DateTimePickerEvent,
+    selectedDate?: Date,
+  ) => {
+    if (!pickerTarget) return;
+    if (Platform.OS === "android") {
+      setPickerTarget(null);
+    }
+    if (event.type === "dismissed" || !selectedDate) return;
+
+    const picked = normalizeDate(selectedDate);
+    const pickedYmd = formatYmd(picked);
+
+    if (pickerTarget === "from") {
+      setFromDate(pickedYmd);
+      const to = parseYmd(toDate);
+      if (to && picked > to) setToDate(pickedYmd);
+    } else {
+      setToDate(pickedYmd);
+      const from = parseYmd(fromDate);
+      if (from && picked < from) setFromDate(pickedYmd);
+    }
+
+    setRangeError(null);
   };
 
   const presetDays = useMemo(() => {
@@ -619,16 +677,23 @@ export default function AccountDetailScreen() {
               iconColor={pastel.ink}
               borderRadius={SECTION_RADIUS}
             />
-            <Text fontSize="$6" fontWeight="900" color={pastel.ink}>
+            <DisplayHeading
+              fontSize="$6"
+              fontWeight="400"
+              color={pastel.ink}
+              lineHeight={26}
+            >
               Detalle de cuenta
-            </Text>
+            </DisplayHeading>
           </XStack>
 
           <ScrollView
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
             style={{ flex: 1 }}
-            contentContainerStyle={{ paddingBottom: 40 }}
+            contentContainerStyle={{
+              paddingBottom: insets.bottom + 16,
+            }}
           >
             <YStack space="$4">
               <YStack
@@ -1096,43 +1161,105 @@ export default function AccountDetailScreen() {
                         <Text fontSize="$2" color={pastel.muted}>
                           Desde
                         </Text>
-                        <Input
-                          placeholder="YYYY-MM-DD"
-                          value={fromDate}
-                          onChangeText={(value) => {
-                            setFromDate(value);
-                            setRangeError(null);
-                          }}
-                          backgroundColor={pastel.inputBg}
-                          color={pastel.inputText}
-                          placeholderTextColor={pastel.inputPlaceholder}
-                          borderWidth={1}
-                          borderColor={pastel.surfaceBorder}
-                          borderRadius={INPUT_RADIUS}
-                          editable={canEmailHistorySync}
-                        />
+                        <Pressable
+                          onPress={() => handleDatePick("from")}
+                          disabled={!canEmailHistorySync}
+                          style={{ flex: 1 }}
+                        >
+                          <YStack
+                            backgroundColor={pastel.inputBg}
+                            borderWidth={1}
+                            borderColor={pastel.surfaceBorder}
+                            borderRadius={INPUT_RADIUS}
+                            paddingHorizontal="$3"
+                            paddingVertical="$3"
+                            opacity={canEmailHistorySync ? 1 : 0.7}
+                          >
+                            <XStack alignItems="center" justifyContent="space-between">
+                              <Text
+                                fontSize="$3"
+                                color={
+                                  fromDate
+                                    ? pastel.inputText
+                                    : pastel.inputPlaceholder
+                                }
+                              >
+                                {fromDate || "Seleccionar fecha"}
+                              </Text>
+                              <Calendar size={16} color={pastel.muted} />
+                            </XStack>
+                          </YStack>
+                        </Pressable>
                       </YStack>
                       <YStack flex={1} space="$1">
                         <Text fontSize="$2" color={pastel.muted}>
                           Hasta
                         </Text>
-                        <Input
-                          placeholder="YYYY-MM-DD"
-                          value={toDate}
-                          onChangeText={(value) => {
-                            setToDate(value);
-                            setRangeError(null);
-                          }}
-                          backgroundColor={pastel.inputBg}
-                          color={pastel.inputText}
-                          placeholderTextColor={pastel.inputPlaceholder}
-                          borderWidth={1}
-                          borderColor={pastel.surfaceBorder}
-                          borderRadius={INPUT_RADIUS}
-                          editable={canEmailHistorySync}
-                        />
+                        <Pressable
+                          onPress={() => handleDatePick("to")}
+                          disabled={!canEmailHistorySync}
+                          style={{ flex: 1 }}
+                        >
+                          <YStack
+                            backgroundColor={pastel.inputBg}
+                            borderWidth={1}
+                            borderColor={pastel.surfaceBorder}
+                            borderRadius={INPUT_RADIUS}
+                            paddingHorizontal="$3"
+                            paddingVertical="$3"
+                            opacity={canEmailHistorySync ? 1 : 0.7}
+                          >
+                            <XStack alignItems="center" justifyContent="space-between">
+                              <Text
+                                fontSize="$3"
+                                color={
+                                  toDate ? pastel.inputText : pastel.inputPlaceholder
+                                }
+                              >
+                                {toDate || "Seleccionar fecha"}
+                              </Text>
+                              <Calendar size={16} color={pastel.muted} />
+                            </XStack>
+                          </YStack>
+                        </Pressable>
                       </YStack>
                     </XStack>
+                    {pickerTarget && (
+                      <YStack
+                        borderWidth={1}
+                        borderColor={pastel.surfaceBorder}
+                        borderRadius={INPUT_RADIUS}
+                        backgroundColor={pastel.inputBg}
+                        padding="$2"
+                      >
+                        <DateTimePicker
+                          value={activePickerDate}
+                          mode="date"
+                          display={Platform.OS === "ios" ? "spinner" : "default"}
+                          onChange={handleDatePickerChange}
+                          maximumDate={
+                            pickerTarget === "from"
+                              ? parseYmd(toDate) || today
+                              : today
+                          }
+                          minimumDate={
+                            pickerTarget === "to" ? parseYmd(fromDate) || undefined : undefined
+                          }
+                        />
+                        {Platform.OS === "ios" && (
+                          <XStack justifyContent="flex-end" paddingRight="$2" paddingBottom="$1">
+                            <WouButton
+                              size="sm"
+                              variant="soft"
+                              tone="pastel"
+                              borderRadius={BUTTON_RADIUS}
+                              label="Listo"
+                              onPress={() => setPickerTarget(null)}
+                            />
+                          </XStack>
+                        )}
+                      </YStack>
+                    )}
                     {rangeError && (
                       <Text fontSize="$2" color="$red10">
                         {rangeError}

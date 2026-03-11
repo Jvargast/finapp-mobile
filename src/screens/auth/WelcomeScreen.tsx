@@ -12,6 +12,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { Mail, Sparkles, TrendingUp, Wallet } from "@tamagui/lucide-icons";
 import { Image, Pressable, StatusBar } from "react-native";
+import { DisplayHeading } from "../../components/ui/DisplayHeading";
 
 const COLORS = {
   primary: "#4F46E5",
@@ -80,17 +81,18 @@ export default function WelcomeScreen() {
             </Stack>
 
             <YStack alignItems="center" space="$1">
-              <Text
+              <DisplayHeading
                 fontSize={42}
-                fontWeight="900"
+                fontWeight="400"
                 color={COLORS.textMain}
                 letterSpacing={-1.5}
                 textAlign="center"
                 animation="quick"
                 enterStyle={{ opacity: 0, y: 10 }}
+                lineHeight={46}
               >
                 Wou Finance
-              </Text>
+              </DisplayHeading>
 
               <Text
                 fontSize="$4"

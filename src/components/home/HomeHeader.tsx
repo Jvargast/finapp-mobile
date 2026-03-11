@@ -2,11 +2,13 @@ import { XStack, YStack, Text, Button, Avatar, View } from "tamagui";
 import { Bell, Menu } from "@tamagui/lucide-icons";
 import { useNavigation, DrawerActions } from "@react-navigation/native";
 import { Pressable } from "react-native";
+import { useSubscription } from "../../hooks/useSubscription";
 import { useUserStore } from "../../stores/useUserStore";
+import { DisplayHeading } from "../ui/DisplayHeading";
 
 export const HomeHeader = () => {
   const user = useUserStore((state) => state.user);
-  const isPro = useUserStore((state) => state.isPro());
+  const { isPro } = useSubscription();
   const navigation = useNavigation<any>();
 
   const goToProfile = () => {
@@ -48,15 +50,15 @@ export const HomeHeader = () => {
           <Text fontSize={13} color="$gray11" fontWeight="500" lineHeight={18}>
             {subTitle}
           </Text>
-          <Text
+          <DisplayHeading
             fontSize={20}
-            fontWeight="800"
+            fontWeight="400"
             color="$color"
-            lineHeight={24}
+            lineHeight={26}
             textTransform="capitalize"
           >
             {mainTitle}
-          </Text>
+          </DisplayHeading>
         </YStack>
       </XStack>
 

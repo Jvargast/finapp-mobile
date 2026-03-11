@@ -10,6 +10,7 @@ import {
 } from "@tamagui/lucide-icons";
 import { MainLayout } from "../../components/layout/MainLayout";
 import { GoBackButton } from "../../components/ui/GoBackButton";
+import { DisplayHeading } from "../../components/ui/DisplayHeading";
 import { useToastStore } from "../../stores/useToastStore";
 import { useNavigation } from "@react-navigation/native";
 
@@ -80,9 +81,9 @@ export default function AccountSourcesScreen() {
         <XStack alignItems="center" space="$3">
           <GoBackButton fallbackRouteName="Accounts" />
           <YStack>
-            <Text fontSize="$6" fontWeight="900">
+            <DisplayHeading fontSize="$6" fontWeight="400" lineHeight={26}>
               Agregar cuentas
-            </Text>
+            </DisplayHeading>
             <Text fontSize="$3" color="$gray10">
               Elige cómo quieres alimentar tu información financiera.
             </Text>

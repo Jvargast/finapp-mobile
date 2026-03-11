@@ -32,7 +32,7 @@ const calculateTotals = (transactions: Transaction[]) => {
       const amount = Number(t.amount);
       if (t.type === "INCOME") {
         acc.income += amount;
-      } else if (t.type === "EXPENSE" || t.type === "TRANSFER") {
+      } else if (t.type === "EXPENSE") {
         acc.expense += amount;
       }
       return acc;

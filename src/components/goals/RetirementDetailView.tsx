@@ -9,11 +9,15 @@ import {
   CheckCircle2,
 } from "@tamagui/lucide-icons";
 import { formatGoalAmount } from "../../utils/formatMoney";
-import { InvestmentAnalysis, GoalTransaction } from "../../types/goal.types";
+import {
+  Currency,
+  GoalTransaction,
+  InvestmentAnalysis,
+} from "../../types/goal.types";
 
 interface RetirementDetailViewProps {
   analysis: InvestmentAnalysis;
-  currency: string;
+  currency: Currency;
   transactions?: GoalTransaction[];
   deadline?: string | Date;
 }

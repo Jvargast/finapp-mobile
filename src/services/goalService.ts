@@ -1,18 +1,72 @@
+import axios from "axios";
 import finappApi from "../api/finappApi";
 import {
   FinancialGoal,
   CreateGoalPayload,
   JoinResponse,
 } from "../types/goal.types";
+import { ExpenseModel } from "../types/expense.types";
+
+const GOALS_RETRY_DELAY_MS = 1200;
+
+const sleep = (ms: number) =>
+  new Promise((resolve) => setTimeout(resolve, ms));
+
+const isCloudflareTimeout = (error: unknown) =>
+  axios.isAxiosError(error) && error.response?.status === 524;
 
 export const GoalService = {
-  getAll: async (): Promise<FinancialGoal[]> => {
-    const { data } = await finappApi.get<FinancialGoal[]>("/goals");
-    return data;
+  getAll: async (filters?: {
+    expenseModel?: ExpenseModel;
+  }): Promise<FinancialGoal[]> => {
+    const startedAt = Date.now();
+    const params = { expenseModel: filters?.expenseModel };
+    const requestGoals = async () => {
+      const { data } = await finappApi.get<FinancialGoal[]>("/goals", {
+        params,
+      });
+      return data;
+    };
+
+    try {
+      return await requestGoals();
+    } catch (error) {
+      if (isCloudflareTimeout(error)) {
+        await sleep(GOALS_RETRY_DELAY_MS);
+        try {
+          return await requestGoals();
+        } catch (retryError) {
+          if (axios.isAxiosError(retryError)) {
+            console.error("[GoalService.getAll] 524 after retry", {
+              status: retryError.response?.status,
+              code: retryError.code,
+              durationMs: Date.now() - startedAt,
+              params,
+            });
+          }
+          throw retryError;
+        }
+      }
+
+      if (axios.isAxiosError(error)) {
+        console.error("[GoalService.getAll] request failed", {
+          status: error.response?.status,
+          code: error.code,
+          durationMs: Date.now() - startedAt,
+          params,
+        });
+      }
+      throw error;
+    }
   },
 
-  getById: async (id: string): Promise<FinancialGoal> => {
-    const { data } = await finappApi.get<FinancialGoal>(`/goals/${id}`);
+  getById: async (
+    id: string,
+    filters?: { expenseModel?: ExpenseModel }
+  ): Promise<FinancialGoal> => {
+    const { data } = await finappApi.get<FinancialGoal>(`/goals/${id}`, {
+      params: { expenseModel: filters?.expenseModel },
+    });
     return data;
   },
 

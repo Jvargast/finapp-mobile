@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { FlatList, RefreshControl } from "react-native";
-import { YStack, Text, View, Separator, Spinner } from "tamagui";
+import { YStack, XStack, Text, View, Separator, Spinner, Button } from "tamagui";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useFocusEffect, useRoute } from "@react-navigation/native";
 
@@ -11,6 +11,12 @@ import { Transaction } from "../../types/transaction.types";
 import { useUserStore } from "../../stores/useUserStore";
 import { useTransactionStore } from "../../stores/useTransactionStore";
 import { TransactionActions } from "../../actions/transactionActions";
+import { ExpenseModelFilter } from "../../types/expense.types";
+import {
+  convertAmount,
+  formatCurrencyAmount,
+  resolveTransactionCurrency,
+} from "../../utils/currency";
 
 interface AllTransactionsScreenProps {
   embedded?: boolean;
@@ -46,6 +52,9 @@ export default function AllTransactionsScreen({
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const user = useUserStore((state) => state.user);
+  const displayCurrency = useUserStore(
+    (state) => state.user?.preferences?.currency || "CLP"
+  );
   const lastUpdatedTransaction = useTransactionStore(
     (state) => state.lastUpdatedTransaction
   );
@@ -55,6 +64,8 @@ export default function AllTransactionsScreen({
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(
     initialAccountId
   );
+  const [expenseModelFilter, setExpenseModelFilter] =
+    useState<ExpenseModelFilter>("ALL");
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -78,35 +89,50 @@ export default function AllTransactionsScreen({
     if (!transactions.length) return { income: 0, expense: 0 };
     return transactions.reduce(
       (acc, t) => {
-        const amt = Number(t.amount);
+        const sourceCurrency = resolveTransactionCurrency(t);
+        const amt = convertAmount(
+          Number(t.amount),
+          sourceCurrency,
+          displayCurrency
+        );
         if (t.type === "INCOME") acc.income += amt;
-        else if (t.type === "EXPENSE" || t.type === "TRANSFER")
-          acc.expense += amt;
+        else if (t.type === "EXPENSE") acc.expense += amt;
         return acc;
       },
       { income: 0, expense: 0 }
     );
-  }, [transactions]);
+  }, [displayCurrency, transactions]);
 
   const buildFilters = useCallback(
-    (overrideAccountId?: string | null, overrideDate?: Date) => {
+    (
+      overrideAccountId?: string | null,
+      overrideDate?: Date,
+      overrideExpenseModel?: ExpenseModelFilter,
+    ) => {
       const queryAccount =
         overrideAccountId !== undefined ? overrideAccountId : selectedAccountId;
       const queryDate = overrideDate || date;
+      const queryExpenseModel =
+        overrideExpenseModel !== undefined
+          ? overrideExpenseModel
+          : expenseModelFilter;
 
       return {
         month: queryDate.getMonth() + 1,
         year: queryDate.getFullYear(),
         accountId: queryAccount || undefined,
+        expenseModel:
+          queryExpenseModel === "ALL" ? undefined : queryExpenseModel,
       };
     },
-    [date, selectedAccountId]
+    [date, expenseModelFilter, selectedAccountId]
   );
 
   const fetchPage = useCallback(
     async (options?: {
       overrideAccountId?: string | null;
       overrideDate?: Date;
+      overrideExpenseModel?: ExpenseModelFilter;
       reset?: boolean;
       showLoading?: boolean;
       clear?: boolean;
@@ -116,12 +142,17 @@ export default function AllTransactionsScreen({
       const {
         overrideAccountId,
         overrideDate,
+        overrideExpenseModel,
         reset = false,
         showLoading = true,
         clear = false,
       } = options || {};
 
-      const filters = buildFilters(overrideAccountId, overrideDate);
+      const filters = buildFilters(
+        overrideAccountId,
+        overrideDate,
+        overrideExpenseModel,
+      );
       const nextOffset = reset ? 0 : offsetRef.current;
 
       if (reset) {
@@ -197,6 +228,17 @@ export default function AllTransactionsScreen({
     });
   };
 
+  const handleExpenseModelChange = (value: ExpenseModelFilter) => {
+    if (value === expenseModelFilter) return;
+    setExpenseModelFilter(value);
+    fetchPage({
+      overrideExpenseModel: value,
+      reset: true,
+      showLoading: true,
+      clear: true,
+    });
+  };
+
   const handleLoadMore = useCallback(() => {
     if (!hasMore || isFetchingMore || isLoading || isRefreshing) return;
     fetchPage();
@@ -210,9 +252,13 @@ export default function AllTransactionsScreen({
       const accountMatch = selectedAccountId
         ? tx.accountId === selectedAccountId
         : true;
-      return monthMatch && yearMatch && accountMatch;
+      const expenseModelMatch =
+        expenseModelFilter === "ALL"
+          ? true
+          : tx.type === "EXPENSE" && tx.expenseModel === expenseModelFilter;
+      return monthMatch && yearMatch && accountMatch && expenseModelMatch;
     },
-    [date, selectedAccountId]
+    [date, selectedAccountId, expenseModelFilter]
   );
 
   useEffect(() => {
@@ -270,7 +316,7 @@ export default function AllTransactionsScreen({
             fontWeight="800"
             color={stats.income >= stats.expense ? "$green10" : "$red10"}
           >
-            ${(stats.income - stats.expense).toLocaleString("es-CL")}
+            {formatCurrencyAmount(stats.income - stats.expense, displayCurrency)}
           </Text>
         </Text>
       </YStack>
@@ -314,6 +360,46 @@ export default function AllTransactionsScreen({
                 selectedAccountId={selectedAccountId}
                 onSelect={handleAccountSelect}
               />
+              <XStack
+                space="$2"
+                paddingHorizontal="$4"
+                marginTop="$3"
+                marginBottom="$2"
+              >
+                {(
+                  [
+                    { id: "ALL", label: "Todos" },
+                    { id: "FIXED", label: "Fijos" },
+                    { id: "VARIABLE", label: "Variables" },
+                  ] as const
+                ).map((option) => {
+                  const active = expenseModelFilter === option.id;
+                  return (
+                    <Button
+                      key={option.id}
+                      flex={1}
+                      height={34}
+                      borderRadius="$8"
+                      borderWidth={1}
+                      borderColor={active ? "$brand" : "$gray5"}
+                      backgroundColor={active ? "$brand" : "$gray2"}
+                      onPress={() =>
+                        handleExpenseModelChange(
+                          option.id as ExpenseModelFilter,
+                        )
+                      }
+                    >
+                      <Text
+                        fontSize={11}
+                        fontWeight="800"
+                        color={active ? "white" : "$gray11"}
+                      >
+                        {option.label.toUpperCase()}
+                      </Text>
+                    </Button>
+                  );
+                })}
+              </XStack>
               <Separator borderColor="$gray4" marginHorizontal="$4" />
 
               <Text

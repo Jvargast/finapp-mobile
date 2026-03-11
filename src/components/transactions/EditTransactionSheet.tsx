@@ -7,6 +7,7 @@ import { CategorySelector } from "./CategorySelector";
 import { TransactionDatePicker } from "./TransactionDatePicker";
 import { Calendar, Check } from "@tamagui/lucide-icons";
 import { NavigationProp } from "@react-navigation/native";
+import { ExpenseModel } from "../../types/expense.types";
 
 interface EditTransactionSheetProps {
   open: boolean;
@@ -25,6 +26,7 @@ export const EditTransactionSheet = ({
   const [description, setDescription] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [date, setDate] = useState(new Date());
+  const [expenseModel, setExpenseModel] = useState<ExpenseModel>("VARIABLE");
 
   const [isDatePickerOpen, setDatePickerOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -35,17 +37,26 @@ export const EditTransactionSheet = ({
       setDescription(transaction.description || "");
       setCategoryId(transaction.categoryId);
       setDate(new Date(transaction.date));
+      setExpenseModel(transaction.expenseModel === "FIXED" ? "FIXED" : "VARIABLE");
     }
   }, [open, transaction]);
 
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      await TransactionActions.updateTransaction(transaction.id, {
+      const payload: Parameters<typeof TransactionActions.updateTransaction>[1] = {
         amount: Number(amount),
         description,
         categoryId,
         date: date.toISOString(),
+      };
+
+      if (transaction.type === "EXPENSE") {
+        payload.expenseModel = expenseModel;
+      }
+
+      await TransactionActions.updateTransaction(transaction.id, {
+        ...payload,
       });
       onOpenChange(false);
     } catch (error) {
@@ -167,6 +178,58 @@ export const EditTransactionSheet = ({
               />
             </YStack>
 
+            {transaction.type === "EXPENSE" && (
+              <YStack>
+                <Text
+                  fontSize={11}
+                  color="$gray9"
+                  fontWeight="700"
+                  textTransform="uppercase"
+                  marginBottom="$2"
+                >
+                  Modelo de gasto
+                </Text>
+                <XStack space="$2">
+                  <Button
+                    flex={1}
+                    height={40}
+                    borderRadius="$4"
+                    backgroundColor={expenseModel === "FIXED" ? "$brand" : "$gray2"}
+                    borderWidth={1}
+                    borderColor={expenseModel === "FIXED" ? "$brand" : "$gray5"}
+                    onPress={() => setExpenseModel("FIXED")}
+                  >
+                    <Text
+                      fontSize="$3"
+                      fontWeight="800"
+                      color={expenseModel === "FIXED" ? "white" : "$gray11"}
+                    >
+                      FIJO
+                    </Text>
+                  </Button>
+                  <Button
+                    flex={1}
+                    height={40}
+                    borderRadius="$4"
+                    backgroundColor={
+                      expenseModel === "VARIABLE" ? "$brand" : "$gray2"
+                    }
+                    borderWidth={1}
+                    borderColor={expenseModel === "VARIABLE" ? "$brand" : "$gray5"}
+                    onPress={() => setExpenseModel("VARIABLE")}
+                  >
+                    <Text
+                      fontSize="$3"
+                      fontWeight="800"
+                      color={expenseModel === "VARIABLE" ? "white" : "$gray11"}
+                    >
+                      VARIABLE
+                    </Text>
+                  </Button>
+                </XStack>
+              </YStack>
+            )}
+
             <YStack flex={1}>
               <Text
                 fontSize={11}
@@ -183,6 +246,7 @@ export const EditTransactionSheet = ({
                   onSelect={setCategoryId}
                   navigation={navigation}
                   onAddCategory={handleAddCategory}
+                  transactionType={transaction.type}
                 />
               </YStack>
             </YStack>

@@ -18,11 +18,17 @@ import { GoalOptionsSheet } from "../../components/goals/GoalOptionsSheet";
 import { FinancialGoal } from "../../types/goal.types";
 import { GoBackButton } from "../../components/ui/GoBackButton";
 import { GoalEntrySheet } from "../../components/goals/GoalEntrySheet";
+import { ExpenseModelFilter } from "../../types/expense.types";
+import { DisplayHeading } from "../../components/ui/DisplayHeading";
 
 export const GoalsScreen = () => {
   const navigation = useNavigation<any>();
   const [selectedGoal, setSelectedGoal] = useState<FinancialGoal | null>(null);
-  const { goals, isLoading, refetch } = useMyGoals();
+  const [expenseModelFilter, setExpenseModelFilter] =
+    useState<ExpenseModelFilter>("ALL");
+  const { goals, isLoading, refetch } = useMyGoals(
+    expenseModelFilter === "ALL" ? undefined : expenseModelFilter,
+  );
   const clearSelectionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
     null
   );
@@ -85,29 +91,63 @@ export const GoalsScreen = () => {
             </XStack>
 
             <YStack marginTop="$4">
-              <Text
+              <DisplayHeading
                 fontSize="$9"
-                fontWeight="900"
+                fontWeight="400"
                 letterSpacing={-0.5}
-                lineHeight={40}
+                lineHeight={42}
               >
                 Mi Billetera
-              </Text>
-              <Text
+              </DisplayHeading>
+              <DisplayHeading
                 fontSize="$9"
-                fontWeight="900"
+                fontWeight="400"
                 color="$brand"
                 letterSpacing={-0.5}
-                lineHeight={40}
+                lineHeight={42}
               >
                 de Metas
-              </Text>
+              </DisplayHeading>
               <Text fontSize="$4" color="$gray10" marginTop="$2">
                 {isLoading
                   ? "Cargando..."
                   : `Tienes ${goals.length} objetivos activos`}
               </Text>
             </YStack>
+
+            <XStack marginTop="$3" space="$2">
+              {(
+                [
+                  { id: "ALL", label: "Todos" },
+                  { id: "FIXED", label: "Fijos" },
+                  { id: "VARIABLE", label: "Variables" },
+                ] as const
+              ).map((option) => {
+                const active = expenseModelFilter === option.id;
+                return (
+                  <Button
+                    key={option.id}
+                    flex={1}
+                    height={34}
+                    borderRadius="$8"
+                    borderWidth={1}
+                    borderColor={active ? "$brand" : "$gray5"}
+                    backgroundColor={active ? "$brand" : "$gray2"}
+                    onPress={() =>
+                      setExpenseModelFilter(option.id as ExpenseModelFilter)
+                    }
+                  >
+                    <Text
+                      fontSize="$2"
+                      fontWeight="800"
+                      color={active ? "white" : "$gray11"}
+                    >
+                      {option.label.toUpperCase()}
+                    </Text>
+                  </Button>
+                );
+              })}
+            </XStack>
           </YStack>
 
           {isLoading && goals.length === 0 ? (
@@ -174,6 +214,10 @@ export const GoalsScreen = () => {
                           navigation.navigate("GoalDetail", {
                             goalId: goal.id,
                             goal,
+                            expenseModelFilter:
+                              expenseModelFilter === "ALL"
+                                ? undefined
+                                : expenseModelFilter,
                           });
                         }}
                         onLongPress={() => handleLongPress(goal)}

@@ -2,6 +2,10 @@ import React, { memo, useMemo } from "react";
 import { YStack, XStack, Text, Stack, Separator } from "tamagui";
 import { getIcon } from "../../utils/iconMap";
 import { Transaction } from "../../types/transaction.types";
+import {
+  formatCurrencyAmount,
+  resolveTransactionCurrency,
+} from "../../utils/currency";
 
 interface TransactionItemProps {
   transaction: Transaction;
@@ -15,14 +19,6 @@ const getIconBg = (color: string | undefined) => {
     return `${color}20`;
   }
   return "$gray3";
-};
-
-const formatCurrency = (amount: string | number, currency = "CLP") => {
-  return new Intl.NumberFormat("es-CL", {
-    style: "currency",
-    currency: currency,
-    maximumFractionDigits: 0,
-  }).format(Number(amount));
 };
 
 const formatDate = (dateString: string) => {
@@ -62,7 +58,9 @@ export const TransactionItem = memo(
       iconBg,
       formattedDate,
       formattedAmount,
+      transactionCurrency,
     } = useMemo(() => {
+      const resolvedTransactionCurrency = resolveTransactionCurrency(transaction);
       return {
         isExpense:
           transaction.type === "EXPENSE" || transaction.type === "TRANSFER",
@@ -70,10 +68,11 @@ export const TransactionItem = memo(
         categoryColor: transaction.category?.color || "#9CA3AF",
         iconBg: getIconBg(transaction.category?.color),
         formattedDate: formatDate(transaction.date),
-        formattedAmount: formatCurrency(
-          transaction.amount,
-          transaction.account?.currency
+        formattedAmount: formatCurrencyAmount(
+          Number(transaction.amount || 0),
+          resolvedTransactionCurrency
         ),
+        transactionCurrency: resolvedTransactionCurrency,
       };
     }, [transaction]);
 
@@ -136,7 +135,7 @@ export const TransactionItem = memo(
                   numberOfLines={1}
                   flexShrink={1}
                 >
-                  {transaction.account?.name}
+                  {transaction.account?.name || "Sin cuenta"} • {transactionCurrency}
                 </Text>
               </XStack>
             </YStack>
@@ -170,6 +169,7 @@ export const TransactionItem = memo(
       prev.transaction.description === next.transaction.description &&
       prev.transaction.date === next.transaction.date &&
       prev.transaction.type === next.transaction.type &&
+      prev.transaction.currency === next.transaction.currency &&
       prev.transaction.categoryId === next.transaction.categoryId &&
       prev.transaction.category?.name === next.transaction.category?.name &&
       prev.transaction.category?.color === next.transaction.category?.color &&

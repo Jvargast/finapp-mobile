@@ -20,6 +20,7 @@ import { MainLayout } from "../../components/layout/MainLayout";
 import { AccountSelector } from "../../components/transactions/AccountSelector";
 import { CategorySelector } from "../../components/transactions/CategorySelector";
 import { TransactionDatePicker } from "../../components/transactions/TransactionDatePicker";
+import { DisplayHeading } from "../../components/ui/DisplayHeading";
 import { AccountActions } from "../../actions/accountActions";
 import { CategoryActions } from "../../actions/categoryActions";
 import { RecurringActions } from "../../actions/recurringActions";
@@ -34,6 +35,7 @@ import {
   RecurringTransaction,
   RecurringTransactionType,
 } from "../../types/recurring.types";
+import { ExpenseModel } from "../../types/expense.types";
 
 const WEEKDAYS = [
   { label: "D", value: 0 },
@@ -202,6 +204,7 @@ export default function RecurringEditScreen() {
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
   const [type, setType] = useState<RecurringTransactionType>("EXPENSE");
+  const [expenseModel, setExpenseModel] = useState<ExpenseModel>("VARIABLE");
   const [description, setDescription] = useState("");
   const [merchant, setMerchant] = useState("");
   const [selectedAccountId, setSelectedAccountId] = useState("");
@@ -229,6 +232,7 @@ export default function RecurringEditScreen() {
     setName(item.name || "");
     setAmount(String(Math.round(Number(item.amount || 0))));
     setType(item.type || "EXPENSE");
+    setExpenseModel(item.expenseModel === "FIXED" ? "FIXED" : "VARIABLE");
     setDescription(item.description || "");
     setMerchant(item.merchant || "");
     setSelectedAccountId(item.accountId || "");
@@ -332,6 +336,35 @@ export default function RecurringEditScreen() {
     () => categories.find((cat) => cat.id === selectedCategoryId),
     [categories, selectedCategoryId],
   );
+  const availableCategories = useMemo(
+    () =>
+      categories.filter(
+        (cat) => cat.isActive !== false && cat.type === type,
+      ),
+    [categories, type],
+  );
+
+  useEffect(() => {
+    if (!isHydrated || categories.length === 0) return;
+
+    if (availableCategories.length === 0) {
+      if (selectedCategoryId) setSelectedCategoryId("");
+      return;
+    }
+
+    const hasValidSelection = availableCategories.some(
+      (cat) => cat.id === selectedCategoryId,
+    );
+    if (!hasValidSelection) {
+      setSelectedCategoryId(availableCategories[0].id);
+    }
+  }, [
+    availableCategories,
+    categories.length,
+    isHydrated,
+    selectedCategoryId,
+  ]);
+
   const heroAccent = selectedCategory?.color || (type === "INCOME" ? "#22C55E" : "#38BDF8");
   const heroGradient = useMemo(
     () =>
@@ -387,6 +420,7 @@ export default function RecurringEditScreen() {
         amount: amountValue,
         currency: accountCurrency,
         type,
+        expenseModel: type === "EXPENSE" ? expenseModel : undefined,
         accountId: selectedAccountId,
         categoryId: selectedCategoryId,
         description: description.trim() || null,
@@ -436,6 +470,7 @@ export default function RecurringEditScreen() {
     selectedCategoryId,
     showToast,
     startsAt,
+    expenseModel,
     type,
     weekday,
   ]);
@@ -542,9 +577,15 @@ export default function RecurringEditScreen() {
                   MODO EDICIÓN
                 </Text>
               </XStack>
-              <Text fontSize="$6" fontWeight="900" color="white" numberOfLines={1}>
+              <DisplayHeading
+                fontSize="$6"
+                fontWeight="400"
+                color="white"
+                lineHeight={26}
+                numberOfLines={1}
+              >
                 {name || "Tu regla recurrente"}
-              </Text>
+              </DisplayHeading>
               <Text fontSize="$2" color="rgba(255,255,255,0.9)">
                 Ajusta frecuencia, cuenta, categoría y estado sin salir de esta vista.
               </Text>
@@ -612,6 +653,28 @@ export default function RecurringEditScreen() {
                   paddingHorizontal="$3"
                 />
               </YStack>
+
+              {type === "EXPENSE" && (
+                <YStack space="$2">
+                  <Text fontSize="$2" color="$gray10" fontWeight="700">
+                    Modelo de gasto
+                  </Text>
+                  <XStack space="$2.5">
+                    <SegmentButton
+                      label="Fijo"
+                      active={expenseModel === "FIXED"}
+                      onPress={() => setExpenseModel("FIXED")}
+                      tone="expense"
+                    />
+                    <SegmentButton
+                      label="Variable"
+                      active={expenseModel === "VARIABLE"}
+                      onPress={() => setExpenseModel("VARIABLE")}
+                      tone="expense"
+                    />
+                  </XStack>
+                </YStack>
+              )}
             </Section>
 
             <Section title="Detalles" subtitle="Nombre y contexto de la regla">
@@ -688,6 +751,7 @@ export default function RecurringEditScreen() {
                     navigation={navigation}
                     embedded
                     showColors
+                    transactionType={type}
                   />
                 </>
               ) : (

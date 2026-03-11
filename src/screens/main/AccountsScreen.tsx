@@ -15,7 +15,7 @@ import {
   Banknote,
   Plus,
 } from "@tamagui/lucide-icons";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { MainLayout } from "../../components/layout/MainLayout";
 import { AccountCard } from "../../components/home/accounts/AccountCard";
 import { AccountActions } from "../../actions/accountActions";
@@ -28,6 +28,8 @@ import { useSubscription } from "../../hooks/useSubscription";
 import { getAccountCategory } from "../../utils/formtatBankCategory";
 import { FlatList, RefreshControl, InteractionManager } from "react-native";
 import { PremiumSheet } from "../../components/ui/PremiumSheet";
+import { fetchMonthlyAccountBalances } from "../../utils/monthlyAccountBalances";
+import { DisplayHeading } from "../../components/ui/DisplayHeading";
 
 const CAT_COLORS: Record<string, string> = {
   BANK: "$blue10",
@@ -57,6 +59,9 @@ export default function AccountsScreen() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showPremiumSheet, setShowPremiumSheet] = useState(false);
   const [isListReady, setIsListReady] = useState(false);
+  const [monthlyBalances, setMonthlyBalances] = useState<Record<string, number>>(
+    {}
+  );
 
   useEffect(() => {
     const task = InteractionManager.runAfterInteractions(() => {
@@ -103,21 +108,62 @@ export default function AccountsScreen() {
     return handlers;
   }, [filteredAccounts, handleCardPress]);
 
+  const loadMonthlyBalances = useCallback(async () => {
+    try {
+      const balances = await fetchMonthlyAccountBalances();
+      setMonthlyBalances(balances);
+    } catch (error) {
+      setMonthlyBalances({});
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
+
+      const run = async () => {
+        try {
+          const balances = await fetchMonthlyAccountBalances();
+          if (isActive) setMonthlyBalances(balances);
+        } catch (error) {
+          if (isActive) setMonthlyBalances({});
+        }
+      };
+
+      run();
+
+      return () => {
+        isActive = false;
+      };
+    }, [])
+  );
+
   const renderAccountItem = useCallback(
-    ({ item, index }: { item: Account; index: number }) => (
-      <YStack alignItems="center">
-        <AccountCard
-          account={item}
-          index={index}
-          isActive={false}
-          onPressIn={
-            accountPressHandlers.get(item.id) ||
-            (() => handleCardPress(item))
-          }
-        />
-      </YStack>
-    ),
-    [accountPressHandlers, handleCardPress],
+    ({ item, index }: { item: Account; index: number }) => {
+      const normalizedType = String(item.type || "").toUpperCase();
+      const isCashAccount = normalizedType === "CASH";
+      const monthlyBalance = monthlyBalances[item.id] || 0;
+      const accountForCard = {
+        ...item,
+        balance: isCashAccount ? Number(item.balance || 0) : monthlyBalance,
+        balanceLabel: isCashAccount ? "Saldo disponible" : "Balance del mes",
+      };
+
+      return (
+        <YStack alignItems="center">
+          <AccountCard
+            account={accountForCard}
+            index={index}
+            isActive={false}
+            onPressIn={
+              accountPressHandlers.get(item.id) ||
+              (() => handleCardPress(item))
+            }
+          />
+        </YStack>
+      );
+    },
+    [accountPressHandlers, handleCardPress, monthlyBalances],
   );
 
   const handleConnectPress = useCallback(() => {
@@ -157,11 +203,11 @@ export default function AccountsScreen() {
     if (isRefreshing) return;
     try {
       setIsRefreshing(true);
-      await AccountActions.loadAccounts();
+      await Promise.all([AccountActions.loadAccounts(), loadMonthlyBalances()]);
     } finally {
       setIsRefreshing(false);
     }
-  }, [isRefreshing]);
+  }, [isRefreshing, loadMonthlyBalances]);
 
   return (
     <MainLayout noPadding={true}>
@@ -174,9 +220,14 @@ export default function AccountsScreen() {
         <XStack alignItems="center" justifyContent="space-between">
           <XStack alignItems="center" space="$3" flexShrink={1}>
             <GoBackButton fallbackRouteName="Dashboard" />
-            <Text fontSize="$6" fontWeight="900" numberOfLines={1}>
+            <DisplayHeading
+              fontSize="$7"
+              fontWeight="400"
+              lineHeight={30}
+              numberOfLines={1}
+            >
               Mis Cuentas
-            </Text>
+            </DisplayHeading>
           </XStack>
 
           <XStack space="$2" alignItems="center" flexShrink={0}>

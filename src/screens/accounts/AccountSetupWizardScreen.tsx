@@ -8,6 +8,7 @@ import { MainLayout } from "../../components/layout/MainLayout";
 import { AccountSetupStepper } from "../../components/accounts/AccountSetupStepper";
 import { Paywall } from "../../components/ui/Paywall";
 import { AccountService } from "../../services/accountService";
+import { CurrencyCode } from "../../types/currency.types";
 import {
   Account,
   AccountSetupMethod,
@@ -75,7 +76,7 @@ export default function AccountSetupWizardScreen() {
       detail?: string;
       ruleName?: string;
       amount?: number | string;
-      currency?: string;
+      currency?: CurrencyCode;
       date?: string;
       matched?: boolean;
     }[]

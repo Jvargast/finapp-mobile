@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Pressable, ScrollView, TextInput } from "react-native";
+import { PanResponder, Pressable, ScrollView, TextInput } from "react-native";
 import {
   YStack,
   XStack,
@@ -25,14 +25,38 @@ import { PieChart } from "react-native-gifted-charts";
 import Svg, { Defs, Pattern, Rect, Mask, Circle as SvgCircle, Line } from "react-native-svg";
 import { MainLayout } from "../../components/layout/MainLayout";
 import { GoBackButton } from "../../components/ui/GoBackButton";
+import { FixedVariableDashboardCard } from "../../components/analytics/fixedVariable/FixedVariableDashboardCard";
+import { PlannedActualDashboardCard } from "../../components/analytics/plannedActual/PlannedActualDashboardCard";
+import { AnalyticsSectionTabs } from "../../components/analytics/navigation/AnalyticsSectionTabs";
+import { AnalyticsModeTabs } from "../../components/analytics/navigation/AnalyticsModeTabs";
+import { PlannedActualStatus } from "../../components/analytics/plannedActual/types";
 import { TransactionActions } from "../../actions/transactionActions";
 import { CategoryActions } from "../../actions/categoryActions";
+import { BudgetActions } from "../../actions/budgetActions";
 import { useTransactionStore } from "../../stores/useTransactionStore";
 import { useCategoryStore } from "../../stores/useCategoryStore";
+import { useBudgetStore } from "../../stores/useBudgetStore";
+import { useUserStore } from "../../stores/useUserStore";
+import {
+  TrendWindowMonths,
+  useFixedVariableTrend,
+} from "../../hooks/analytics/useFixedVariableTrend";
+import { ExpenseModelFilter } from "../../types/expense.types";
 import { Transaction } from "../../types/transaction.types";
 import { getIcon } from "../../utils/iconMap";
+import {
+  convertAmount,
+  formatCurrencyAmount,
+  resolveTransactionCurrency,
+} from "../../utils/currency";
+import {
+  AnalyticsVisualPalette,
+  getAnalyticsPalette,
+  getAnalyticsPieColors,
+} from "../../theme/appVisuals";
 
 type ViewMode = "EXPENSE" | "INCOME";
+type AnalyticsSection = "CATEGORIES" | "PLANNED_ACTUAL" | "FIXED_VARIABLE";
 type MinPercentFilter = 0 | 3 | 5 | 10;
 type MaxCategoriesFilter = 5 | 8 | 12;
 
@@ -69,73 +93,6 @@ type LabelCluster = {
   gap?: number;
 };
 
-const LIGHT_PALETTE = {
-  page: "#FBF8F4",
-  surface: "#FFFFFF",
-  border: "#E6DFD6",
-  muted: "#6B7280",
-  ink: "#1F2937",
-  accent: "#8BA7F2",
-  accentSoft: "#EEF3FF",
-  peach: "#FFE6D1",
-  peachText: "#C2410C",
-  mint: "#DCFCE7",
-  mintText: "#15803D",
-  hatchStrong: "rgba(255,255,255,0.3)",
-  hatchSoft: "rgba(255,255,255,0.16)",
-  clusterBg: "rgba(255,255,255,0.35)",
-  badgeBg: "#1F2937",
-  badgeText: "#FFFFFF",
-  emptyPie: "#E5E7EB",
-  iconBgFallback: "#EEF2FF",
-  mixBase: "#FFFFFF",
-  mixAlt: "#0F172A",
-};
-
-const DARK_PALETTE = {
-  page: "#0B1220",
-  surface: "#111827",
-  border: "#233044",
-  muted: "#94A3B8",
-  ink: "#F8FAFC",
-  accent: "#A5B4FC",
-  accentSoft: "rgba(165,180,252,0.18)",
-  peach: "#FB923C",
-  peachText: "#FDBA74",
-  mint: "#34D399",
-  mintText: "#6EE7B7",
-  hatchStrong: "rgba(255,255,255,0.14)",
-  hatchSoft: "rgba(255,255,255,0.08)",
-  clusterBg: "rgba(15,23,42,0.7)",
-  badgeBg: "#E2E8F0",
-  badgeText: "#0F172A",
-  emptyPie: "#334155",
-  iconBgFallback: "rgba(148,163,184,0.18)",
-  mixBase: "#0F172A",
-  mixAlt: "#FFFFFF",
-};
-
-const LIGHT_PIE_COLORS = [
-  "#9DB8F7",
-  "#F6C9A6",
-  "#9ADBC0",
-  "#C7B9F2",
-  "#F4B8C4",
-  "#B7D4F1",
-  "#F2D48A",
-];
-
-const DARK_PIE_COLORS = [
-  "#8FB4FF",
-  "#F7B983",
-  "#6AD2A9",
-  "#B9A6FF",
-  "#F5A0C2",
-  "#7FC8E8",
-  "#F0D070",
-];
-
-type AnalyticsPalette = typeof LIGHT_PALETTE;
 type SegmentOption = { id: string; label: string };
 
 const chunkBy = <T,>(items: readonly T[], size: number) => {
@@ -158,7 +115,7 @@ const SegmentControl = ({
   value: string;
   onChange: (id: string) => void;
   columns?: number;
-  pastel: AnalyticsPalette;
+  pastel: AnalyticsVisualPalette;
   activeColor: string;
 }) => {
   const rows = chunkBy(options, columns);
@@ -178,20 +135,20 @@ const SegmentControl = ({
               <Button
                 key={option.id}
                 flex={1}
-                height={44}
+                height={46}
                 borderRadius="$3"
                 paddingHorizontal="$2"
                 paddingVertical="$2.5"
-                borderWidth={active ? 0 : 1}
-                borderColor={active ? "transparent" : pastel.border}
+                borderWidth={1}
+                borderColor={active ? activeColor : pastel.border}
                 backgroundColor={active ? activeColor : pastel.surface}
                 onPress={() => onChange(option.id)}
                 pressStyle={{ opacity: 0.9, scale: 0.985 }}
               >
                 <Text
-                  fontSize={12}
+                  fontSize={13}
                   fontWeight={active ? "800" : "600"}
-                  color={active ? "white" : pastel.muted}
+                  color={active ? pastel.badgeText : pastel.ink}
                   numberOfLines={1}
                   textAlign="center"
                 >
@@ -247,6 +204,20 @@ const MIN_PERCENT_OPTIONS = [
   { id: "10", label: "Desde 10%" },
 ] as const;
 
+const EXPENSE_MODEL_OPTIONS = [
+  { id: "ALL", label: "Todos" },
+  { id: "FIXED", label: "Fijos" },
+  { id: "VARIABLE", label: "Variables" },
+] as const;
+
+const ANALYTICS_SECTION_OPTIONS = [
+  { id: "CATEGORIES", label: "Categorias" },
+  { id: "PLANNED_ACTUAL", label: "Plan vs Real" },
+  { id: "FIXED_VARIABLE", label: "Fijo vs Variable" },
+] as const;
+
+const SECTION_SWIPE_THRESHOLD = 42;
+
 const MAX_CATEGORY_OPTIONS = [
   { id: "5", label: "Top 5" },
   { id: "8", label: "Top 8" },
@@ -261,13 +232,6 @@ const formatPercent = (value: number, detailed = false) => {
   if (detailed) return `${oneDecimal}%`;
   return `${Math.round(value)}%`;
 };
-
-const formatCurrency = (value: number, currency = "CLP") =>
-  new Intl.NumberFormat("es-CL", {
-    style: "currency",
-    currency,
-    maximumFractionDigits: currency === "CLP" ? 0 : 2,
-  }).format(value);
 
 const clampValue = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, value));
@@ -345,32 +309,70 @@ export default function AnalyticsScreen() {
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [includeTransfers, setIncludeTransfers] = useState(true);
+  const [includeTransfers, setIncludeTransfers] = useState(false);
+  const [trendWindow, setTrendWindow] = useState<TrendWindowMonths>(3);
+  const [analyticsSection, setAnalyticsSection] =
+    useState<AnalyticsSection>("CATEGORIES");
+  const [expenseModelFilter, setExpenseModelFilter] =
+    useState<ExpenseModelFilter>("ALL");
   const [minPercentFilter, setMinPercentFilter] =
     useState<MinPercentFilter>(0);
   const [maxCategories, setMaxCategories] = useState<MaxCategoriesFilter>(8);
   const [labelSheetOpen, setLabelSheetOpen] = useState(false);
   const [activeCluster, setActiveCluster] = useState<LabelCluster | null>(null);
+  const isFixedVariableActive =
+    viewMode === "EXPENSE" && analyticsSection === "FIXED_VARIABLE";
+  const isPlannedActualActive =
+    viewMode === "EXPENSE" && analyticsSection === "PLANNED_ACTUAL";
   const categories = useCategoryStore((state) => state.categories);
-  const pastel = isDark ? DARK_PALETTE : LIGHT_PALETTE;
-  const pieColors = isDark ? DARK_PIE_COLORS : LIGHT_PIE_COLORS;
+  const { budgets, isLoading: budgetLoading } = useBudgetStore();
+  const pastel = useMemo(() => getAnalyticsPalette(isDark), [isDark]);
+  const pieColors = useMemo(() => getAnalyticsPieColors(isDark), [isDark]);
   const softMixAmount = isDark ? 0.68 : 0.82;
   const gradientMixAmount = isDark ? 0.24 : 0.65;
   const searchNormalized = searchQuery.trim().toLowerCase();
-
+  const displayCurrency = useUserStore(
+    (state) => state.user?.preferences?.currency || "CLP"
+  );
   const {
     transactions,
     isLoading,
     selectedMonth,
     selectedYear,
-    totalExpense,
-    totalIncome,
   } = useTransactionStore();
+  const {
+    data: fixedVariableTrend,
+    isLoading: fixedVariableLoading,
+    error: fixedVariableError,
+  } = useFixedVariableTrend({
+    selectedMonth,
+    selectedYear,
+    displayCurrency,
+    windowMonths: trendWindow,
+    enabled: viewMode === "EXPENSE",
+  });
+  const selectedExpenseModelQuery =
+    viewMode === "EXPENSE" && expenseModelFilter !== "ALL"
+      ? expenseModelFilter
+      : undefined;
 
   useEffect(() => {
-    TransactionActions.loadTransactions();
     CategoryActions.loadCategories();
   }, []);
+
+  useEffect(() => {
+    TransactionActions.loadTransactions({
+      expenseModel: selectedExpenseModelQuery,
+    });
+  }, [selectedExpenseModelQuery]);
+
+  useEffect(() => {
+    if (viewMode !== "EXPENSE") return;
+
+    BudgetActions.changeDate(selectedMonth, selectedYear, {
+      expenseModel: selectedExpenseModelQuery,
+    });
+  }, [selectedExpenseModelQuery, selectedMonth, selectedYear, viewMode]);
 
   const handleMonthShift = (delta: number) => {
     let nextMonth = selectedMonth + delta;
@@ -383,10 +385,12 @@ export default function AnalyticsScreen() {
       nextMonth = 1;
       nextYear += 1;
     }
-    TransactionActions.changeDate(nextMonth, nextYear);
+    TransactionActions.changeDate(nextMonth, nextYear, {
+      expenseModel: selectedExpenseModelQuery,
+    });
   };
 
-  const { rows, total } = useMemo(() => {
+  const { rows, total, baseTotal } = useMemo(() => {
     const categoryMap = new Map(categories.map((cat) => [cat.id, cat]));
     const monthTransactions = transactions.filter((tx) => {
       const date = new Date(tx.date);
@@ -397,6 +401,9 @@ export default function AnalyticsScreen() {
         return false;
       }
       if (viewMode === "INCOME") return tx.type === "INCOME";
+      if (expenseModelFilter !== "ALL") {
+        return tx.type === "EXPENSE" && tx.expenseModel === expenseModelFilter;
+      }
       return tx.type === "EXPENSE" || (includeTransfers && tx.type === "TRANSFER");
     });
 
@@ -413,7 +420,10 @@ export default function AnalyticsScreen() {
     >();
 
     monthTransactions.forEach((tx) => {
-      const amount = Math.abs(Number(tx.amount || 0));
+      const txCurrency = resolveTransactionCurrency(tx);
+      const amount = Math.abs(
+        convertAmount(Number(tx.amount || 0), txCurrency, displayCurrency)
+      );
       const category = tx.category || categoryMap.get(tx.categoryId);
       const key = tx.categoryId || category?.id || "unknown";
       const prev = map.get(key);
@@ -431,7 +441,9 @@ export default function AnalyticsScreen() {
       });
     });
 
-    let list = Array.from(map.values()).sort((a, b) => b.total - a.total);
+    const categoryTotals = Array.from(map.values()).sort((a, b) => b.total - a.total);
+    const fullTotal = categoryTotals.reduce((acc, item) => acc + item.total, 0);
+    let list = categoryTotals;
 
     if (searchNormalized) {
       list = list.filter((item) =>
@@ -471,13 +483,18 @@ export default function AnalyticsScreen() {
 
     const visibleTotal = rowsWithPercent.reduce((acc, item) => acc + item.total, 0);
 
-    return { rows: rowsWithPercent, total: visibleTotal };
+    return {
+      rows: rowsWithPercent,
+      total: visibleTotal,
+      baseTotal: fullTotal,
+    };
   }, [
     transactions,
     selectedMonth,
     selectedYear,
     viewMode,
     includeTransfers,
+    expenseModelFilter,
     searchNormalized,
     minPercentFilter,
     maxCategories,
@@ -486,6 +503,7 @@ export default function AnalyticsScreen() {
     pastel.mixBase,
     pastel.iconBgFallback,
     softMixAmount,
+    displayCurrency,
   ]);
 
   const pieData = useMemo(() => {
@@ -497,7 +515,7 @@ export default function AnalyticsScreen() {
       color: row.color,
       gradientCenterColor: mixHex(
         row.color,
-        "#FFFFFF",
+        pastel.mixBase,
         gradientMixAmount,
         row.color
       ),
@@ -506,15 +524,83 @@ export default function AnalyticsScreen() {
     }));
   }, [rows, pastel.emptyPie, gradientMixAmount]);
 
+  const plannedActualRows = useMemo(() => {
+    const statusOrder: Record<PlannedActualStatus, number> = {
+      OVER: 0,
+      RISK: 1,
+      ON_TRACK: 2,
+    };
+
+    return budgets
+      .map((budget) => {
+        const planned = Math.max(
+          0,
+          convertAmount(Number(budget.amount || 0), budget.currency, displayCurrency)
+        );
+        const actual = Math.max(
+          0,
+          convertAmount(
+            Number(budget.progress?.spent || 0),
+            budget.currency,
+            displayCurrency
+          )
+        );
+        const utilization =
+          planned > 0 ? (actual / planned) * 100 : actual > 0 ? 100 : 0;
+        const variance = actual - planned;
+        const status: PlannedActualStatus =
+          utilization >= 100
+            ? "OVER"
+            : utilization >= budget.warningThreshold
+              ? "RISK"
+              : "ON_TRACK";
+
+        return {
+          id: budget.id,
+          name: budget.name || budget.category.name,
+          icon: budget.category.icon,
+          color:
+            budget.category.color ||
+            pieColors[hashCode(budget.categoryId || budget.id) % pieColors.length],
+          planned,
+          actual,
+          variance,
+          remaining: planned - actual,
+          utilization,
+          warningThreshold: budget.warningThreshold,
+          status,
+        };
+      })
+      .sort((a, b) => {
+        const byStatus = statusOrder[a.status] - statusOrder[b.status];
+        if (byStatus !== 0) return byStatus;
+        const byVariance = Math.abs(b.variance) - Math.abs(a.variance);
+        if (byVariance !== 0) return byVariance;
+        return b.actual - a.actual;
+      });
+  }, [budgets, displayCurrency, pieColors]);
+
+  const plannedActualScopeLabel =
+    expenseModelFilter === "FIXED"
+      ? "Solo presupuestos fijos"
+      : expenseModelFilter === "VARIABLE"
+        ? "Solo presupuestos variables"
+        : "Todas las categorias";
+
   const viewLabel = viewMode === "EXPENSE" ? "Gastos" : "Ingresos";
-  const summaryTotal = viewMode === "EXPENSE" ? totalExpense : totalIncome;
+  const showFixedVariableSection = isFixedVariableActive;
+  const showPlannedActualSection = isPlannedActualActive;
+  const showCategorySection = analyticsSection === "CATEGORIES";
+  const summaryTotal = baseTotal;
   const hasActiveFilters =
     searchNormalized.length > 0 ||
     minPercentFilter > 0 ||
     maxCategories !== 8 ||
-    (viewMode === "EXPENSE" && !includeTransfers);
+    (viewMode === "EXPENSE" && includeTransfers) ||
+    (viewMode === "EXPENSE" && expenseModelFilter !== "ALL");
   const filterCount =
-    (viewMode === "EXPENSE" && !includeTransfers ? 1 : 0) +
+    (viewMode === "EXPENSE" && includeTransfers ? 1 : 0) +
+    (viewMode === "EXPENSE" && expenseModelFilter !== "ALL" ? 1 : 0) +
     (minPercentFilter > 0 ? 1 : 0) +
     (maxCategories !== 8 ? 1 : 0);
   const centerTotal = hasActiveFilters ? total : summaryTotal || total;
@@ -743,10 +829,63 @@ export default function AnalyticsScreen() {
   };
 
   const clearFilters = () => {
-    setIncludeTransfers(true);
+    setIncludeTransfers(false);
+    setExpenseModelFilter("ALL");
     setMinPercentFilter(0);
     setMaxCategories(8);
   };
+
+  const handleSectionChange = (id: string) => {
+    const next = id as AnalyticsSection;
+    setAnalyticsSection(next);
+    if (next !== "CATEGORIES") {
+      setFilterSheetOpen(false);
+      setSearchOpen(false);
+      setSearchQuery("");
+    }
+  };
+
+  useEffect(() => {
+    if (viewMode === "INCOME") {
+      setAnalyticsSection("CATEGORIES");
+    }
+  }, [viewMode]);
+
+  const sectionSwipeResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onMoveShouldSetPanResponder: (_, gestureState) => {
+          if (viewMode !== "EXPENSE") return false;
+          const dx = Math.abs(gestureState.dx);
+          const dy = Math.abs(gestureState.dy);
+          return dx > 18 && dx > dy * 1.15;
+        },
+        onPanResponderRelease: (_, gestureState) => {
+          if (viewMode !== "EXPENSE") return;
+          if (Math.abs(gestureState.dx) < SECTION_SWIPE_THRESHOLD) return;
+          const currentIndex = ANALYTICS_SECTION_OPTIONS.findIndex(
+            (option) => option.id === analyticsSection
+          );
+
+          if (gestureState.dx < 0 && currentIndex < ANALYTICS_SECTION_OPTIONS.length - 1) {
+            handleSectionChange(
+              ANALYTICS_SECTION_OPTIONS[currentIndex + 1].id
+            );
+            return;
+          }
+
+          if (gestureState.dx > 0 && currentIndex > 0) {
+            handleSectionChange(
+              ANALYTICS_SECTION_OPTIONS[currentIndex - 1].id
+            );
+          }
+        },
+      }),
+    [analyticsSection, viewMode]
+  );
+
+  const swipeHandlers =
+    viewMode === "EXPENSE" ? sectionSwipeResponder.panHandlers : {};
 
   return (
     <MainLayout noPadding>
@@ -793,94 +932,92 @@ export default function AnalyticsScreen() {
               icon={<ChevronRight size={16} color={pastel.ink} />}
             />
           </XStack>
-          <XStack alignItems="center" space="$2">
-            <Button
-              size="$3"
-              circular
-              backgroundColor={
-                filterSheetOpen || filterCount > 0 ? pastel.accentSoft : pastel.surface
-              }
-              borderWidth={1}
-              borderColor={pastel.border}
-              onPress={() => setFilterSheetOpen(true)}
-              icon={
-                <SlidersHorizontal
-                  size={16}
-                  color={filterCount > 0 ? pastel.accent : pastel.muted}
-                />
-              }
-            />
-            <Button
-              size="$3"
-              circular
-              backgroundColor={
-                searchOpen || searchNormalized.length > 0
-                  ? pastel.accentSoft
-                  : pastel.surface
-              }
-              borderWidth={1}
-              borderColor={pastel.border}
-              onPress={toggleSearch}
-              icon={
-                <Search
-                  size={16}
-                  color={searchNormalized.length > 0 ? pastel.accent : pastel.muted}
-                />
-              }
-            />
-          </XStack>
+          {showCategorySection ? (
+            <XStack alignItems="center" space="$2">
+              <Button
+                size="$3"
+                circular
+                backgroundColor={
+                  filterSheetOpen || filterCount > 0
+                    ? pastel.accentSoft
+                    : pastel.surface
+                }
+                borderWidth={1}
+                borderColor={pastel.border}
+                onPress={() => setFilterSheetOpen(true)}
+                icon={
+                  <SlidersHorizontal
+                    size={16}
+                    color={filterCount > 0 ? pastel.accent : pastel.muted}
+                  />
+                }
+              />
+              <Button
+                size="$3"
+                circular
+                backgroundColor={
+                  searchOpen || searchNormalized.length > 0
+                    ? pastel.accentSoft
+                    : pastel.surface
+                }
+                borderWidth={1}
+                borderColor={pastel.border}
+                onPress={toggleSearch}
+                icon={
+                  <Search
+                    size={16}
+                    color={searchNormalized.length > 0 ? pastel.accent : pastel.muted}
+                  />
+                }
+              />
+            </XStack>
+          ) : (
+            <Stack width={76} />
+          )}
         </XStack>
 
-        <XStack alignItems="center" space="$2">
-          <Button
-            height={32}
-            borderRadius="$8"
-            paddingHorizontal="$3"
-            backgroundColor={
-              viewMode === "EXPENSE" ? pastel.accentSoft : "transparent"
-            }
-            borderWidth={0}
-            onPress={() => setViewMode("EXPENSE")}
-            pressStyle={{ opacity: 0.9 }}
-          >
-            <XStack alignItems="center" space="$2">
-              <Circle size={8} backgroundColor={pastel.peach} />
-              <Text
-                fontSize={12}
-                fontWeight="700"
-                color={viewMode === "EXPENSE" ? pastel.ink : pastel.muted}
-                letterSpacing={0.6}
-              >
-                GASTOS
-              </Text>
-            </XStack>
-          </Button>
-          <Button
-            height={32}
-            borderRadius="$8"
-            paddingHorizontal="$3"
-            backgroundColor={
-              viewMode === "INCOME" ? pastel.accentSoft : "transparent"
-            }
-            borderWidth={0}
-            onPress={() => setViewMode("INCOME")}
-            pressStyle={{ opacity: 0.9 }}
-          >
-            <XStack alignItems="center" space="$2">
-              <Circle size={8} backgroundColor={pastel.mint} />
-              <Text
-                fontSize={12}
-                fontWeight="700"
-                color={viewMode === "INCOME" ? pastel.ink : pastel.muted}
-                letterSpacing={0.6}
-              >
-                INGRESO
-              </Text>
-            </XStack>
-          </Button>
-        </XStack>
+        <AnalyticsSectionTabs
+          options={ANALYTICS_SECTION_OPTIONS}
+          value={analyticsSection}
+          onChange={(id) => handleSectionChange(id)}
+          incomeOnly={viewMode === "INCOME"}
+          colors={{
+            page: pastel.page,
+            surface: pastel.surface,
+            border: pastel.border,
+            ink: pastel.ink,
+            muted: pastel.muted,
+            accent: pastel.accent,
+            accentSoft: pastel.accentSoft,
+            peach: pastel.peach,
+            peachText: pastel.peachText,
+            mint: pastel.mint,
+            mintText: pastel.mintText,
+          }}
+        />
 
-        {searchOpen && (
+        {showCategorySection && (
+          <AnalyticsModeTabs
+            value={viewMode}
+            onChange={setViewMode}
+            showIncomeHint={
+              viewMode === "EXPENSE" && analyticsSection !== "CATEGORIES"
+            }
+            colors={{
+              page: pastel.page,
+              surface: pastel.surface,
+              border: pastel.border,
+              ink: pastel.ink,
+              muted: pastel.muted,
+              peach: pastel.peach,
+              peachText: pastel.peachText,
+              mint: pastel.mint,
+              mintText: pastel.mintText,
+            }}
+          />
+        )}
+
+        {showCategorySection && searchOpen && (
           <XStack
             height={40}
             borderRadius="$10"
@@ -917,329 +1054,358 @@ export default function AnalyticsScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 40 }}
         >
-          <YStack space="$4" alignItems="center">
-            <YStack
-              backgroundColor="transparent"
-              borderWidth={0}
-              paddingTop="$2"
-              paddingBottom="$3"
-              width="100%"
-              alignItems="center"
-              space="$3"
-            >
-              {isLoading ? (
-                <Spinner size="large" color={pastel.accent} />
-              ) : (
-                <Stack
-                  width={DONUT_FRAME}
-                  height={DONUT_FRAME}
-                  alignItems="center"
-                  justifyContent="center"
-                  overflow="visible"
-                >
-                  <PieChart
-                    data={pieData}
-                    donut
-                    radius={DONUT_RADIUS}
-                    innerRadius={DONUT_INNER}
-                    strokeWidth={10}
-                    strokeColor={pastel.page}
-                    innerCircleColor={pastel.page}
-                    showGradient={true}
-                    focusOnPress={false}
-                    toggleFocusOnPress={false}
-                    showText={false}
-                    initialAngle={-Math.PI / 2}
-                    centerLabelComponent={() => (
-                      <YStack alignItems="center" space="$1">
-                        <Text
-                          fontSize={12}
-                          letterSpacing={1}
-                          color={pastel.muted}
-                        >
-                          {viewLabel.toUpperCase()}
-                        </Text>
-                        <Text fontSize="$5" fontWeight="800" color={pastel.ink}>
-                          {formatCurrency(centerTotal)}
-                        </Text>
-                      </YStack>
-                    )}
-                  />
-                  <Svg
-                    width={DONUT_SIZE}
-                    height={DONUT_SIZE}
-                    style={{
-                      position: "absolute",
-                      left: DONUT_FRAME_OFFSET,
-                      top: DONUT_FRAME_OFFSET,
-                    }}
-                  >
-                    <Defs>
-                      <Pattern
-                        id="hatch"
-                        patternUnits="userSpaceOnUse"
-                        width="8"
-                        height="8"
-                        patternTransform="rotate(32)"
-                      >
-                        <Line
-                          x1="0"
-                          y1="0"
-                          x2="0"
-                          y2="8"
-                          stroke={pastel.hatchStrong}
-                          strokeWidth="1"
-                        />
-                        <Line
-                          x1="4"
-                          y1="0"
-                          x2="4"
-                          y2="8"
-                          stroke={pastel.hatchSoft}
-                          strokeWidth="1"
-                        />
-                      </Pattern>
-                      <Mask id="donutMask">
-                        <Rect width={DONUT_SIZE} height={DONUT_SIZE} fill="black" />
-                        <SvgCircle
-                          cx={DONUT_CENTER}
-                          cy={DONUT_CENTER}
-                          r={DONUT_RADIUS}
-                          fill="white"
-                        />
-                        <SvgCircle
-                          cx={DONUT_CENTER}
-                          cy={DONUT_CENTER}
-                          r={DONUT_INNER}
-                          fill="black"
-                        />
-                      </Mask>
-                    </Defs>
-                    <Rect
-                      width={DONUT_SIZE}
-                      height={DONUT_SIZE}
-                      fill="url(#hatch)"
-                      mask="url(#donutMask)"
-                    />
-                  </Svg>
-                  <Stack
-                    position="absolute"
-                    width={DONUT_SIZE + OVERLAY_PAD * 2}
-                    height={DONUT_SIZE + OVERLAY_PAD * 2}
-                    left={DONUT_FRAME_OFFSET - OVERLAY_PAD}
-                    top={DONUT_FRAME_OFFSET - OVERLAY_PAD}
-                    pointerEvents="box-none"
-                  >
-                    {clusterRenders.map((cluster) => {
-                      const isMulti = cluster.items.length > 1;
-                      const percentLabel = formatPercent(cluster.percentTotal, true);
-                      return (
-                        <Pressable
-                          key={cluster.id}
-                          onPress={isMulti ? () => handleClusterPress(cluster) : undefined}
-                          disabled={!isMulti}
-                          hitSlop={isMulti ? 8 : undefined}
-                          style={{
-                            position: "absolute",
-                            left: cluster.groupLeft + OVERLAY_PAD,
-                            top: cluster.groupTop + OVERLAY_PAD,
-                            width: cluster.groupWidth,
-                            alignItems: "center",
-                            overflow: "visible",
-                          }}
-                        >
-                          <YStack alignItems="center" space="$1">
-                            {isMulti && (
-                              <Stack
-                                position="absolute"
-                                left={cluster.ovalLeft - cluster.groupLeft}
-                                top={cluster.ovalTop - cluster.groupTop}
-                                width={cluster.ovalWidth}
-                                height={cluster.ovalHeight}
-                                borderRadius={999}
-                                borderWidth={1}
-                                borderColor={mixHex(
-                                  cluster.primaryColor,
-                                  pastel.mixAlt,
-                                  isDark ? 0.3 : 0.15,
-                                  pastel.border
-                                )}
-                                backgroundColor={pastel.clusterBg}
-                                zIndex={0}
-                              />
-                            )}
-                            <Stack
-                              width={cluster.groupWidth}
-                              height={cluster.groupHeight}
-                              zIndex={1}
-                            >
-                              {cluster.iconPositions.map((entry) => {
-                                const Icon = getIcon(entry.icon || "HelpCircle");
-                                return (
-                                  <YStack
-                                    key={entry.id}
-                                    position="absolute"
-                                    left={entry.left - cluster.groupLeft}
-                                    top={entry.top - cluster.groupTop}
-                                    alignItems="center"
-                                    width={entry.blockWidth || ICON_BLOCK_WIDTH}
-                                  >
-                                    <Circle
-                                      size={entry.iconSize || LABEL_ICON_SIZE}
-                                      backgroundColor={mixHex(
-                                        entry.color,
-                                        pastel.mixBase,
-                                        isDark ? 0.72 : 0.9,
-                                        pastel.iconBgFallback
-                                      )}
-                                      borderWidth={1}
-                                      borderColor={entry.color}
-                                    >
-                                      <Icon
-                                        size={12}
-                                        color={entry.color}
-                                        strokeWidth={2}
-                                      />
-                                    </Circle>
-                                    {!isMulti && (
-                                      <Text
-                                        fontSize={8}
-                                        fontWeight="700"
-                                        color={entry.color}
-                                        marginTop={2}
-                                      >
-                                        {entry.percentLabel}
-                                      </Text>
-                                    )}
-                                  </YStack>
-                                );
-                              })}
-                              {cluster.items.length > cluster.visibleItems.length && (
-                                <Circle
-                                  size={14}
-                                  backgroundColor={pastel.badgeBg}
-                                  position="absolute"
-                                  right={-4}
-                                  bottom={-4}
-                                >
-                                  <Text
-                                    fontSize={9}
-                                    fontWeight="700"
-                                    color={pastel.badgeText}
-                                  >
-                                    +{cluster.items.length - cluster.visibleItems.length}
-                                  </Text>
-                                </Circle>
-                              )}
-                            </Stack>
-                            {isMulti && (
-                              <Text
-                                position="absolute"
-                                left={cluster.pillLeft}
-                                top={cluster.pillTop}
-                                width={PILL_WIDTH}
-                                fontSize={8}
-                                fontWeight="700"
-                                color={cluster.primaryColor}
-                                textAlign="center"
-                                numberOfLines={1}
-                                zIndex={2}
-                              >
-                                {percentLabel}
-                              </Text>
-                            )}
-                          </YStack>
-                        </Pressable>
-                      );
-                    })}
-                  </Stack>
-                </Stack>
-              )}
-
-              <Text
-                fontSize="$5"
-                fontWeight="700"
-                color={pastel.ink}
-                fontStyle="italic"
-              >
-                {viewLabel}
-              </Text>
-            </YStack>
-
-            <YStack width="100%" space="$3">
-              {rows.length === 0 ? (
+          <YStack space="$4" alignItems="center" {...swipeHandlers}>
+            {showCategorySection && (
+              <>
                 <YStack
-                  backgroundColor={pastel.surface}
-                  borderRadius="$12"
-                  borderWidth={1}
-                  borderColor={pastel.border}
-                  padding="$4"
+                  backgroundColor="transparent"
+                  borderWidth={0}
+                  paddingTop="$2"
+                  paddingBottom="$3"
+                  width="100%"
                   alignItems="center"
+                  space="$3"
                 >
-                  <Text color={pastel.muted}>
-                    {hasActiveFilters
-                      ? "No hay resultados con los filtros actuales."
-                      : "Aún no hay movimientos en este mes."}
+                  {isLoading ? (
+                    <Spinner size="large" color={pastel.accent} />
+                  ) : (
+                    <Stack
+                      width={DONUT_FRAME}
+                      height={DONUT_FRAME}
+                      alignItems="center"
+                      justifyContent="center"
+                      overflow="visible"
+                    >
+                      <PieChart
+                        data={pieData}
+                        donut
+                        radius={DONUT_RADIUS}
+                        innerRadius={DONUT_INNER}
+                        strokeWidth={10}
+                        strokeColor={pastel.page}
+                        innerCircleColor={pastel.page}
+                        showGradient={true}
+                        focusOnPress={false}
+                        toggleFocusOnPress={false}
+                        showText={false}
+                        initialAngle={-Math.PI / 2}
+                        centerLabelComponent={() => (
+                          <YStack alignItems="center" space="$1">
+                            <Text
+                              fontSize={12}
+                              letterSpacing={1}
+                              color={pastel.muted}
+                            >
+                              {viewLabel.toUpperCase()}
+                            </Text>
+                            <Text fontSize="$5" fontWeight="800" color={pastel.ink}>
+                              {formatCurrencyAmount(centerTotal, displayCurrency)}
+                            </Text>
+                          </YStack>
+                        )}
+                      />
+                      <Svg
+                        width={DONUT_SIZE}
+                        height={DONUT_SIZE}
+                        style={{
+                          position: "absolute",
+                          left: DONUT_FRAME_OFFSET,
+                          top: DONUT_FRAME_OFFSET,
+                        }}
+                      >
+                        <Defs>
+                          <Pattern
+                            id="hatch"
+                            patternUnits="userSpaceOnUse"
+                            width="8"
+                            height="8"
+                            patternTransform="rotate(32)"
+                          >
+                            <Line
+                              x1="0"
+                              y1="0"
+                              x2="0"
+                              y2="8"
+                              stroke={pastel.hatchStrong}
+                              strokeWidth="1"
+                            />
+                            <Line
+                              x1="4"
+                              y1="0"
+                              x2="4"
+                              y2="8"
+                              stroke={pastel.hatchSoft}
+                              strokeWidth="1"
+                            />
+                          </Pattern>
+                          <Mask id="donutMask">
+                            <Rect width={DONUT_SIZE} height={DONUT_SIZE} fill="black" />
+                            <SvgCircle
+                              cx={DONUT_CENTER}
+                              cy={DONUT_CENTER}
+                              r={DONUT_RADIUS}
+                              fill="white"
+                            />
+                            <SvgCircle
+                              cx={DONUT_CENTER}
+                              cy={DONUT_CENTER}
+                              r={DONUT_INNER}
+                              fill="black"
+                            />
+                          </Mask>
+                        </Defs>
+                        <Rect
+                          width={DONUT_SIZE}
+                          height={DONUT_SIZE}
+                          fill="url(#hatch)"
+                          mask="url(#donutMask)"
+                        />
+                      </Svg>
+                      <Stack
+                        position="absolute"
+                        width={DONUT_SIZE + OVERLAY_PAD * 2}
+                        height={DONUT_SIZE + OVERLAY_PAD * 2}
+                        left={DONUT_FRAME_OFFSET - OVERLAY_PAD}
+                        top={DONUT_FRAME_OFFSET - OVERLAY_PAD}
+                        pointerEvents="box-none"
+                      >
+                        {clusterRenders.map((cluster) => {
+                          const isMulti = cluster.items.length > 1;
+                          const percentLabel = formatPercent(cluster.percentTotal, true);
+                          return (
+                            <Pressable
+                              key={cluster.id}
+                              onPress={
+                                isMulti ? () => handleClusterPress(cluster) : undefined
+                              }
+                              disabled={!isMulti}
+                              hitSlop={isMulti ? 8 : undefined}
+                              style={{
+                                position: "absolute",
+                                left: cluster.groupLeft + OVERLAY_PAD,
+                                top: cluster.groupTop + OVERLAY_PAD,
+                                width: cluster.groupWidth,
+                                alignItems: "center",
+                                overflow: "visible",
+                              }}
+                            >
+                              <YStack alignItems="center" space="$1">
+                                {isMulti && (
+                                  <Stack
+                                    position="absolute"
+                                    left={cluster.ovalLeft - cluster.groupLeft}
+                                    top={cluster.ovalTop - cluster.groupTop}
+                                    width={cluster.ovalWidth}
+                                    height={cluster.ovalHeight}
+                                    borderRadius={999}
+                                    borderWidth={1}
+                                    borderColor={mixHex(
+                                      cluster.primaryColor,
+                                      pastel.mixAlt,
+                                      isDark ? 0.3 : 0.15,
+                                      pastel.border
+                                    )}
+                                    backgroundColor={pastel.clusterBg}
+                                    zIndex={0}
+                                  />
+                                )}
+                                <Stack
+                                  width={cluster.groupWidth}
+                                  height={cluster.groupHeight}
+                                  zIndex={1}
+                                >
+                                  {cluster.iconPositions.map((entry) => {
+                                    const Icon = getIcon(entry.icon || "HelpCircle");
+                                    return (
+                                      <YStack
+                                        key={entry.id}
+                                        position="absolute"
+                                        left={entry.left - cluster.groupLeft}
+                                        top={entry.top - cluster.groupTop}
+                                        alignItems="center"
+                                        width={entry.blockWidth || ICON_BLOCK_WIDTH}
+                                      >
+                                        <Circle
+                                          size={entry.iconSize || LABEL_ICON_SIZE}
+                                          backgroundColor={mixHex(
+                                            entry.color,
+                                            pastel.mixBase,
+                                            isDark ? 0.72 : 0.9,
+                                            pastel.iconBgFallback
+                                          )}
+                                          borderWidth={1}
+                                          borderColor={entry.color}
+                                        >
+                                          <Icon
+                                            size={12}
+                                            color={entry.color}
+                                            strokeWidth={2}
+                                          />
+                                        </Circle>
+                                        {!isMulti && (
+                                          <Text
+                                            fontSize={8}
+                                            fontWeight="700"
+                                            color={entry.color}
+                                            marginTop={2}
+                                          >
+                                            {entry.percentLabel}
+                                          </Text>
+                                        )}
+                                      </YStack>
+                                    );
+                                  })}
+                                  {cluster.items.length > cluster.visibleItems.length && (
+                                    <Circle
+                                      size={14}
+                                      backgroundColor={pastel.badgeBg}
+                                      position="absolute"
+                                      right={-4}
+                                      bottom={-4}
+                                    >
+                                      <Text
+                                        fontSize={9}
+                                        fontWeight="700"
+                                        color={pastel.badgeText}
+                                      >
+                                        +{cluster.items.length - cluster.visibleItems.length}
+                                      </Text>
+                                    </Circle>
+                                  )}
+                                </Stack>
+                                {isMulti && (
+                                  <Text
+                                    position="absolute"
+                                    left={cluster.pillLeft}
+                                    top={cluster.pillTop}
+                                    width={PILL_WIDTH}
+                                    fontSize={8}
+                                    fontWeight="700"
+                                    color={cluster.primaryColor}
+                                    textAlign="center"
+                                    numberOfLines={1}
+                                    zIndex={2}
+                                  >
+                                    {percentLabel}
+                                  </Text>
+                                )}
+                              </YStack>
+                            </Pressable>
+                          );
+                        })}
+                      </Stack>
+                    </Stack>
+                  )}
+
+                  <Text
+                    fontSize="$5"
+                    fontWeight="700"
+                    color={pastel.ink}
+                    fontStyle="italic"
+                  >
+                    {viewLabel}
                   </Text>
                 </YStack>
-              ) : (
-                rows.map((row) => (
-                  <YStack
-                    key={row.id}
-                    backgroundColor={pastel.surface}
-                    borderRadius="$14"
-                    borderWidth={1}
-                    borderColor={pastel.border}
-                    padding="$3"
-                    space="$2"
-                  >
-                    <XStack alignItems="center" justifyContent="space-between">
-                      <XStack alignItems="center" space="$3">
-                        <Circle
-                          size={38}
-                          backgroundColor={getIconBg(
-                            row.color,
-                            isDark,
-                            pastel.iconBgFallback
-                          )}
-                        >
-                          {(() => {
-                            const Icon = getIcon(row.icon || "HelpCircle");
-                            return (
-                              <Icon size={18} color={row.color} strokeWidth={2} />
-                            );
-                          })()}
-                        </Circle>
-                        <YStack space="$1">
-                          <Text fontSize="$3" fontWeight="700" color={pastel.ink}>
-                            {row.name}
-                          </Text>
-                          <Text fontSize={11} color={pastel.muted}>
-                            {formatPercent(row.percent, true)}
-                          </Text>
-                        </YStack>
-                      </XStack>
-                      <Text fontWeight="700" color={pastel.ink}>
-                        {formatCurrency(row.total)}
-                      </Text>
-                    </XStack>
-                    <Stack
-                      height={6}
-                      backgroundColor={row.softColor}
-                      borderRadius={999}
-                      overflow="hidden"
+
+                <YStack width="100%" space="$3">
+                  {rows.length === 0 ? (
+                    <YStack
+                      backgroundColor={pastel.surface}
+                      borderRadius="$12"
+                      borderWidth={1}
+                      borderColor={pastel.border}
+                      padding="$4"
+                      alignItems="center"
                     >
-                      <Stack
-                        height="100%"
-                        width={`${Math.min(row.percent, 100)}%`}
-                        backgroundColor={row.color}
-                        borderRadius={999}
-                      />
-                    </Stack>
-                  </YStack>
-                ))
-              )}
-            </YStack>
+                      <Text color={pastel.muted}>
+                        {hasActiveFilters
+                          ? "No hay resultados con los filtros actuales."
+                          : "Aún no hay movimientos en este mes."}
+                      </Text>
+                    </YStack>
+                  ) : (
+                    rows.map((row) => (
+                      <YStack
+                        key={row.id}
+                        backgroundColor={pastel.surface}
+                        borderRadius="$14"
+                        borderWidth={1}
+                        borderColor={pastel.border}
+                        padding="$3"
+                        space="$2"
+                      >
+                        <XStack alignItems="center" justifyContent="space-between">
+                          <XStack alignItems="center" space="$3">
+                            <Circle
+                              size={38}
+                              backgroundColor={getIconBg(
+                                row.color,
+                                isDark,
+                                pastel.iconBgFallback
+                              )}
+                            >
+                              {(() => {
+                                const Icon = getIcon(row.icon || "HelpCircle");
+                                return (
+                                  <Icon size={18} color={row.color} strokeWidth={2} />
+                                );
+                              })()}
+                            </Circle>
+                            <YStack space="$1">
+                              <Text fontSize="$3" fontWeight="700" color={pastel.ink}>
+                                {row.name}
+                              </Text>
+                              <Text fontSize={12} color={pastel.ink}>
+                                {formatPercent(row.percent, true)}
+                              </Text>
+                            </YStack>
+                          </XStack>
+                          <Text fontWeight="700" color={pastel.ink}>
+                            {formatCurrencyAmount(row.total, displayCurrency)}
+                          </Text>
+                        </XStack>
+                        <Stack
+                          height={6}
+                          backgroundColor={row.softColor}
+                          borderRadius={999}
+                          overflow="hidden"
+                        >
+                          <Stack
+                            height="100%"
+                            width={`${Math.min(row.percent, 100)}%`}
+                            backgroundColor={row.color}
+                            borderRadius={999}
+                          />
+                        </Stack>
+                      </YStack>
+                    ))
+                  )}
+                </YStack>
+              </>
+            )}
+
+            {showFixedVariableSection && (
+              <FixedVariableDashboardCard
+                data={fixedVariableTrend}
+                isLoading={fixedVariableLoading}
+                error={fixedVariableError}
+                currency={displayCurrency}
+                selectedWindow={trendWindow}
+                onWindowChange={setTrendWindow}
+                colors={pastel}
+              />
+            )}
+
+            {showPlannedActualSection && (
+              <PlannedActualDashboardCard
+                rows={plannedActualRows}
+                isLoading={budgetLoading}
+                currency={displayCurrency}
+                monthLabel={formatMonthLabel(selectedMonth, selectedYear)}
+                scopeLabel={plannedActualScopeLabel}
+                colors={pastel}
+              />
+            )}
           </YStack>
       </ScrollView>
 
@@ -1247,14 +1413,14 @@ export default function AnalyticsScreen() {
         modal
         open={filterSheetOpen}
         onOpenChange={(open: boolean) => setFilterSheetOpen(open)}
-        snapPoints={[70]}
+        snapPoints={[85]}
         dismissOnSnapToBottom
         zIndex={100_200}
         animation="medium"
       >
         <Sheet.Overlay
           animation="lazy"
-          backgroundColor={isDark ? "rgba(2,6,23,0.74)" : "rgba(15,23,42,0.3)"}
+          backgroundColor={pastel.overlay}
           enterStyle={{ opacity: 0 }}
           exitStyle={{ opacity: 0 }}
         />
@@ -1264,7 +1430,7 @@ export default function AnalyticsScreen() {
             <XStack
               paddingHorizontal="$4"
               paddingTop="$4"
-              paddingBottom="$3"
+              paddingBottom="$2"
               alignItems="center"
               justifyContent="space-between"
             >
@@ -1298,7 +1464,7 @@ export default function AnalyticsScreen() {
                 {viewMode === "EXPENSE" && (
                   <YStack space="$3">
                     <Text
-                      fontSize={11}
+                      fontSize={12}
                       fontWeight="800"
                       color={pastel.muted}
                       letterSpacing={0.45}
@@ -1316,9 +1482,32 @@ export default function AnalyticsScreen() {
                   </YStack>
                 )}
 
+                {viewMode === "EXPENSE" && (
+                  <YStack space="$3">
+                    <Text
+                      fontSize={12}
+                      fontWeight="800"
+                      color={pastel.muted}
+                      letterSpacing={0.45}
+                    >
+                      MODELO DE GASTO
+                    </Text>
+                    <SegmentControl
+                      options={EXPENSE_MODEL_OPTIONS}
+                      value={expenseModelFilter}
+                      onChange={(id) =>
+                        setExpenseModelFilter(id as ExpenseModelFilter)
+                      }
+                      columns={3}
+                      pastel={pastel}
+                      activeColor={pastel.accent}
+                    />
+                  </YStack>
+                )}
+
                 <YStack space="$3">
                   <Text
-                    fontSize={11}
+                    fontSize={12}
                     fontWeight="800"
                     color={pastel.muted}
                     letterSpacing={0.45}
@@ -1337,7 +1526,7 @@ export default function AnalyticsScreen() {
 
                 <YStack space="$3">
                   <Text
-                    fontSize={11}
+                    fontSize={12}
                     fontWeight="800"
                     color={pastel.muted}
                     letterSpacing={0.45}
@@ -1356,7 +1545,8 @@ export default function AnalyticsScreen() {
               </YStack>
 
               <YStack
-                paddingBottom={Math.max(insets.bottom, 12)}
+                paddingTop="$1"
+                paddingBottom={Math.max(insets.bottom + 18, 28)}
                 space="$3"
               >
                 <Separator borderColor={pastel.border} />
@@ -1381,7 +1571,7 @@ export default function AnalyticsScreen() {
                   borderRadius="$4"
                   onPress={() => setFilterSheetOpen(false)}
                 >
-                  <Text fontSize="$3" fontWeight="700" color="white">
+                  <Text fontSize="$3" fontWeight="700" color={pastel.badgeText}>
                     Aplicar
                   </Text>
                 </Button>
@@ -1406,7 +1596,7 @@ export default function AnalyticsScreen() {
       >
         <Sheet.Overlay
           animation="lazy"
-          backgroundColor={isDark ? "rgba(2,6,23,0.74)" : "rgba(15,23,42,0.3)"}
+          backgroundColor={pastel.overlay}
           enterStyle={{ opacity: 0 }}
           exitStyle={{ opacity: 0 }}
         />
@@ -1467,13 +1657,13 @@ export default function AnalyticsScreen() {
                               <Text fontSize="$3" fontWeight="700" color={pastel.ink}>
                                 {item.name}
                               </Text>
-                              <Text fontSize={11} color={pastel.muted}>
+                              <Text fontSize={12} color={pastel.ink}>
                                 {formatPercent(item.percent, true)}
                               </Text>
                             </YStack>
                           </XStack>
                           <Text fontWeight="700" color={pastel.ink}>
-                            {formatCurrency(item.total)}
+                            {formatCurrencyAmount(item.total, displayCurrency)}
                           </Text>
                         </XStack>
                       );

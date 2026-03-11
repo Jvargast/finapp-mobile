@@ -8,8 +8,21 @@ import {
   Coins,
   Globe,
 } from "@tamagui/lucide-icons";
+import { CurrencyCode } from "../../types/currency.types";
 
-const CURRENCIES = [
+type CurrencyIcon = React.ComponentType<{
+  size?: number;
+  color?: string;
+  strokeWidth?: number;
+}>;
+
+const CURRENCIES: ReadonlyArray<{
+  id: CurrencyCode;
+  label: string;
+  symbol: string;
+  icon: CurrencyIcon;
+  color: string;
+}> = [
   { id: "CLP", label: "Peso", symbol: "$", icon: Banknote, color: "#10B981" },
   { id: "UF", label: "UF", symbol: "UF", icon: Coins, color: "#F59E0B" },
   {
@@ -21,12 +34,13 @@ const CURRENCIES = [
   },
   { id: "EUR", label: "Euro", symbol: "€", icon: Euro, color: "#6366F1" },
   { id: "CAD", label: "Canadá", symbol: "C$", icon: Globe, color: "#EF4444" },
+  { id: "GBP", label: "Libra", symbol: "£", icon: Globe, color: "#0F766E" },
   { id: "BTC", label: "Bitcoin", symbol: "₿", icon: Bitcoin, color: "#F7931A" },
 ];
 
 interface GoalCurrencySelectorProps {
-  value: string;
-  onChange: (currency: string) => void;
+  value: CurrencyCode;
+  onChange: (currency: CurrencyCode) => void;
 }
 
 export const GoalCurrencySelector = ({

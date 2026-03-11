@@ -1,4 +1,6 @@
 import { Budget } from "./budget.types";
+import { ExpenseModel } from "./expense.types";
+import { CurrencyCode } from "./currency.types";
 
 export type TransactionType = "INCOME" | "EXPENSE" | "TRANSFER";
 
@@ -7,6 +9,7 @@ export interface TransactionFilters {
   year?: number;
   accountId?: string;
   type?: TransactionType;
+  expenseModel?: ExpenseModel;
   limit?: number;
   offset?: number;
 }
@@ -16,6 +19,8 @@ export interface CreateTransactionParams {
   type: TransactionType;
   accountId: string;
   categoryId: string;
+  currency?: CurrencyCode;
+  expenseModel?: ExpenseModel;
   description?: string;
   date?: string;
   budgetId?: string;
@@ -29,7 +34,9 @@ export interface UpdateTransactionParams
 export interface Transaction {
   id: string;
   amount: string;
+  currency?: CurrencyCode | null;
   type: TransactionType;
+  expenseModel?: ExpenseModel | null;
   description: string | null;
   date: string;
 
@@ -46,7 +53,7 @@ export interface Transaction {
   account?: {
     id: string;
     name: string;
-    currency: string;
+    currency: CurrencyCode;
     type: string;
   };
 

@@ -17,6 +17,8 @@ import { MonthlySummary } from "../../components/budget/MonthlySummary";
 import { GoBackButton } from "../../components/ui/GoBackButton";
 import { MonthSelector } from "../../components/budget/MonthSelector";
 import { BudgetEntrySheet } from "../../components/budget/BudgetEntrySheet";
+import { ExpenseModelFilter } from "../../types/expense.types";
+import { DisplayHeading } from "../../components/ui/DisplayHeading";
 
 export default function BudgetScreen() {
   const insets = useSafeAreaInsets();
@@ -25,6 +27,10 @@ export default function BudgetScreen() {
   const isDark = themeName.startsWith("dark");
 
   const [isEntrySheetOpen, setIsEntrySheetOpen] = useState(false);
+  const [expenseModelFilter, setExpenseModelFilter] =
+    useState<ExpenseModelFilter>("ALL");
+  const expenseModelQuery =
+    expenseModelFilter === "ALL" ? undefined : expenseModelFilter;
 
   const {
     budgets,
@@ -40,13 +46,21 @@ export default function BudgetScreen() {
   useEffect(() => {
     const task = InteractionManager.runAfterInteractions(() => {
       setTimeout(() => {
-        BudgetActions.loadBudgets();
+        BudgetActions.loadBudgets({ expenseModel: expenseModelQuery });
         setIsReady(true);
       }, 50);
     });
 
     return () => task.cancel();
   }, []);
+
+  const handleExpenseModelFilterChange = async (value: ExpenseModelFilter) => {
+    if (value === expenseModelFilter) return;
+    setExpenseModelFilter(value);
+    await BudgetActions.loadBudgets({
+      expenseModel: value === "ALL" ? undefined : value,
+    });
+  };
 
   const renderedBudgets = useMemo(() => {
     if (budgets.length === 0 && !isLoading) {
@@ -137,10 +151,16 @@ export default function BudgetScreen() {
       <BudgetCard
         key={budget.id}
         budget={budget}
-        onPress={() => navigation.navigate("BudgetDetail", { budget })}
+        onPress={() =>
+          navigation.navigate("BudgetDetail", {
+            budget,
+            expenseModelFilter:
+              expenseModelFilter === "ALL" ? undefined : expenseModelFilter,
+          })
+        }
       />
     ));
-  }, [budgets, isLoading, navigation]);
+  }, [budgets, expenseModelFilter, isLoading, navigation]);
 
   return (
     <YStack flex={1} backgroundColor="$background" paddingTop={insets.top}>
@@ -152,17 +172,53 @@ export default function BudgetScreen() {
       >
         <XStack alignItems="center" space="$3">
           <GoBackButton />
-          <Text fontSize="$5" fontWeight="800" color="$color">
+          <DisplayHeading fontSize="$6" fontWeight="400" color="$color">
             Presupuestos
-          </Text>
+          </DisplayHeading>
         </XStack>
 
         <MonthSelector
           currentMonth={selectedMonth}
           currentYear={selectedYear}
-          onChange={(m, y) => BudgetActions.changeDate(m, y)}
+          onChange={(m, y) =>
+            BudgetActions.changeDate(m, y, {
+              expenseModel: expenseModelQuery,
+            })
+          }
           loading={isLoading}
         />
+      </XStack>
+
+      <XStack paddingHorizontal="$4" paddingBottom="$2" space="$2">
+        {(
+          [
+            { id: "ALL", label: "Todos" },
+            { id: "FIXED", label: "Fijos" },
+            { id: "VARIABLE", label: "Variables" },
+          ] as const
+        ).map((option) => {
+          const active = expenseModelFilter === option.id;
+          return (
+            <Button
+              key={option.id}
+              flex={1}
+              height={34}
+              borderRadius="$8"
+              borderWidth={1}
+              borderColor={active ? "$brand" : "$gray5"}
+              backgroundColor={active ? "$brand" : "$gray2"}
+              onPress={() =>
+                handleExpenseModelFilterChange(
+                  option.id as ExpenseModelFilter,
+                )
+              }
+            >
+              <Text fontSize="$2" fontWeight="800" color={active ? "white" : "$gray11"}>
+                {option.label.toUpperCase()}
+              </Text>
+            </Button>
+          );
+        })}
       </XStack>
       {!isReady ? (
         <YStack flex={1} alignItems="center" justifyContent="center">
@@ -174,7 +230,9 @@ export default function BudgetScreen() {
           refreshControl={
             <RefreshControl
               refreshing={isLoading}
-              onRefresh={BudgetActions.loadBudgets}
+              onRefresh={() =>
+                BudgetActions.loadBudgets({ expenseModel: expenseModelQuery })
+              }
             />
           }
           showsVerticalScrollIndicator={false}

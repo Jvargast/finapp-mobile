@@ -1,13 +1,16 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { ScrollView, YStack, XStack, Text, Spinner } from "tamagui";
-import { CreditCard, Wallet, Landmark, Banknote } from "@tamagui/lucide-icons";
-import { useNavigation } from "@react-navigation/native";
+import { CreditCard, Landmark, Banknote } from "@tamagui/lucide-icons";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { AccountCard } from "./accounts/AccountCard";
 import { AddAccountButton } from "./accounts/AddAccountButton";
 import { useAccountStore } from "../../stores/useAccountStore";
 import { PremiumSheet } from "../ui/PremiumSheet";
 import { useSubscription } from "../../hooks/useSubscription";
 import { PillButton } from "../ui/PillButton";
+import { fetchMonthlyAccountBalances } from "../../utils/monthlyAccountBalances";
+import { formatCurrencyAmount } from "../../utils/currency";
+import { DisplayHeading } from "../ui/DisplayHeading";
 
 const getIconByType = (type?: string) => {
   if (!type) return Landmark;
@@ -25,19 +28,13 @@ const getIconByType = (type?: string) => {
   }
 };
 
-const formatCurrency = (amount: number, currency: string = "CLP") => {
-  return new Intl.NumberFormat("es-CL", {
-    style: "currency",
-    currency: currency,
-    minimumFractionDigits: currency === "CLP" ? 0 : 2,
-    maximumFractionDigits: currency === "CLP" ? 0 : 2,
-  }).format(amount);
-};
-
 export const AccountsCarousel = () => {
   const navigation = useNavigation<any>();
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
   const [showPremiumSheet, setShowPremiumSheet] = useState(false);
+  const [monthlyBalances, setMonthlyBalances] = useState<Record<string, number>>(
+    {}
+  );
 
   const { isPro, canCreateAccount } = useSubscription();
 
@@ -53,6 +50,27 @@ export const AccountsCarousel = () => {
     setActiveCardId((prev) => (prev === id ? null : id));
   };
 
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
+
+      const run = async () => {
+        try {
+          const balances = await fetchMonthlyAccountBalances();
+          if (isActive) setMonthlyBalances(balances);
+        } catch (error) {
+          if (isActive) setMonthlyBalances({});
+        }
+      };
+
+      run();
+
+      return () => {
+        isActive = false;
+      };
+    }, [])
+  );
+
   return (
     <YStack space="$4" marginBottom="$4" marginTop="$4">
       <XStack
@@ -61,9 +79,9 @@ export const AccountsCarousel = () => {
         paddingHorizontal="$4"
       >
         <YStack>
-          <Text fontSize="$5" fontWeight="800" color="$color">
+          <DisplayHeading fontSize="$6" fontWeight="400" color="$color">
             Mis Cuentas
-          </Text>
+          </DisplayHeading>
 
           <XStack alignItems="center" space="$1.5">
             {isPro ? (
@@ -142,12 +160,18 @@ export const AccountsCarousel = () => {
             />
             {accounts.map((account, index) => {
               const isLastItem = index === accounts.length - 1;
+              const normalizedType = String(account.type || "").toUpperCase();
+              const isCashAccount = normalizedType === "CASH";
+              const monthlyBalance = monthlyBalances[account.id] || 0;
               const accountForUI = {
                 ...account,
-                balance: formatCurrency(
-                  Number(account.balance || 0),
-                  account.currency || "CLP"
+                balance: formatCurrencyAmount(
+                  isCashAccount ? Number(account.balance || 0) : monthlyBalance,
+                  account.currency
                 ),
+                balanceLabel: isCashAccount
+                  ? "Saldo disponible"
+                  : "Balance del mes",
                 icon: getIconByType(account.type),
                 color: account.color ? account.color : "#1E293B",
               };

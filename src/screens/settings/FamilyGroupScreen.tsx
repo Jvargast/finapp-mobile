@@ -18,6 +18,7 @@ import { FamilyMemberItem } from "../../components/family/FamilyMemberItem";
 import { InviteSheet } from "../../components/family/InviteSheet";
 import { DangerModal } from "../../components/ui/DangerModal";
 import { FamilyActions } from "../../actions/familyActions";
+import { DisplayHeading } from "../../components/ui/DisplayHeading";
 
 export default function FamilyGroupScreen() {
   const navigation = useNavigation<any>();
@@ -121,9 +122,14 @@ export default function FamilyGroupScreen() {
             color="$color"
             onPress={() => navigation.goBack()}
           />
-          <Text fontSize="$6" fontWeight="900" color="$color">
+          <DisplayHeading
+            fontSize="$6"
+            fontWeight="400"
+            color="$color"
+            lineHeight={26}
+          >
             Familia Wou+
-          </Text>
+          </DisplayHeading>
         </XStack>
       </YStack>
 

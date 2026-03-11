@@ -13,6 +13,7 @@ import * as Clipboard from "expo-clipboard";
 import { Linking, Share } from "react-native";
 import { FamilyActions } from "../../actions/familyActions";
 import { ActionModal } from "../ui/ActionModal";
+import { DisplayHeading } from "../ui/DisplayHeading";
 
 interface InviteSheetProps {
   open: boolean;
@@ -197,9 +198,9 @@ export const InviteSheet = ({
 
       <Sheet.Frame padding="$4" space="$5" backgroundColor="$background">
         <YStack space="$1" alignItems="center" marginBottom="$2">
-          <Text fontSize="$6" fontWeight="900" color="$color">
+          <DisplayHeading fontSize="$6" fontWeight="400" color="$color">
             Invitar a tu Familia
-          </Text>
+          </DisplayHeading>
           <Text
             fontSize="$3"
             color="$gray10"

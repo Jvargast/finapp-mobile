@@ -4,6 +4,7 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import { CheckCircle2, Sparkles } from "@tamagui/lucide-icons";
 import { MainLayout } from "../../components/layout/MainLayout";
 import { GoBackButton } from "../../components/ui/GoBackButton";
+import { DisplayHeading } from "../../components/ui/DisplayHeading";
 
 export default function EmailSourceSyncScreen() {
   const insets = useSafeAreaInsets();
@@ -27,9 +28,9 @@ export default function EmailSourceSyncScreen() {
         <XStack alignItems="center" space="$3">
           <GoBackButton fallbackRouteName="EmailSourcePreview" />
           <YStack>
-            <Text fontSize="$6" fontWeight="900">
+            <DisplayHeading fontSize="$6" fontWeight="400" lineHeight={26}>
               Sync listo
-            </Text>
+            </DisplayHeading>
             <Text fontSize="$3" color="$gray10">
               La fuente quedó conectada y sincronizada.
             </Text>

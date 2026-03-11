@@ -5,6 +5,7 @@ import { Mail, ShieldCheck, CheckCircle2 } from "@tamagui/lucide-icons";
 import { MainLayout } from "../../components/layout/MainLayout";
 import { GoBackButton } from "../../components/ui/GoBackButton";
 import { useNavigation } from "@react-navigation/native";
+import { DisplayHeading } from "../../components/ui/DisplayHeading";
 
 export default function EmailSourceCreateScreen() {
   const insets = useSafeAreaInsets();
@@ -41,9 +42,9 @@ export default function EmailSourceCreateScreen() {
         <XStack alignItems="center" space="$3">
           <GoBackButton fallbackRouteName="AccountSources" />
           <YStack>
-            <Text fontSize="$6" fontWeight="900">
+            <DisplayHeading fontSize="$6" fontWeight="400" lineHeight={26}>
               Email API
-            </Text>
+            </DisplayHeading>
             <Text fontSize="$3" color="$gray10">
               Crea una fuente para importar movimientos desde tu correo.
             </Text>

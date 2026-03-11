@@ -50,8 +50,8 @@ export const HomeRecurringWidget = () => {
   const muted = isDark ? "#B8DAD3" : "#335F57";
   const titleColor = isDark ? "#CCFBF1" : "#134E4A";
   const gradient = isDark ? ["#123532", "#0D2926"] : ["#CCFBF1", "#F0FDFA"];
-  const chipBg = isDark ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.85)";
-  const chipBorder = isDark ? "rgba(45,212,191,0.32)" : "rgba(15,118,110,0.18)";
+  const chipBg = isDark ? "rgba(255,255,255,0.16)" : "rgba(255,255,255,0.92)";
+  const chipBorder = isDark ? "rgba(45,212,191,0.4)" : "rgba(15,118,110,0.26)";
 
   const amountColor =
     hasData && nextItem
@@ -118,7 +118,7 @@ export const HomeRecurringWidget = () => {
           </Stack>
 
           <YStack flex={1} space="$1">
-            <Text fontSize={10} fontWeight="700" color={muted} letterSpacing={0.5}>
+            <Text fontSize={12} fontWeight="700" color={muted} letterSpacing={0.4}>
               {title.toUpperCase()}
             </Text>
             <Text fontSize="$4" fontWeight="800" color={titleColor} numberOfLines={1}>
@@ -134,12 +134,12 @@ export const HomeRecurringWidget = () => {
                 borderWidth={1}
                 borderColor={chipBorder}
               >
-                <Text fontSize={10} fontWeight="700" color={accent}>
+                <Text fontSize={12} fontWeight="700" color={accent}>
                   {recurrenceLabel}
                 </Text>
               </XStack>
 
-              <Text fontSize={10} fontWeight="600" color={muted} numberOfLines={1}>
+              <Text fontSize={12} fontWeight="600" color={titleColor} numberOfLines={1}>
                 {hasData ? `Próxima: ${nextLabel}` : nextLabel}
               </Text>
             </XStack>

@@ -16,21 +16,21 @@ import { ChevronLeft, Link2Off, Link2 } from "@tamagui/lucide-icons";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { AppState, Image, Linking } from "react-native";
 import { BankingActions } from "../../actions/bankingActions";
+import { BankingPublicActions } from "../../actions/bankingPublicActions";
 import { useToastStore } from "../../stores/useToastStore";
 import { useUserStore } from "../../stores/useUserStore";
+import { DisplayHeading } from "../../components/ui/DisplayHeading";
 
 type Provider = "GMAIL" | "GOOGLE";
 type ProviderKey = Provider | "OUTLOOK";
+type PendingOAuthContext = {
+  provider: Provider;
+  sourceId: string;
+  redirectUri?: string;
+};
 
 const normalizeProvider = (value?: string | null) =>
   (value || "").toString().toUpperCase();
-
-const isConnectedStatus = (value?: string | null) => {
-  const status = (value || "").toString().toLowerCase();
-  return ["connected", "ready", "linked", "success", "authorized"].includes(
-    status,
-  );
-};
 
 const PROVIDER_THEMES: Record<
   ProviderKey,
@@ -105,6 +105,22 @@ const getApiErrorMessage = (error: any) => {
   return message ? String(message) : "";
 };
 
+const hasIssValidationError = (error: any) => {
+  const data = error?.response?.data;
+  const messages: string[] = [];
+  if (Array.isArray(data?.message)) {
+    messages.push(...data.message.map((item: any) => String(item)));
+  } else if (data?.message) {
+    messages.push(String(data.message));
+  }
+  if (data?.error) messages.push(String(data.error));
+  if (error?.message) messages.push(String(error.message));
+
+  return messages.some((message) =>
+    message.toLowerCase().includes("iss should not exist"),
+  );
+};
+
 const getSourceProvider = (source?: any) =>
   normalizeProvider(
     source?.provider ||
@@ -120,6 +136,42 @@ const getSourceEmail = (source?: any) =>
     source?.email || source?.config?.email || source?.accountEmail,
   );
 
+const hasOAuthConnectedState = (source?: any) => {
+  if (!source) return false;
+  if (source?.connected === true || source?.isConnected === true) return true;
+  if (source?.connectedAt || source?.oauthConnectedAt) return true;
+  if (source?.config?.connectedAt || source?.config?.oauthConnectedAt) {
+    return true;
+  }
+  if (source?.oauthStatus?.toString().toLowerCase() === "connected") {
+    return true;
+  }
+  if (
+    source?.config?.oauthStatus &&
+    source?.config?.oauthStatus.toString().toLowerCase() === "connected"
+  ) {
+    return true;
+  }
+  return false;
+};
+
+const getUrlParam = (url?: string | null, key?: string) => {
+  if (!url || !key) return null;
+  const queryIndex = url.indexOf("?");
+  if (queryIndex === -1) return null;
+  const query = url.slice(queryIndex + 1).split("#")[0];
+  const params = new URLSearchParams(query);
+  return params.get(key);
+};
+
+const parseOAuthReturnUrl = (url?: string | null) => ({
+  code: getUrlParam(url, "code"),
+  state: getUrlParam(url, "state"),
+  error: getUrlParam(url, "error"),
+  errorDescription: getUrlParam(url, "error_description"),
+  sourceId: getUrlParam(url, "sourceId") || getUrlParam(url, "source_id"),
+});
+
 export default function BankingIntegrationsScreen() {
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
@@ -132,8 +184,12 @@ export default function BankingIntegrationsScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [isConnecting, setIsConnecting] = useState<Provider | null>(null);
   const [pendingProvider, setPendingProvider] = useState<Provider | null>(null);
+  const [pendingOAuth, setPendingOAuth] =
+    useState<PendingOAuthContext | null>(null);
   const [gmailEmail, setGmailEmail] = useState(user?.email || "");
   const [googleEmail, setGoogleEmail] = useState(user?.email || "");
+  const hasCheckedInitialUrlRef = useRef(false);
+  const oauthCallbackInFlightRef = useRef(false);
 
   const getProviderSourceFromList = useCallback(
     (provider: Provider, list: any[]) => {
@@ -166,24 +222,7 @@ export default function BankingIntegrationsScreen() {
     (provider: Provider, list: any[]) => {
       const source = getProviderSourceFromList(provider, list);
       if (!source) return false;
-      if (source?.connected === true || source?.isConnected === true)
-        return true;
-      if (source?.connectedAt || source?.oauthConnectedAt) return true;
-      if (source?.config?.connectedAt || source?.config?.oauthConnectedAt) {
-        return true;
-      }
-      if (source?.oauthStatus?.toString().toLowerCase() === "connected") {
-        return true;
-      }
-      if (
-        source?.config?.oauthStatus &&
-        source?.config?.oauthStatus.toString().toLowerCase() === "connected"
-      ) {
-        return true;
-      }
-      const status = getSourceStatus(source);
-      if (status === "active") return true;
-      return isConnectedStatus(source?.status || source?.state);
+      return hasOAuthConnectedState(source);
     },
     [getProviderSourceFromList],
   );
@@ -193,30 +232,42 @@ export default function BankingIntegrationsScreen() {
     try {
       const data = await BankingActions.listSources();
       const list = Array.isArray(data) ? data : data?.data || [];
-      console.log("BankingIntegrations.loadSources", {
-        raw: data,
-        normalizedCount: list.length,
-        normalized: list,
-        summary: list.map((source) => ({
-          id: source?.id,
-          type: source?.type,
-          status: getSourceStatus(source),
-          provider: getSourceProvider(source),
-          email: getSourceEmail(source),
-          oauthStatus: source?.config?.oauthStatus || source?.oauthStatus,
-          connectedAt:
-            source?.config?.oauthConnectedAt ||
-            source?.oauthConnectedAt ||
-            source?.config?.connectedAt ||
-            source?.connectedAt,
-        })),
-      });
-      setSources(list);
+      const activeList = list.filter(
+        (source: any) => getSourceStatus(source) !== "deleted",
+      );
+
+      if (__DEV__) {
+        console.log("BankingIntegrations.loadSources", {
+          total: list.length,
+          activeCount: activeList.length,
+          summary: activeList.map((source: any) => ({
+            id: source?.id,
+            type: source?.type,
+            status: getSourceStatus(source),
+            provider: getSourceProvider(source),
+            email: getSourceEmail(source),
+            oauthStatus: source?.config?.oauthStatus || source?.oauthStatus,
+            connectedAt:
+              source?.config?.oauthConnectedAt ||
+              source?.oauthConnectedAt ||
+              source?.config?.connectedAt ||
+              source?.connectedAt,
+          })),
+        });
+      }
+
+      setSources(activeList);
       if (pendingProvider) {
-        const connectedNow = isProviderConnectedFromList(pendingProvider, list);
+        const connectedNow = isProviderConnectedFromList(
+          pendingProvider,
+          activeList,
+        );
         if (connectedNow) {
           showToast("Conexión completada", "success");
           setPendingProvider(null);
+          setPendingOAuth((current) =>
+            current?.provider === pendingProvider ? null : current,
+          );
         }
       }
     } catch (error) {
@@ -262,6 +313,213 @@ export default function BankingIntegrationsScreen() {
     return Boolean(status) && status !== "active";
   };
 
+  const beginOAuthFlow = useCallback(
+    async (provider: Provider, sourceId: string) => {
+      const response = await BankingActions.connect(sourceId);
+      console.log("BankingIntegrations.connect:response", {
+        provider,
+        sourceId,
+        response,
+      });
+      const url =
+        response?.authUrl ||
+        response?.url ||
+        response?.redirectUrl ||
+        response?.authUrl ||
+        response?.authorizationUrl;
+      const responseRedirectUri =
+        response?.redirectUri ||
+        response?.redirect_uri ||
+        response?.oauth?.redirectUri ||
+        response?.oauth?.redirect_uri ||
+        getUrlParam(url, "redirect_uri") ||
+        getUrlParam(url, "redirectUri") ||
+        undefined;
+      const decodedUrl = url ? decodeURIComponent(url) : "";
+      const responseType = (getUrlParam(url, "response_type") || "")
+        .toLowerCase()
+        .split(" ")
+        .filter(Boolean);
+      const hasIdTokenOnlyResponse =
+        responseType.length > 0 &&
+        responseType.includes("id_token") &&
+        !responseType.includes("code");
+      const regexIdTokenOnly =
+        /response_type=([^&]*(?:id_token)[^&]*)/i.test(decodedUrl) &&
+        !/response_type=([^&]*(?:code)[^&]*)/i.test(decodedUrl);
+
+      if (url && (hasIdTokenOnlyResponse || regexIdTokenOnly)) {
+        console.error("OAuth response_type inválido", {
+          provider,
+          sourceId,
+          responseType,
+          url,
+        });
+        showToast("OAuth mal configurado: debe usar authorization code", "error");
+        return false;
+      }
+
+      setPendingOAuth({
+        provider,
+        sourceId,
+        redirectUri: responseRedirectUri,
+      });
+
+      if (url) {
+        await Linking.openURL(url);
+        setPendingProvider(provider);
+        showToast("Completa la conexión y vuelve a la app", "info");
+      } else {
+        showToast("Conexión iniciada", "success");
+      }
+
+      return true;
+    },
+    [showToast],
+  );
+
+  const shouldRecreateSource = (
+    source: any,
+    provider: Provider,
+    email: string,
+  ) => {
+    if (!source) return true;
+    if (isSourceInactive(source)) return true;
+
+    const sourceProvider = getSourceProvider(source);
+    if (sourceProvider && sourceProvider !== provider) {
+      return true;
+    }
+
+    const sourceEmail = getSourceEmail(source);
+    const normalizedInputEmail = normalizeEmail(email);
+    if (
+      sourceEmail &&
+      normalizedInputEmail &&
+      sourceEmail !== normalizedInputEmail
+    ) {
+      return true;
+    }
+
+    return false;
+  };
+
+  const handleOAuthReturn = useCallback(
+    async (url: string) => {
+      const {
+        code,
+        state,
+        error,
+        errorDescription,
+        sourceId: sourceIdFromUrl,
+      } =
+        parseOAuthReturnUrl(url);
+
+      if (!code && !error) return;
+      if (oauthCallbackInFlightRef.current) return;
+
+      if (error) {
+        let friendly = "La autorización fue cancelada o falló";
+        if (errorDescription) {
+          try {
+            friendly = decodeURIComponent(errorDescription);
+          } catch {
+            friendly = String(errorDescription);
+          }
+        }
+        showToast(friendly, "error");
+        setPendingProvider(null);
+        setPendingOAuth(null);
+        return;
+      }
+
+      const sourceIdFromPendingProvider =
+        pendingProvider && sources.length > 0
+          ? getProviderSourceFromList(pendingProvider, sources)?.id
+          : null;
+      const resolvedSourceId =
+        pendingOAuth?.sourceId || sourceIdFromUrl || sourceIdFromPendingProvider;
+      console.log("OAuth return parsed", {
+        hasCode: Boolean(code),
+        codeLength: code ? String(code).length : 0,
+        hasState: Boolean(state),
+        sourceIdFromUrl,
+        sourceIdFromPendingProvider,
+        resolvedSourceId,
+      });
+
+      if (!resolvedSourceId || !code) {
+        showToast("No encontramos la fuente para completar OAuth", "error");
+        return;
+      }
+
+      oauthCallbackInFlightRef.current = true;
+      try {
+        console.log("OAuth callback by sourceId", {
+          resolvedSourceId,
+          hasRedirectUri: Boolean(pendingOAuth?.redirectUri),
+        });
+        await BankingActions.callback(resolvedSourceId, {
+          code,
+          redirectUri: pendingOAuth?.redirectUri,
+        });
+        showToast("Conexión completada", "success");
+        setPendingProvider(null);
+        setPendingOAuth(null);
+        await loadSources();
+      } catch (error: any) {
+        const apiMessage = getApiErrorMessage(error);
+        // Fallback: algunos entornos asocian la fuente por `state` en callback público.
+        // Si falla el callback por sourceId, intentamos callback público con code/state.
+        if (code) {
+          try {
+            console.log("OAuth callback public fallback", {
+              hasState: Boolean(state),
+              hasRedirectUri: Boolean(pendingOAuth?.redirectUri),
+            });
+            await BankingPublicActions.oauthCallback({
+              code,
+              state,
+              redirectUri: pendingOAuth?.redirectUri,
+            });
+            showToast("Conexión completada", "success");
+            setPendingProvider(null);
+            setPendingOAuth(null);
+            await loadSources();
+            return;
+          } catch (publicCallbackError) {
+            console.warn("Fallback oauth/callback público falló", {
+              publicCallbackError,
+            });
+          }
+        }
+        if (hasIssValidationError(error)) {
+          showToast(
+            "El backend respondió 'iss should not exist' en OAuth callback",
+            "error",
+          );
+        } else {
+          showToast(apiMessage || "No se pudo completar OAuth", "error");
+        }
+      } finally {
+        oauthCallbackInFlightRef.current = false;
+      }
+    },
+    [
+      beginOAuthFlow,
+      gmailEmail,
+      googleEmail,
+      getProviderSourceFromList,
+      loadSources,
+      pendingOAuth?.redirectUri,
+      pendingOAuth?.provider,
+      pendingOAuth?.sourceId,
+      pendingProvider,
+      showToast,
+      sources,
+    ],
+  );
+
   const handleConnect = async (provider: Provider) => {
     setIsConnecting(provider);
     try {
@@ -279,21 +537,25 @@ export default function BankingIntegrationsScreen() {
         return;
       }
 
-      if (!source || isSourceInactive(source)) {
+      if (shouldRecreateSource(source, provider, email)) {
         if (source && isSourceInactive(source)) {
           showToast("Fuente inactiva, regenerando…", "info");
+        } else if (source) {
+          showToast("Usando fuente existente para reconectar…", "info");
         }
-        source = await BankingActions.createEmailApi({
-          email,
-          provider,
-          initialSyncMonths: 3,
-          syncFrequencyMinutes: 60,
-        });
-        console.log("BankingIntegrations.createEmailApi:response", {
-          provider,
-          email,
-          source,
-        });
+        if (!source || isSourceInactive(source)) {
+          source = await BankingActions.createEmailApi({
+            email,
+            provider,
+            initialSyncMonths: 3,
+            syncFrequencyMinutes: 60,
+          });
+          console.log("BankingIntegrations.createEmailApi:response", {
+            provider,
+            email,
+            source,
+          });
+        }
       }
 
       if (!source?.id) {
@@ -302,29 +564,10 @@ export default function BankingIntegrationsScreen() {
         return;
       }
 
-      const response = await BankingActions.connect(source.id);
-      console.log("BankingIntegrations.connect:response", {
-        provider,
-        sourceId: source.id,
-        response,
-      });
-      const url =
-        response?.authUrl ||
-        response?.url ||
-        response?.redirectUrl ||
-        response?.authUrl ||
-        response?.authorizationUrl;
-
-      if (url) {
-        await Linking.openURL(url);
-        setPendingProvider(provider);
-        showToast("Completa la conexión y vuelve a la app", "info");
-      } else {
-        showToast("Conexión iniciada", "success");
-      }
+      await beginOAuthFlow(provider, source.id);
 
       await loadSources();
-    } catch (error) {
+    } catch (error: any) {
       const apiMessage = getApiErrorMessage(error);
       console.error("Error conectando provider", {
         error,
@@ -336,6 +579,27 @@ export default function BankingIntegrationsScreen() {
       setIsConnecting(null);
     }
   };
+
+  useEffect(() => {
+    const subscription = Linking.addEventListener("url", ({ url }) => {
+      void handleOAuthReturn(url);
+    });
+
+    if (!hasCheckedInitialUrlRef.current) {
+      hasCheckedInitialUrlRef.current = true;
+      Linking.getInitialURL()
+        .then((url) => {
+          if (url) {
+            void handleOAuthReturn(url);
+          }
+        })
+        .catch(() => undefined);
+    }
+
+    return () => {
+      subscription.remove();
+    };
+  }, [handleOAuthReturn]);
 
   const handleDisconnect = async (provider: Provider) => {
     const source = getProviderSource(provider);
@@ -561,9 +825,14 @@ export default function BankingIntegrationsScreen() {
           marginBottom="$2"
           alignSelf="flex-start"
         />
-        <Text fontSize="$8" fontWeight="900" color="$color">
+        <DisplayHeading
+          fontSize="$8"
+          fontWeight="400"
+          color="$color"
+          lineHeight={36}
+        >
           Integraciones
-        </Text>
+        </DisplayHeading>
         <Text fontSize="$3" color="$gray10">
           Conecta tu correo una sola vez y luego configura reglas por cuenta.
         </Text>

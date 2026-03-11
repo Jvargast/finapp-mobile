@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { YStack, XStack, Text, Input, Button } from "tamagui";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ChevronLeft, Calendar } from "@tamagui/lucide-icons";
@@ -11,6 +11,7 @@ import { AccountSelector } from "../../components/transactions/AccountSelector";
 import { useAccountStore } from "../../stores/useAccountStore";
 import { ScrollView } from "react-native-gesture-handler";
 import { TransactionDatePicker } from "../../components/transactions/TransactionDatePicker";
+import { DisplayHeading } from "../../components/ui/DisplayHeading";
 
 export default function AddIncomeScreen() {
   const insets = useSafeAreaInsets();
@@ -90,9 +91,14 @@ export default function AddIncomeScreen() {
           onPressIn={() => navigation.goBack()}
         />
         <XStack alignItems="center" space="$2">
-          <Text fontSize="$4" fontWeight="800" color="$gray11">
+          <DisplayHeading
+            fontSize="$5"
+            fontWeight="400"
+            color="$gray11"
+            lineHeight={24}
+          >
             Nuevo Ingreso
-          </Text>
+          </DisplayHeading>
         </XStack>
         <Button size="$3" chromeless width={40} />
       </XStack>
@@ -184,6 +190,7 @@ export default function AddIncomeScreen() {
             selectedId={selectedCategory}
             onSelect={setSelectedCategory}
             navigation={navigation}
+            transactionType="INCOME"
           />
         </ScrollView>
 

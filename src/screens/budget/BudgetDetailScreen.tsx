@@ -1,10 +1,11 @@
 import React, { useCallback, useState } from "react";
 import { ScrollView, RefreshControl } from "react-native";
-import { YStack, useTheme, Text } from "tamagui";
+import { YStack } from "tamagui";
 import { useRoute, useFocusEffect } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BudgetActions } from "../../actions/budgetActions";
 import { Budget } from "../../types/budget.types";
+import { ExpenseModel } from "../../types/expense.types";
 import { BudgetDetailHeader } from "../../components/budget/BudgetDetailHeader";
 import { BudgetProgressCard } from "../../components/budget/BudgetProgressCard";
 import { BudgetParticipantsSection } from "../../components/budget/BudgetParticipantsSection";
@@ -19,7 +20,10 @@ export default function BudgetDetailScreen() {
 
   const user = useUserStore((state) => state.user);
 
-  const { budget: initialBudget } = route.params;
+  const { budget: initialBudget, expenseModelFilter } = route.params as {
+    budget: Budget;
+    expenseModelFilter?: ExpenseModel;
+  };
 
   const [budget, setBudget] = useState<Budget>(initialBudget);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -28,12 +32,14 @@ export default function BudgetDetailScreen() {
 
   const fetchBudgetDetail = useCallback(async () => {
     try {
-      const data = await BudgetActions.getBudgetById(initialBudget.id);
+      const data = await BudgetActions.getBudgetById(initialBudget.id, {
+        expenseModel: expenseModelFilter,
+      });
       setBudget(data);
     } catch (error) {
       console.log("Error refrescando presupuesto");
     }
-  }, [initialBudget.id]);
+  }, [expenseModelFilter, initialBudget.id]);
 
   useFocusEffect(
     useCallback(() => {
@@ -46,9 +52,6 @@ export default function BudgetDetailScreen() {
     await fetchBudgetDetail();
     setIsRefreshing(false);
   };
-
-  console.log(initialBudget)
-
   return (
     <YStack flex={1} backgroundColor="$background" paddingTop={insets.top}>
       <BudgetDetailHeader

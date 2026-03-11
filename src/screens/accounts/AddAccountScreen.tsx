@@ -19,6 +19,7 @@ import { CurrencySelector } from "../../components/accounts/CurrencySelector";
 import { AccountCard } from "../../components/home/accounts/AccountCard";
 import { useAccountForm } from "../../hooks/accounts/useAccountForm";
 import { BANK_CATALOG } from "../../constants/bankCatalog";
+import { DisplayHeading } from "../../components/ui/DisplayHeading";
 import { KeyboardAvoidingView, Platform } from "react-native";
 import { Account } from "../../types/account.types";
 
@@ -83,9 +84,9 @@ export default function AddAccountScreen() {
               onPress={() => navigation.goBack()}
               icon={ChevronLeft}
             />
-            <Text fontSize="$6" fontWeight="800">
+            <DisplayHeading fontSize="$6" fontWeight="400" lineHeight={26}>
               {isEditing ? "Editar Cuenta" : "Nueva Cuenta"}
-            </Text>
+            </DisplayHeading>
           </XStack>
 
           <YStack space="$5" paddingHorizontal="$2" paddingBottom="$10">

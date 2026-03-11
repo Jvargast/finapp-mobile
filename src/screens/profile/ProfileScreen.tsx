@@ -25,6 +25,7 @@ import { UserActions } from "../../actions/userActions";
 import { useNavigation } from "@react-navigation/native";
 import { InfoGroup } from "../../components/profile/InfoGroup";
 import { InfoRow } from "../../components/profile/InfoRow";
+import { useSubscription } from "../../hooks/useSubscription";
 import * as ImagePicker from "expo-image-picker";
 
 export default function ProfileScreen() {
@@ -75,8 +76,7 @@ export default function ProfileScreen() {
   const fullName = user?.firstName
     ? `${user.firstName} ${user.lastName}`
     : "Usuario WOU Finance";
-  const isPro = useUserStore((state) => state.isPro());
-  const planName = user?.plan || "FREE";
+  const { isPro } = useSubscription();
 
   const avatarSource = user?.avatar;
 

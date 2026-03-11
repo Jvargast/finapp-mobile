@@ -6,13 +6,17 @@ import {
   PiggyBank,
   CheckCircle2,
 } from "@tamagui/lucide-icons";
-import { GoalTransaction, InvestmentAnalysis } from "../../types/goal.types";
+import {
+  Currency,
+  GoalTransaction,
+  InvestmentAnalysis,
+} from "../../types/goal.types";
 import { formatGoalAmount } from "../../utils/formatMoney";
 import { isSameMonth, isSameYear } from "date-fns";
 
 interface InvestmentDetailViewProps {
   analysis: InvestmentAnalysis;
-  currency: string;
+  currency: Currency;
   transactions?: GoalTransaction[];
 }
 

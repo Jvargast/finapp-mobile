@@ -1,9 +1,10 @@
 import { BudgetService } from "../services/budgetService";
 import { useBudgetStore } from "../stores/useBudgetStore";
 import { Budget, CreateBudgetParams, UpdateBudgetParams } from "../types/budget.types";
+import { ExpenseModel } from "../types/expense.types";
 
 export const BudgetActions = {
-  loadBudgets: async () => {
+  loadBudgets: async (filters?: { expenseModel?: ExpenseModel }) => {
     const store = useBudgetStore.getState();
     store.setLoading(true);
 
@@ -12,7 +13,8 @@ export const BudgetActions = {
 
       const budgets = await BudgetService.getBudgets(
         selectedMonth,
-        selectedYear
+        selectedYear,
+        filters?.expenseModel
       );
       store.setBudgets(budgets);
     } catch (error) {
@@ -22,9 +24,9 @@ export const BudgetActions = {
     }
   },
 
-  getBudgetById: async (id: string) => {
+  getBudgetById: async (id: string, filters?: { expenseModel?: ExpenseModel }) => {
     try {
-      const budget = await BudgetService.getBudgetById(id);
+      const budget = await BudgetService.getBudgetById(id, filters?.expenseModel);
       const store = useBudgetStore.getState();
       store.updateBudget(budget);
 
@@ -35,11 +37,15 @@ export const BudgetActions = {
     }
   },
 
-  changeDate: async (month: number, year: number) => {
+  changeDate: async (
+    month: number,
+    year: number,
+    filters?: { expenseModel?: ExpenseModel }
+  ) => {
     const store = useBudgetStore.getState();
 
     store.setDateContext(month, year);
-    await BudgetActions.loadBudgets();
+    await BudgetActions.loadBudgets(filters);
   },
 
   createBudget: async (data: CreateBudgetParams) => {

@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { MainLayout } from "../../components/layout/MainLayout";
 import { GoBackButton } from "../../components/ui/GoBackButton";
+import { DisplayHeading } from "../../components/ui/DisplayHeading";
 
 export default function EmailRuleCreateScreen() {
   const insets = useSafeAreaInsets();
@@ -44,9 +45,9 @@ export default function EmailRuleCreateScreen() {
         <XStack alignItems="center" space="$3">
           <GoBackButton fallbackRouteName="EmailRuleSelect" />
           <YStack>
-            <Text fontSize="$6" fontWeight="900">
+            <DisplayHeading fontSize="$6" fontWeight="400" lineHeight={26}>
               Crear regla
-            </Text>
+            </DisplayHeading>
             <Text fontSize="$3" color="$gray10">
               Define cómo interpretar los correos.
             </Text>

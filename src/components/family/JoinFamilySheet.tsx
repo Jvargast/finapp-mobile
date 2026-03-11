@@ -4,6 +4,7 @@ import { Sheet, YStack, Text, Button, Input, Spinner, XStack } from "tamagui";
 import { Users, Gift, ChevronRight } from "@tamagui/lucide-icons";
 import { FamilyActions } from "../../actions/familyActions";
 import { ActionModal } from "../ui/ActionModal";
+import { DisplayHeading } from "../ui/DisplayHeading";
 
 interface JoinFamilySheetProps {
   open: boolean;
@@ -117,14 +118,15 @@ export const JoinFamilySheet = ({
           </YStack>
 
           <YStack space="$2" alignItems="center" paddingHorizontal="$2">
-            <Text
+            <DisplayHeading
               fontSize={22}
-              fontWeight="900"
+              fontWeight="400"
               color="$color"
               textAlign="center"
+              lineHeight={28}
             >
               Únete a una Familia
-            </Text>
+            </DisplayHeading>
             <Text
               fontSize={14}
               color="$gray11"

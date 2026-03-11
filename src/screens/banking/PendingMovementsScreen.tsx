@@ -33,6 +33,11 @@ import {
 } from "../../types/banking.types";
 import { getIcon } from "../../utils/iconMap";
 import { sanitizeEmailSnippet } from "../../utils/sanitizeEmailSnippet";
+import {
+  isExpenseCandidate,
+  normalizeExpenseModel,
+} from "../../utils/expenseModel";
+import { formatCurrencyAmount, resolveCurrency } from "../../utils/currency";
 
 const getPastel = (isDark: boolean) => ({
   page: isDark ? "#0B0F1A" : "#FBF8F4",
@@ -57,14 +62,6 @@ const getPastel = (isDark: boolean) => ({
   ignoreBorder: isDark ? "rgba(248, 113, 113, 0.35)" : "#F7C6C0",
   ignoreText: isDark ? "#FCA5A5" : "#B91C1C",
 });
-
-const formatCurrency = (amount: number, currency = "CLP") => {
-  return new Intl.NumberFormat("es-CL", {
-    style: "currency",
-    currency,
-    maximumFractionDigits: 0,
-  }).format(Number(amount));
-};
 
 const formatDate = (dateString?: string | null) => {
   if (!dateString) return "Sin fecha";
@@ -155,25 +152,53 @@ export default function PendingMovementsScreen({
     [categories],
   );
 
-  const resolveAccountName = useCallback(
+  const resolveCandidateAccount = useCallback(
     (candidate: BankingCandidate) => {
       const accountId = candidate.accountId || candidate.account?.id || null;
       if (accountId) {
         const account = accounts.find((acc) => acc.id === accountId);
-        return account?.name || candidate.account?.name || null;
+        if (account) return account;
       }
       const last4 = candidate.account?.last4 || candidate.last4 || null;
       if (last4) {
         const matches = accounts.filter((acc) => acc.last4 === last4);
-        if (matches.length === 1) return matches[0]?.name || null;
+        if (matches.length === 1) return matches[0];
       }
-      const cashAccount =
+      return (
         accounts.find((acc) => acc.type?.toUpperCase() === "CASH") ||
         accounts.find((acc) => acc.type?.toUpperCase() === "WALLET") ||
-        accounts[0];
-      return cashAccount?.name || null;
+        accounts[0] ||
+        null
+      );
     },
     [accounts],
+  );
+
+  const resolveAccountName = useCallback(
+    (candidate: BankingCandidate) => {
+      const account = resolveCandidateAccount(candidate);
+      return account?.name || candidate.account?.name || null;
+    },
+    [resolveCandidateAccount],
+  );
+
+  const getCurrencyMismatch = useCallback(
+    (candidate: BankingCandidate) => {
+      if (!candidate.currency) return null;
+      const candidateCurrency = resolveCurrency(candidate.currency);
+      const resolvedAccount = resolveCandidateAccount(candidate);
+      const accountCurrency = resolvedAccount?.currency
+        ? resolveCurrency(resolvedAccount.currency)
+        : candidate.account?.currency
+          ? resolveCurrency(candidate.account.currency)
+          : null;
+      if (!accountCurrency || candidateCurrency === accountCurrency) return null;
+      return {
+        candidateCurrency,
+        accountCurrency,
+      };
+    },
+    [resolveCandidateAccount],
   );
 
   const resolveBudgetName = useCallback(
@@ -279,7 +304,28 @@ export default function PendingMovementsScreen({
   };
 
   const handleQuickConfirm = async (id: string) => {
-    await BankingActions.confirmCandidate(id, {});
+    const candidate = candidates.find((item) => item.id === id);
+    if (!candidate) return;
+    const mismatch = getCurrencyMismatch(candidate);
+    if (mismatch) {
+      showToast(
+        `Movimiento en ${mismatch.candidateCurrency} no coincide con cuenta en ${mismatch.accountCurrency}`,
+        "error",
+      );
+      return;
+    }
+    const candidateIsExpense =
+      isExpenseCandidate(candidate.direction, candidate.amount) ||
+      Boolean(candidate.expenseModel || candidate.suggestedExpenseModel);
+    const expenseModel = candidateIsExpense
+      ? normalizeExpenseModel(
+          candidate.suggestedExpenseModel || candidate.expenseModel,
+        )
+      : undefined;
+    await BankingActions.confirmCandidate(
+      id,
+      expenseModel ? { expenseModel } : {},
+    );
     removeCandidate(id);
   };
 
@@ -293,11 +339,44 @@ export default function PendingMovementsScreen({
       showToast("Selecciona al menos un movimiento", "info");
       return;
     }
-    const items = selectedIds.map((id) => ({ id }));
+    const mismatchedIds = new Set<string>();
+    const items = selectedIds
+      .map((id) => {
+      const candidate = candidates.find((item) => item.id === id);
+      if (!candidate) return null;
+      const mismatch = getCurrencyMismatch(candidate);
+      if (mismatch) {
+        mismatchedIds.add(id);
+        return null;
+      }
+      const expenseModel = candidate
+        ? isExpenseCandidate(candidate.direction, candidate.amount) ||
+          Boolean(candidate.expenseModel || candidate.suggestedExpenseModel)
+          ? normalizeExpenseModel(
+              candidate.suggestedExpenseModel || candidate.expenseModel,
+            )
+          : undefined
+        : undefined;
+
+      return expenseModel ? { id, expenseModel } : { id };
+    })
+      .filter((item): item is { id: string } => Boolean(item));
+
+    if (items.length === 0) {
+      showToast("Los seleccionados tienen moneda incompatible con su cuenta", "error");
+      return;
+    }
     await BankingActions.confirmCandidates(items);
-    setCandidates((prev) => prev.filter((item) => !selectedIds.includes(item.id)));
+    const confirmedIds = new Set(items.map((item) => item.id));
+    setCandidates((prev) => prev.filter((item) => !confirmedIds.has(item.id)));
     setSelectedIds([]);
     setIsBulkMode(false);
+    if (mismatchedIds.size > 0) {
+      showToast(
+        `${mismatchedIds.size} movimiento(s) no confirmado(s) por moneda incompatible`,
+        "info",
+      );
+    }
   };
 
   const pendingCount = candidates.length;
@@ -424,7 +503,11 @@ export default function PendingMovementsScreen({
                 const category = resolveCategory(candidate);
                 const CategoryIcon = category?.icon ? getIcon(category.icon) : Mail;
                 const amountColor = getDirectionColor(candidate.direction, pastel);
+                const resolvedAccount = resolveCandidateAccount(candidate);
                 const accountName = resolveAccountName(candidate);
+                const accountCurrency =
+                  resolvedAccount?.currency || candidate.account?.currency || null;
+                const mismatch = getCurrencyMismatch(candidate);
                 const budgetName = resolveBudgetName(candidate);
                 const categoryLabel = category?.name || "Sin categoría";
                 const accountLabel = accountName || "Sin cuenta";
@@ -518,7 +601,10 @@ export default function PendingMovementsScreen({
                       </XStack>
                       <YStack alignItems="flex-end" space="$1" paddingTop={2}>
                         <Text fontWeight="800" color={amountColor} lineHeight={18}>
-                          {formatCurrency(candidate.amount)}
+                          {formatCurrencyAmount(
+                            Number(candidate.amount || 0),
+                            candidate.currency || accountCurrency || "CLP",
+                          )}
                         </Text>
                         {candidate.direction && (
                           <Text fontSize={10} color={pastel.muted}>
@@ -538,8 +624,32 @@ export default function PendingMovementsScreen({
                       >
                         <Text fontSize={10} fontWeight="700" color={pastel.ink}>
                           Cuenta: {accountLabel}
+                          {accountCurrency ? ` (${accountCurrency})` : ""}
                         </Text>
                       </XStack>
+                      {mismatch && (
+                        <XStack
+                          paddingHorizontal="$2"
+                          paddingVertical="$1"
+                          borderRadius="$6"
+                          backgroundColor={pastel.ignoreBg}
+                          borderWidth={1}
+                          borderColor={pastel.ignoreBorder}
+                          alignSelf="flex-start"
+                          space="$1.5"
+                          alignItems="center"
+                        >
+                          <X size={10} color={pastel.ignoreText} />
+                          <Text
+                            fontSize={10}
+                            fontWeight="700"
+                            color={pastel.ignoreText}
+                          >
+                            Moneda {mismatch.candidateCurrency} vs cuenta{" "}
+                            {mismatch.accountCurrency}
+                          </Text>
+                        </XStack>
+                      )}
                       <XStack
                         paddingHorizontal="$2"
                         paddingVertical="$1"

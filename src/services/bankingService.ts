@@ -1,4 +1,5 @@
 import finappApi from "../api/finappApi";
+import { BankingCandidateOverrides } from "../types/banking.types";
 
 export type OAuthProvider = "GMAIL" | "GOOGLE";
 
@@ -109,9 +110,25 @@ export const BankingService = {
   },
 
   callback: async (id: string, data: any) => {
+    const code =
+      data?.code ||
+      data?.authorizationCode ||
+      data?.authCode ||
+      data?.oauthCode;
+    if (!code) {
+      const keys = data && typeof data === "object" ? Object.keys(data) : [];
+      throw new Error(
+        `OAuth callback requiere code. Campos recibidos: ${keys.join(",")}`,
+      );
+    }
+    const redirectUri = data?.redirectUri || data?.redirect_uri;
+    const payload: Record<string, any> = {};
+    payload.code = String(code);
+    if (redirectUri) payload.redirectUri = String(redirectUri);
+
     const response = await finappApi.post(
       `/banking/sources/${id}/callback`,
-      data,
+      payload,
     );
     return response.data;
   },
@@ -171,7 +188,7 @@ export const BankingService = {
     return response.data;
   },
 
-  confirmCandidate: async (id: string, data?: any) => {
+  confirmCandidate: async (id: string, data?: BankingCandidateOverrides) => {
     const response = await finappApi.post(
       `/banking/candidates/${id}/confirm`,
       data ?? {},
@@ -179,7 +196,7 @@ export const BankingService = {
     return response.data;
   },
 
-  confirmCandidates: async (items: any[]) => {
+  confirmCandidates: async (items: Array<{ id: string } & BankingCandidateOverrides>) => {
     const response = await finappApi.post("/banking/candidates/confirm", {
       items,
     });

@@ -28,15 +28,16 @@ import {
 import { DrawerContentScrollView } from "@react-navigation/drawer";
 import { useNavigation } from "@react-navigation/native";
 import { Pressable } from "react-native";
+import { useSubscription } from "../../hooks/useSubscription";
 import { useUserStore } from "../../stores/useUserStore";
 import { AuthActions } from "../../actions/authActions";
 
 export const Sidebar = (props: any) => {
   const navigation = useNavigation<any>();
-  const isPro = useUserStore((state) => state.isPro());
   const user = useUserStore((state) => state.user);
+  const { isPro, plan } = useSubscription();
 
-  const userPlan = user?.plan || "FREE";
+  const userPlan = plan || user?.plan || "FREE";
   const state = props.state;
   const currentRoute = state.routes[state.index].name;
 
@@ -47,13 +48,11 @@ export const Sidebar = (props: any) => {
       case "FREE":
         navigation.navigate("Subscription");
         break;
-      case "FAMILY_ADMIN":
-        navigation.navigate("FamilyGroup");
-        break;
       case "FAMILY_MEMBER":
       case "PRO":
+      case "FAMILY_ADMIN":
       default:
-        navigation.navigate("Settings");
+        navigation.navigate("SubscriptionDetails");
         break;
     }
   };

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { GoalType } from "../../types/goal.types";
+import { CURRENCY_CODES } from "../../types/currency.types";
 
 const GoalTypeEnum = z.nativeEnum(GoalType);
 
@@ -17,7 +18,7 @@ export const createGoalSchema = z.object({
   type: GoalTypeEnum,
 
   currency: z
-    .enum(["CLP", "USD", "EUR", "UF", "CAD", "BTC"])
+    .enum(CURRENCY_CODES)
     .refine((val) => !!val, { message: "Selecciona una moneda" }),
 
   targetAmount: z

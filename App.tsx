@@ -12,6 +12,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { GlobalToast } from "./src/components/ui/GlobalToast";
 import { useUserStore } from "./src/stores/useUserStore";
 import { usePushNotifications } from "./src/hooks/usePushNotifications";
+import { SubscriptionProvider } from "./src/providers/SubscriptionProvider";
 import { useThemePreferencesStore } from "./src/stores/useThemePreferencesStore";
 import { PortalProvider } from "@tamagui/portal";
 import { TamaguiProvider, Theme } from "tamagui";
@@ -87,8 +88,9 @@ export default function App() {
   const currentTheme = isDarkMode ? "dark" : "light";
 
   const [loaded, error] = useFonts({
-    Inter: require("@tamagui/font-inter/otf/Inter-Medium.otf"),
-    InterBold: require("@tamagui/font-inter/otf/Inter-Bold.otf"),
+    Manrope: require("./assets/fonts/Manrope-VariableFont_wght.ttf"),
+    InstrumentSerif: require("./assets/fonts/InstrumentSerif-Regular.ttf"),
+    InstrumentSerifItalic: require("./assets/fonts/InstrumentSerif-Italic.ttf"),
   });
 
   if (error) {
@@ -124,9 +126,11 @@ export default function App() {
           <PortalProvider shouldAddRootHost>
             <Theme name={currentTheme}>
               <SafeAreaProvider>
-                <GlobalToast />
-                <StatusBar style={isDarkMode ? "light" : "dark"} />
-                <RootNavigator />
+                <SubscriptionProvider>
+                  <GlobalToast />
+                  <StatusBar style={isDarkMode ? "light" : "dark"} />
+                  <RootNavigator />
+                </SubscriptionProvider>
               </SafeAreaProvider>
             </Theme>
           </PortalProvider>

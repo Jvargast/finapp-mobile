@@ -18,6 +18,7 @@ import {
 import { Plus, Sparkles } from "@tamagui/lucide-icons";
 import { GoalService } from "../../services/goalService";
 import { FinancialGoal, GoalType } from "../../types/goal.types";
+import { ExpenseModel } from "../../types/expense.types";
 import { formatGoalAmount } from "../../utils/formatMoney";
 import { GoalDetailHeader } from "../../components/goals/GoalDetailHeader";
 import { SavingsDetailView } from "../../components/goals/SavingsDetailView";
@@ -73,7 +74,11 @@ export const GoalDetailScreen = () => {
   const insets = useSafeAreaInsets();
   const route = useRoute<any>();
   const [isTransactionOpen, setTransactionOpen] = useState(false);
-  const { goalId, goal: initialGoal } = route.params;
+  const { goalId, goal: initialGoal, expenseModelFilter } = route.params as {
+    goalId: string;
+    goal: FinancialGoal;
+    expenseModelFilter?: ExpenseModel;
+  };
 
   const [goal, setGoal] = useState<FinancialGoal>(initialGoal);
   const [isLoading, setIsLoading] = useState(false);
@@ -86,12 +91,14 @@ export const GoalDetailScreen = () => {
 
   const fetchGoalDetails = useCallback(async () => {
     try {
-      const data = await GoalService.getById(goalId);
+      const data = await GoalService.getById(goalId, {
+        expenseModel: expenseModelFilter,
+      });
       setGoal(data);
     } catch (error) {
       console.error("Error actualizando meta", error);
     }
-  }, [goalId]);
+  }, [expenseModelFilter, goalId]);
 
   useFocusEffect(
     useCallback(() => {

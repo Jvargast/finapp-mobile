@@ -1,4 +1,5 @@
 import { Currency } from "./goal.types";
+import { ExpenseModel } from "./expense.types";
 
 export type RecurrenceUnit = "MONTHLY" | "WEEKLY";
 export type RecurringTransactionType = "INCOME" | "EXPENSE";
@@ -11,6 +12,7 @@ export interface RecurringTransaction {
   amount: number;
   currency: Currency;
   type: RecurringTransactionType;
+  expenseModel?: ExpenseModel | null;
   accountId: string;
   categoryId: string;
   description?: string | null;
@@ -36,6 +38,7 @@ export interface CreateRecurringParams {
   amount: number;
   currency: Currency;
   type: RecurringTransactionType;
+  expenseModel?: ExpenseModel;
   accountId: string;
   categoryId: string;
   description?: string | null;
@@ -61,6 +64,7 @@ export interface RecurringFilters {
   accountId?: string;
   isActive?: boolean;
   type?: RecurringTransactionType;
+  expenseModel?: ExpenseModel;
 }
 
 export type RecurringStatusFilter = "ALL" | "ACTIVE" | "PAUSED";
@@ -69,6 +73,7 @@ export interface RecurringListFilters {
   search?: string;
   accountId?: string | null;
   type?: RecurringTransactionType | "ALL";
+  expenseModel?: ExpenseModel | "ALL";
   recurrenceUnit?: RecurrenceUnit | "ALL";
   status?: RecurringStatusFilter;
 }

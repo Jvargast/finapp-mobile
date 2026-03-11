@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { CURRENCY_CODES } from "../../types/currency.types";
 
 export const createAccountSchema = z.object({
   name: z
@@ -14,7 +15,7 @@ export const createAccountSchema = z.object({
     .enum(["CHECKING", "SAVINGS", "CREDIT_CARD", "CASH", "OTHER"])
     .default("CHECKING"),
 
-  currency: z.enum(["CLP", "USD"]).default("CLP"),
+  currency: z.enum(CURRENCY_CODES).default("CLP"),
 
   institution: z.string().optional(),
 

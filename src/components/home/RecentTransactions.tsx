@@ -4,6 +4,7 @@ import { useNavigation } from "@react-navigation/native";
 import { useTransactionStore } from "../../stores/useTransactionStore";
 import { TransactionItem } from "../transactions/TransactionItem";
 import { PillButton } from "../ui/PillButton";
+import { DisplayHeading } from "../ui/DisplayHeading";
 
 export const RecentTransactions = () => {
   const navigation = useNavigation<any>();
@@ -15,9 +16,9 @@ export const RecentTransactions = () => {
   return (
     <YStack space="$4" paddingHorizontal="$2" marginBottom="$6">
       <XStack justifyContent="space-between" alignItems="center">
-        <Text fontSize="$5" fontWeight="800" color="$color">
+        <DisplayHeading fontSize="$6" fontWeight="400" color="$color">
           Últimos Movimientos
-        </Text>
+        </DisplayHeading>
         <PillButton
           label="Ver todo"
           onPress={() => navigation.navigate("Movements", { tab: "HISTORY" })}

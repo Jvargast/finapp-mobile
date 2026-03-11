@@ -18,6 +18,7 @@ import {
   ArrowRightLeft,
 } from "@tamagui/lucide-icons";
 import { BankingActions } from "../../actions/bankingActions";
+import { DisplayHeading } from "../ui/DisplayHeading";
 
 const LIMIT = 20;
 
@@ -98,19 +99,19 @@ export const HomePriorityRail = () => {
     [navigation, pendingCount, isLoading, isDark],
   );
   const subtitleColor = isDark ? "#E2E8F0" : "#1F2937";
-  const chipBg = isDark ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.8)";
+  const chipBg = isDark ? "rgba(255,255,255,0.16)" : "rgba(255,255,255,0.92)";
   const chipBorder = isDark
-    ? "rgba(255,255,255,0.2)"
-    : "rgba(255,255,255,0.6)";
-  const badgeBg = isDark ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.8)";
+    ? "rgba(255,255,255,0.28)"
+    : "rgba(255,255,255,0.82)";
+  const badgeBg = isDark ? "rgba(255,255,255,0.16)" : "rgba(255,255,255,0.92)";
 
   return (
     <YStack space="$3" marginBottom="$5">
       <XStack justifyContent="space-between" alignItems="center">
         <YStack>
-          <Text fontSize="$5" fontWeight="800" color="$color">
+          <DisplayHeading fontSize="$6" fontWeight="400" color="$color">
             Centro de acción
-          </Text>
+          </DisplayHeading>
           <Text fontSize={12} color="$gray10">
             Lo importante primero.
           </Text>
@@ -146,7 +147,6 @@ export const HomePriorityRail = () => {
                 shadowOpacity={card.primary ? 0.2 : 0.12}
                 shadowRadius={12}
                 shadowOffset={{ width: 0, height: 6 }}
-                elevation={2}
               >
                 <LinearGradient
                   colors={card.gradient}
@@ -180,12 +180,14 @@ export const HomePriorityRail = () => {
                         paddingVertical={2}
                         borderRadius="$8"
                         backgroundColor={badgeBg}
+                        borderWidth={1}
+                        borderColor={chipBorder}
                       >
                         {isLoading && card.primary ? (
                           <Spinner size="small" color={card.accent} />
                         ) : (
                           <Text
-                            fontSize={11}
+                            fontSize={12}
                             fontWeight="800"
                             color={card.accent}
                           >

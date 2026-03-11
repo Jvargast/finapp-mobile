@@ -1,58 +1,93 @@
 import React from "react";
-import { YStack, XStack, Text, Progress, Circle } from "tamagui";
+import { YStack, XStack, Text, Circle } from "tamagui";
 import {
   Crown,
   Users,
   HeartHandshake,
   CheckCircle2,
   AlertCircle,
+  Clock3,
 } from "@tamagui/lucide-icons";
+import { DisplayHeading } from "../ui/DisplayHeading";
+import {
+  type BackendSubscriptionState,
+  type SubscriptionFamilyRole,
+} from "../../types/subscription.types";
+import { SubscriptionPlan } from "../../types/user.types";
 
 interface PlanStatusCardProps {
-  planType: "PRO" | "FAMILY_ADMIN" | "FAMILY_MEMBER";
-  status: "ACTIVE" | "CANCELLED" | "EXPIRED";
-  renewsAt: string; 
+  subscription: BackendSubscriptionState | null;
+  familyRole?: SubscriptionFamilyRole;
+  dateLabel?: string;
 }
 
 export const PlanStatusCard = ({
-  planType,
-  status,
-  renewsAt,
+  subscription,
+  familyRole = "NONE",
+  dateLabel,
 }: PlanStatusCardProps) => {
-  const isActive = status === "ACTIVE";
+  const planType = subscription?.plan ?? SubscriptionPlan.FREE;
+  const isActive = subscription?.isActive ?? false;
+  const isCanceled = subscription?.isCanceled ?? false;
+  const statusLabel = isActive
+    ? isCanceled
+      ? "Cancelada, activa hasta el fin del ciclo"
+      : "Suscripcion activa"
+    : "Sin suscripcion activa";
 
   const config = {
     PRO: {
-      title: "Wou+ Individual",
+      title: "WouFinance Pro",
       icon: Crown,
       color: "#F59E0B",
       description: "Acceso total a herramientas personales.",
     },
     FAMILY_ADMIN: {
-      title: "Wou+ Familiar (Admin)",
+      title: "WouFinance Family",
       icon: Users,
-      color: "#8B5CF6",
+      color: "#0EA5E9",
       description: "Tú y 5 miembros disfrutan de beneficios Premium.",
     },
     FAMILY_MEMBER: {
-      title: "Miembro Familiar",
+      title: "WouFinance Family",
       icon: HeartHandshake,
       color: "#10B981",
       description: "Plan gestionado por el administrador del grupo.",
     },
+    FREE: {
+      title: "Plan Free",
+      icon: Clock3,
+      color: "#64748B",
+      description: "Acceso basico sin beneficios premium.",
+    },
   }[planType];
 
   const Icon = config.icon;
+  const toneColor = isActive ? config.color : "#94A3B8";
+  const secondaryLabel = dateLabel
+    ? isActive
+      ? subscription?.willRenew
+        ? `Renueva ${dateLabel}`
+        : `Acceso hasta ${dateLabel}`
+      : `Vencio ${dateLabel}`
+    : isActive
+    ? "Sin fecha de expiracion informada"
+    : "Activa un plan para desbloquear WouFinance Pro";
+  const familyRoleLabel =
+    planType === SubscriptionPlan.FAMILY_ADMIN
+      ? "Administrador"
+      : familyRole === "MEMBER"
+      ? "Miembro"
+      : null;
 
   return (
     <YStack
       backgroundColor="$gray2"
       borderRadius="$8"
       borderWidth={1}
-      borderColor={isActive ? config.color : "$gray5"}
+      borderColor={toneColor}
       padding="$5"
-      elevation={isActive ? "$4" : undefined}
-      shadowColor={config.color}
+      shadowColor={toneColor}
       shadowOpacity={0.1}
     >
       <XStack
@@ -61,25 +96,30 @@ export const PlanStatusCard = ({
         marginBottom="$4"
       >
         <XStack space="$3" alignItems="center">
-          <Circle size={48} backgroundColor={`${config.color}20`}>
-            <Icon size={24} color={config.color} />
+          <Circle size={48} backgroundColor={`${toneColor}20`}>
+            <Icon size={24} color={toneColor} />
           </Circle>
           <YStack>
-            <Text fontSize="$5" fontWeight="800" color="$color">
+            <DisplayHeading
+              fontSize="$6"
+              fontWeight="400"
+              color="$color"
+              lineHeight={26}
+            >
               {config.title}
-            </Text>
+            </DisplayHeading>
             <XStack alignItems="center" space="$1.5">
               {isActive ? (
-                <CheckCircle2 size={12} color={config.color} />
+                <CheckCircle2 size={12} color={toneColor} />
               ) : (
                 <AlertCircle size={12} color="$red10" />
               )}
               <Text
                 fontSize={12}
                 fontWeight="700"
-                color={isActive ? config.color : "$red10"}
+                color={isActive ? toneColor : "$red10"}
               >
-                {isActive ? "Suscripción Activa" : "Cancelada / Expirada"}
+                {statusLabel}
               </Text>
             </XStack>
           </YStack>
@@ -90,24 +130,27 @@ export const PlanStatusCard = ({
         {config.description}
       </Text>
 
-      {isActive && (
-        <YStack space="$2">
-          <XStack justifyContent="space-between">
-            <Text fontSize={11} color="$gray10">
-              Ciclo actual
+      <YStack space="$2">
+        <XStack justifyContent="space-between" alignItems="center">
+          <Text fontSize={12} color="$gray10">
+            Estado backend
+          </Text>
+          <Text fontSize={12} color="$color" fontWeight="700">
+            {secondaryLabel}
+          </Text>
+        </XStack>
+
+        {familyRoleLabel ? (
+          <XStack justifyContent="space-between" alignItems="center">
+            <Text fontSize={12} color="$gray10">
+              Rol familiar
             </Text>
-            <Text fontSize={11} color="$gray10">
-              Renueva: {renewsAt}
+            <Text fontSize={12} color="$color" fontWeight="700">
+              {familyRoleLabel}
             </Text>
           </XStack>
-          <Progress value={65} size="$1">
-            <Progress.Indicator
-              animation="bouncy"
-              backgroundColor={config.color}
-            />
-          </Progress>
-        </YStack>
-      )}
+        ) : null}
+      </YStack>
     </YStack>
   );
 };

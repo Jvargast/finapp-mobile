@@ -34,6 +34,7 @@ export const AccountCard = memo(
     const isConnected = !!account.bankLinkId;
     const setupStatus = account.setupStatus || null;
     const normalizedType = String(account.type || "").toUpperCase();
+    const isAllAccounts = normalizedType === "ALL";
     const isCash = normalizedType === "CASH";
     const isSetupPending = !isCash && setupStatus === "PENDING";
     const isSetupActive = !isCash && setupStatus === "ACTIVE";
@@ -68,14 +69,28 @@ export const AccountCard = memo(
     }
 
     const CategoryIcon = account.icon || Wallet;
+    const formatCurrency = (value: number) =>
+      new Intl.NumberFormat("es-CL", {
+        style: "currency",
+        currency: account.currency || "CLP",
+      }).format(value);
+
+    const mainBalanceValue = Number(account.balance || 0);
+    const creditBalanceValue = Number(account.creditBalance || 0);
+    const netBalanceValue =
+      account.netBalance === undefined
+        ? mainBalanceValue
+        : Number(account.netBalance || 0);
+    const hasSplitSummary =
+      isAllAccounts && Math.abs(creditBalanceValue) > 0.005;
+    const balanceLabel =
+      account.balanceLabel ||
+      (isAllAccounts ? "Saldo Líquido" : "Saldo Disponible");
 
     const displayBalance =
       typeof account.balance === "number" ||
       (typeof account.balance === "string" && !account.balance.includes("$"))
-        ? new Intl.NumberFormat("es-CL", {
-            style: "currency",
-            currency: account.currency || "CLP",
-          }).format(Number(account.balance))
+        ? formatCurrency(mainBalanceValue)
         : account.balance;
 
     const fallbackBg =
@@ -142,70 +157,72 @@ export const AccountCard = memo(
             zIndex={1}
           />
         )}
-        <XStack
-          position="absolute"
-          top={12}
-          right={12}
-          zIndex={3}
-          backgroundColor="rgba(0,0,0,0.25)"
-          borderRadius="$10"
-          paddingVertical="$1"
-          paddingHorizontal="$2"
-          alignItems="center"
-          space="$2"
-          borderWidth={1}
-          borderColor="rgba(255,255,255,0.2)"
-        >
-          {isSetupPending ? (
-            <>
-              <Clock size={14} color="rgba(255,255,255,0.9)" />
-              <Text
-                color="rgba(255,255,255,0.9)"
-                fontSize={11}
-                fontWeight="800"
-              >
-                Pendiente
-              </Text>
-            </>
-          ) : isSetupActive ? (
-            <>
-              <LinkIcon size={14} color="rgba(255,255,255,0.9)" />
-              <Text
-                color="rgba(255,255,255,0.9)"
-                fontSize={11}
-                fontWeight="800"
-              >
-                Activa
-              </Text>
-            </>
-          ) : isConnected ? (
-            <>
-              <LinkIcon size={14} color="rgba(255,255,255,0.9)" />
-              <Text
-                color="rgba(255,255,255,0.9)"
-                fontSize={11}
-                fontWeight="800"
-              >
-                Conectada
-              </Text>
-            </>
-          ) : (
-            <>
-              <CheckCircle size={14} color="rgba(255,255,255,0.85)" />
-              <Text
-                color="rgba(255,255,255,0.85)"
-                fontSize={11}
-                fontWeight="800"
-              >
-                Manual
-              </Text>
-            </>
-          )}
-        </XStack>
+        {!isAllAccounts && (
+          <XStack
+            position="absolute"
+            top={12}
+            right={12}
+            zIndex={3}
+            backgroundColor="rgba(0,0,0,0.25)"
+            borderRadius="$10"
+            paddingVertical="$1"
+            paddingHorizontal="$2"
+            alignItems="center"
+            space="$2"
+            borderWidth={1}
+            borderColor="rgba(255,255,255,0.2)"
+          >
+            {isSetupPending ? (
+              <>
+                <Clock size={14} color="rgba(255,255,255,0.9)" />
+                <Text
+                  color="rgba(255,255,255,0.9)"
+                  fontSize={11}
+                  fontWeight="800"
+                >
+                  Pendiente
+                </Text>
+              </>
+            ) : isSetupActive ? (
+              <>
+                <LinkIcon size={14} color="rgba(255,255,255,0.9)" />
+                <Text
+                  color="rgba(255,255,255,0.9)"
+                  fontSize={11}
+                  fontWeight="800"
+                >
+                  Activa
+                </Text>
+              </>
+            ) : isConnected ? (
+              <>
+                <LinkIcon size={14} color="rgba(255,255,255,0.9)" />
+                <Text
+                  color="rgba(255,255,255,0.9)"
+                  fontSize={11}
+                  fontWeight="800"
+                >
+                  Conectada
+                </Text>
+              </>
+            ) : (
+              <>
+                <CheckCircle size={14} color="rgba(255,255,255,0.85)" />
+                <Text
+                  color="rgba(255,255,255,0.85)"
+                  fontSize={11}
+                  fontWeight="800"
+                >
+                  Manual
+                </Text>
+              </>
+            )}
+          </XStack>
+        )}
 
         <YStack padding="$4" flex={1} justifyContent="space-between" zIndex={2}>
           <XStack justifyContent="space-between" alignItems="flex-start">
-            {["CASH", "WALLET", "CREDIT_CARD", "OTHER"].includes(
+            {["ALL", "CASH", "WALLET", "CREDIT_CARD", "OTHER"].includes(
               String(account.type || "").toUpperCase()
             ) ? (
               <Stack
@@ -267,7 +284,7 @@ export const AccountCard = memo(
                 textTransform="uppercase"
                 letterSpacing={1}
               >
-                Saldo Disponible
+                {balanceLabel}
               </Text>
               {isConnected && (
                 <Wifi
@@ -288,6 +305,13 @@ export const AccountCard = memo(
             >
               {displayBalance}
             </Text>
+
+            {hasSplitSummary && (
+              <Text color="rgba(255,255,255,0.78)" fontSize={11} marginTop={2}>
+                {creditBalanceValue < 0 ? "Deuda" : "Crédito"}:{" "}
+                {formatCurrency(Math.abs(creditBalanceValue))}
+              </Text>
+            )}
           </YStack>
 
           <XStack justifyContent="space-between" alignItems="center">
@@ -300,15 +324,25 @@ export const AccountCard = memo(
             >
               {account.name}
             </Text>
-            {account.last4 && (
+            {isAllAccounts && hasSplitSummary ? (
               <Text
-                color="rgba(255,255,255,0.7)"
-                fontSize={12}
-                fontFamily="$mono"
-                letterSpacing={2}
+                color="rgba(255,255,255,0.82)"
+                fontSize={11}
+                fontWeight="700"
               >
-                •••• {account.last4}
+                Neto: {formatCurrency(netBalanceValue)}
               </Text>
+            ) : (
+              account.last4 && (
+                <Text
+                  color="rgba(255,255,255,0.7)"
+                  fontSize={12}
+                  fontFamily="$mono"
+                  letterSpacing={2}
+                >
+                  •••• {account.last4}
+                </Text>
+              )
             )}
           </XStack>
         </YStack>
