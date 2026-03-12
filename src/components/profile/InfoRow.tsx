@@ -1,5 +1,13 @@
-import { YStack, XStack, Text, Button, Separator, View } from "tamagui";
-import { ChevronRight, Lock } from "@tamagui/lucide-icons";
+import {
+  YStack,
+  XStack,
+  Text,
+  Button,
+  Stack,
+  Separator,
+  useThemeName,
+} from "tamagui";
+import { ChevronRight } from "@tamagui/lucide-icons";
 
 interface InfoRowProps {
   icon: any;
@@ -17,6 +25,14 @@ export const InfoRow = ({
   isLast = false,
 }: InfoRowProps) => {
   const isEditable = !!onEdit;
+  const hasValue = !!value;
+  const themeName = useThemeName();
+  const isDark = themeName.startsWith("dark");
+  const accentColor = "#4F46E5";
+  const iconColor = hasValue ? accentColor : "#94A3B8";
+  const pressOverlay = isDark
+    ? "rgba(255,255,255,0.05)"
+    : "rgba(15,23,42,0.04)";
 
   return (
     <YStack>
@@ -24,49 +40,43 @@ export const InfoRow = ({
         unstyled
         onPress={onEdit}
         disabled={!isEditable}
-        paddingVertical="$4"
+        backgroundColor="transparent"
+        paddingVertical="$3.5"
         paddingHorizontal="$4"
         animation="quick"
         pressStyle={{
-          scale: 0.98,
-          opacity: 0.8,
-          backgroundColor: "$backgroundPress",
+          scale: 0.985,
+          opacity: 1,
+          backgroundColor: pressOverlay,
         }}
       >
-        <XStack alignItems="center" space="$4">
-          <YStack
-            backgroundColor="$gray3"
+        <XStack alignItems="center" space="$3.5">
+          <Stack
+            backgroundColor={isEditable ? "$appAccentSoft" : "$appPage"}
             width={42}
             height={42}
-            borderRadius="$4"
+            borderRadius={14}
             alignItems="center"
             justifyContent="center"
-            borderWidth={1}
-            borderColor="$borderColor"
-            shadowColor="$shadowColor"
-            shadowRadius={4}
-            shadowOffset={{ width: 0, height: 2 }}
-            shadowOpacity={0.05}
           >
-            <Icon size={20} color="#4F46E5" strokeWidth={2} />
-          </YStack>
+            <Icon size={18} color={iconColor} strokeWidth={2} />
+          </Stack>
 
-          <YStack flex={1} space="$1">
+          <YStack flex={1} space="$0.5">
             <Text
               fontSize={11}
               color="$gray11"
-              fontWeight="700"
-              letterSpacing={0.5}
+              fontWeight="800"
+              letterSpacing={0.9}
               textTransform="uppercase"
-              opacity={0.8}
             >
               {label}
             </Text>
 
             <Text
-              fontSize={16}
-              color={value ? "$color" : "$gray9"}
-              fontWeight="600"
+              fontSize={15}
+              color={hasValue ? "$color" : "$gray9"}
+              fontWeight="700"
               numberOfLines={1}
             >
               {value || "No registrado"}
@@ -74,15 +84,16 @@ export const InfoRow = ({
           </YStack>
 
           {isEditable ? (
-            <View backgroundColor="$gray4" borderRadius="$10" padding="$1.5">
-              <ChevronRight size={16} color="$gray10" />
-            </View>
-          ) : (
-            <Lock size={14} color="$gray8" />
-          )}
+            <XStack alignItems="center" space="$1">
+              <Text fontSize={11} fontWeight="800" color={accentColor}>
+                Editar
+              </Text>
+              <ChevronRight size={14} color={accentColor} />
+            </XStack>
+          ) : null}
         </XStack>
       </Button>
-      {!isLast && <Separator borderColor="$borderColor" marginLeft={74} />}
+      {!isLast ? <Separator borderColor="$appBorder" marginLeft={58} /> : null}
     </YStack>
   );
 };

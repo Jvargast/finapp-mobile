@@ -46,6 +46,7 @@ import FintocWidgetScreen from "../screens/fintoc/FintocWidgetScreen";
 import RecurringScreen from "../screens/recurring/RecurringScreen";
 import RecurringCreateScreen from "../screens/recurring/RecurringCreateScreen";
 import RecurringEditScreen from "../screens/recurring/RecurringEditScreen";
+import { GoBackButton } from "../components/ui/GoBackButton";
 
 const Drawer = createDrawerNavigator();
 const Stack = createNativeStackNavigator();
@@ -76,13 +77,21 @@ export default function MainNavigator() {
   );
   const stackHeaderTitleStyle = {
     color: stackHeaderTint,
-    fontFamily: "InstrumentSerif",
+    fontFamily: "QuicksandSemiBold",
     fontSize: 22,
-    fontWeight: "400" as const,
   };
+  const renderHeaderBack = () => (
+    <GoBackButton iconColor={stackHeaderTint} marginLeft="$1" />
+  );
 
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator
+      screenOptions={{
+        headerShown: false,
+        headerBackVisible: false,
+        headerLeft: renderHeaderBack,
+      }}
+    >
       <Stack.Screen name="HomeDrawer" component={DrawerGroup} />
       <Stack.Screen
         name="Profile"
@@ -90,7 +99,6 @@ export default function MainNavigator() {
         options={{
           title: "Mi Perfil",
           headerShown: true,
-          headerBackTitle: "Volver",
           headerTintColor: stackHeaderTint,
           headerStyle: { backgroundColor: stackHeaderBackground },
           headerTitleStyle: stackHeaderTitleStyle,
@@ -104,7 +112,6 @@ export default function MainNavigator() {
         options={{
           title: "Editar",
           headerShown: true,
-          headerBackTitle: "Atrás",
           headerTintColor: stackHeaderTint,
           headerStyle: { backgroundColor: stackHeaderBackground },
           headerTitleStyle: stackHeaderTitleStyle,
@@ -161,7 +168,6 @@ export default function MainNavigator() {
         options={{
           headerShown: true,
           title: "Cambiar Contraseña",
-          headerBackTitle: "Volver",
           headerTintColor: stackHeaderTint,
           headerStyle: { backgroundColor: stackHeaderBackground },
           headerTitleStyle: stackHeaderTitleStyle,

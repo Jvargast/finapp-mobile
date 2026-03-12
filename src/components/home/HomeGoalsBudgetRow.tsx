@@ -23,10 +23,18 @@ import {
   ShieldCheck,
   TrendingUp,
   Briefcase,
+  HeartHandshake,
+  Users,
 } from "@tamagui/lucide-icons";
 import { LinearGradient } from "@tamagui/linear-gradient";
 import { useMyGoals } from "../../hooks/useMyGoals";
-import { Currency, GoalType } from "../../types/goal.types";
+import {
+  Currency,
+  FinancialGoal,
+  GoalType,
+  InvitationStatus,
+} from "../../types/goal.types";
+import { Budget, BudgetType } from "../../types/budget.types";
 import { useUserStore } from "../../stores/useUserStore";
 import { formatGoalAmount } from "../../utils/formatMoney";
 import { formatCurrencyAmount } from "../../utils/currency";
@@ -115,6 +123,48 @@ const hexToRgba = (hex: string, alpha: number, fallback: string) => {
   const g = parseInt(clean.slice(2, 4), 16);
   const b = parseInt(clean.slice(4, 6), 16);
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
+const getBudgetAudienceMeta = (budget: Budget) => {
+  const guests = budget.participants || [];
+  const ownerAsParticipant = budget.owner ? { user: budget.owner } : null;
+  const allParticipants = ownerAsParticipant
+    ? [
+        ownerAsParticipant,
+        ...guests.filter(
+          (participant) => participant.user.id !== ownerAsParticipant.user.id
+        ),
+      ]
+    : guests;
+  const isShared = budget.type === BudgetType.SHARED;
+  const isCouple = isShared && allParticipants.length <= 2;
+
+  return {
+    isShared,
+    isCouple,
+  };
+};
+
+const getGoalAudienceMeta = (goal: FinancialGoal) => {
+  const acceptedParticipants = (goal.participants || []).filter(
+    (participant) => participant.status === InvitationStatus.ACCEPTED
+  );
+  const memberIds = new Set<string>();
+
+  if (goal.userId) {
+    memberIds.add(goal.userId);
+  }
+
+  acceptedParticipants.forEach((participant) => {
+    memberIds.add(participant.userId || participant.user.id);
+  });
+
+  const totalMembers = memberIds.size;
+
+  return {
+    isShared: totalMembers > 1,
+    isCouple: totalMembers === 2,
+  };
 };
 
 const WidgetTitle = ({
@@ -394,12 +444,36 @@ export const HomeGoalsBudgetRow = () => {
                   const Icon = visual.icon;
                   const accent = isDark ? visual.darkAccent : visual.lightAccent;
                   const bg = isDark ? visual.darkColors : visual.lightColors;
+                  const { isShared, isCouple } = getGoalAudienceMeta(goal);
+                  const SharedGoalIcon = isCouple ? HeartHandshake : Users;
                   const target = Number(goal.targetAmount || 0);
                   const current = Number(goal.currentAmount || 0);
                   const progress =
                     target > 0 ? Math.min((current / target) * 100, 100) : 0;
                   const isPrioritySlide =
                     index === 0 && goal.type === mainGoalType;
+                  const sharedBadgeLabel = isCouple ? "Pareja" : "Grupo";
+                  const sharedBadgeColor = isCouple
+                    ? isDark
+                      ? "#FCD34D"
+                      : "#B45309"
+                    : isDark
+                    ? "#BFDBFE"
+                    : "#1D4ED8";
+                  const sharedBadgeBg = isCouple
+                    ? isDark
+                      ? "rgba(245,158,11,0.14)"
+                      : "rgba(245,158,11,0.12)"
+                    : isDark
+                    ? "rgba(96,165,250,0.14)"
+                    : "rgba(37,99,235,0.08)";
+                  const sharedBadgeBorder = isCouple
+                    ? isDark
+                      ? "rgba(252,211,77,0.24)"
+                      : "rgba(180,83,9,0.14)"
+                    : isDark
+                    ? "rgba(191,219,254,0.22)"
+                    : "rgba(29,78,216,0.12)";
 
                   return (
                     <Pressable
@@ -478,13 +552,41 @@ export const HomeGoalsBudgetRow = () => {
                           )}
                         </XStack>
 
-                        <YStack space="$2">
+                        <YStack space="$1">
+                          <Stack minHeight={14} justifyContent="flex-start">
+                            {isShared ? (
+                              <XStack
+                                alignItems="center"
+                                alignSelf="flex-start"
+                                space={3}
+                                paddingHorizontal={5}
+                                paddingVertical={1}
+                                borderRadius={999}
+                                backgroundColor={sharedBadgeBg}
+                                borderWidth={1}
+                                borderColor={sharedBadgeBorder}
+                              >
+                                <SharedGoalIcon
+                                  size={9}
+                                  color={sharedBadgeColor}
+                                />
+                                <Text
+                                  fontSize={8}
+                                  fontWeight="800"
+                                  color={sharedBadgeColor}
+                                  letterSpacing={0.1}
+                                >
+                                  {sharedBadgeLabel}
+                                </Text>
+                              </XStack>
+                            ) : null}
+                          </Stack>
                           <Text
                             fontSize="$5"
                             fontWeight="900"
                             color={isDark ? "#FFFFFF" : "#111827"}
                             numberOfLines={2}
-                            lineHeight={24}
+                            lineHeight={22}
                           >
                             {goal.name}
                           </Text>
@@ -638,12 +740,36 @@ export const HomeGoalsBudgetRow = () => {
                   const CategoryIcon = getIcon(
                     budget.category?.icon || "HelpCircle"
                   );
+                  const { isShared, isCouple } = getBudgetAudienceMeta(budget);
+                  const SharedBudgetIcon = isCouple ? HeartHandshake : Users;
                   const budgetTitle =
                     budget.name || budget.category?.name || "Sin nombre";
                   const categoryLabel = budget.category?.name || "Sin categoría";
                   const budgetMetaLabel = budgetTitle !== categoryLabel
                     ? categoryLabel
                     : "Mensual";
+                  const sharedBadgeLabel = isCouple ? "Pareja" : "Grupo";
+                  const sharedBadgeColor = isCouple
+                    ? isDark
+                      ? "#FCD34D"
+                      : "#B45309"
+                    : isDark
+                    ? "#BFDBFE"
+                    : "#1D4ED8";
+                  const sharedBadgeBg = isCouple
+                    ? isDark
+                      ? "rgba(245,158,11,0.14)"
+                      : "rgba(245,158,11,0.12)"
+                    : isDark
+                    ? "rgba(96,165,250,0.14)"
+                    : "rgba(37,99,235,0.08)";
+                  const sharedBadgeBorder = isCouple
+                    ? isDark
+                      ? "rgba(252,211,77,0.24)"
+                      : "rgba(180,83,9,0.14)"
+                    : isDark
+                    ? "rgba(191,219,254,0.22)"
+                    : "rgba(29,78,216,0.12)";
 
                   return (
                     <Pressable
@@ -704,12 +830,44 @@ export const HomeGoalsBudgetRow = () => {
                             marginTop={4}
                             backgroundColor={status.indicatorColor}
                             borderWidth={1}
-                            borderColor={isDark ? "rgba(255,255,255,0.4)" : "rgba(15,23,42,0.12)"}
+                            borderColor={
+                              isDark
+                                ? "rgba(255,255,255,0.4)"
+                                : "rgba(15,23,42,0.12)"
+                            }
                           />
                         </XStack>
 
                         <YStack space="$1.5" marginTop="$0.5">
-                          <YStack minHeight={36} justifyContent="flex-start">
+                          <YStack minHeight={44} justifyContent="flex-start" space="$1">
+                            <Stack minHeight={20} justifyContent="flex-start">
+                              {isShared ? (
+                                <XStack
+                                  alignItems="center"
+                                  alignSelf="flex-start"
+                                  space="$1"
+                                  paddingHorizontal="$1.5"
+                                  paddingVertical={3}
+                                  borderRadius={999}
+                                  backgroundColor={sharedBadgeBg}
+                                  borderWidth={1}
+                                  borderColor={sharedBadgeBorder}
+                                >
+                                  <SharedBudgetIcon
+                                    size={10}
+                                    color={sharedBadgeColor}
+                                  />
+                                  <Text
+                                    fontSize={9}
+                                    fontWeight="800"
+                                    color={sharedBadgeColor}
+                                    letterSpacing={0.2}
+                                  >
+                                    {sharedBadgeLabel}
+                                  </Text>
+                                </XStack>
+                              ) : null}
+                            </Stack>
                             <Text
                               fontSize={13}
                               fontWeight="800"

@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { ScrollView, RefreshControl } from "react-native";
 import { YStack, XStack, Text, Button } from "tamagui";
-import { ChevronLeft, Archive, Plus } from "@tamagui/lucide-icons";
+import { Archive, Plus } from "@tamagui/lucide-icons";
 import { useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useCategoryStore } from "../../stores/useCategoryStore";
@@ -10,6 +10,7 @@ import { Category } from "../../types/category.types";
 import { CreateCategorySheet } from "../../components/category/CreateCategorySheet";
 import { CategoryGridItem } from "../../components/category/CategoryGridItem";
 import { DangerModal } from "../../components/ui/DangerModal";
+import { GoBackButton } from "../../components/ui/GoBackButton";
 
 type TabOption = "ACTIVE" | "ARCHIVED";
 
@@ -106,13 +107,7 @@ export default function ManageCategoriesScreen() {
         paddingVertical="$3"
         space="$3"
       >
-        <Button
-          size="$3"
-          circular
-          chromeless
-          icon={ChevronLeft}
-          onPress={navigation.goBack}
-        />
+        <GoBackButton onPress={() => navigation.goBack()} iconColor="$color" />
         <Text fontSize="$6" fontWeight="800" flex={1}>
           Categorías
         </Text>

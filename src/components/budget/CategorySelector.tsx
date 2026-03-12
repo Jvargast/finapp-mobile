@@ -1,7 +1,7 @@
 import React, { useMemo, memo, useCallback, useState } from "react";
-import { Alert, FlatList } from "react-native";
-import { YStack, XStack, Text, Button, Separator } from "tamagui";
-import { Plus } from "@tamagui/lucide-icons";
+import { FlatList, TextInput } from "react-native";
+import { YStack, XStack, Text, Button, Separator, useThemeName } from "tamagui";
+import { Plus, Search } from "@tamagui/lucide-icons";
 import { Category } from "../../types/category.types";
 import { CategoryItem } from "../category/CategoryItem";
 import { DangerModal } from "../ui/DangerModal";
@@ -32,9 +32,19 @@ export const CategorySelector = memo(
     const [categoryToDelete, setCategoryToDelete] = useState<string | null>(
       null
     );
-    const { processedData, generalCount, customCount } = useMemo(() => {
-      const custom = categories.filter((c) => c.userId);
-      const general = categories.filter((c) => !c.userId);
+    const [searchQuery, setSearchQuery] = useState("");
+    const themeName = useThemeName();
+    const isDark = themeName.startsWith("dark");
+    const normalizedSearch = searchQuery.trim().toLowerCase();
+    const showSearch = categories.length > 7;
+    const { processedData, generalCount, customCount, visibleCount } = useMemo(() => {
+      const visibleCategories = normalizedSearch
+        ? categories.filter((category) =>
+            category.name.toLowerCase().includes(normalizedSearch)
+          )
+        : categories;
+      const custom = visibleCategories.filter((c) => c.userId);
+      const general = visibleCategories.filter((c) => !c.userId);
 
       const sorter = (a: Category, b: Category) => {
         if (a.name === "Otros" || a.name === "Others") return 1;
@@ -55,8 +65,9 @@ export const CategorySelector = memo(
         processedData: data,
         generalCount: general.length,
         customCount: custom.length,
+        visibleCount: visibleCategories.length,
       };
-    }, [categories]);
+    }, [categories, normalizedSearch]);
 
     const handleDeletePress = useCallback((id: string) => {
       setCategoryToDelete(id);
@@ -141,7 +152,16 @@ export const CategorySelector = memo(
           </Text>
 
           <XStack space="$1" alignItems="center">
-            {customCount > 0 && (
+            {normalizedSearch ? (
+              <Text
+                fontSize={10}
+                color="$gray9"
+                fontWeight="600"
+                marginRight="$2"
+              >
+                {visibleCount} resultados
+              </Text>
+            ) : customCount > 0 ? (
               <>
                 <Text fontSize={10} color="$purple10" fontWeight="700">
                   {customCount} Creadas
@@ -150,17 +170,47 @@ export const CategorySelector = memo(
                   |
                 </Text>
               </>
-            )}
-            <Text
-              fontSize={10}
-              color="$gray9"
-              fontWeight="600"
-              marginRight="$2"
-            >
-              {generalCount} Generales
-            </Text>
+            ) : null}
+            {!normalizedSearch ? (
+              <Text
+                fontSize={10}
+                color="$gray9"
+                fontWeight="600"
+                marginRight="$2"
+              >
+                {generalCount} Generales
+              </Text>
+            ) : null}
           </XStack>
         </XStack>
+
+        {showSearch ? (
+          <XStack
+            alignItems="center"
+            space="$2"
+            marginHorizontal="$2"
+            paddingHorizontal="$2.5"
+            height={36}
+            borderRadius="$10"
+            backgroundColor="$gray2"
+            borderWidth={1}
+            borderColor="$gray4"
+          >
+            <Search size={14} color="#94A3B8" />
+            <TextInput
+              style={{
+                flex: 1,
+                fontSize: 13,
+                color: isDark ? "#F8FAFC" : "#0F172A",
+                paddingVertical: 0,
+              }}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholder="Buscar categoría"
+              placeholderTextColor="#94A3B8"
+            />
+          </XStack>
+        ) : null}
 
         <FlatList
           data={processedData}
@@ -171,9 +221,6 @@ export const CategorySelector = memo(
           horizontal
           showsHorizontalScrollIndicator={false}
           ListHeaderComponent={ListHeader}
-          initialNumToRender={5}
-          maxToRenderPerBatch={5}
-          windowSize={5}
           contentContainerStyle={{
             paddingHorizontal: 16,
             paddingBottom: 10,
@@ -182,6 +229,11 @@ export const CategorySelector = memo(
           }}
           keyboardShouldPersistTaps="handled"
         />
+        {showSearch && normalizedSearch && visibleCount === 0 ? (
+          <Text paddingHorizontal="$4" fontSize={11} color="$gray8">
+            No hay categorías con ese nombre.
+          </Text>
+        ) : null}
         <DangerModal
           visible={!!categoryToDelete}
           onClose={() => setCategoryToDelete(null)}

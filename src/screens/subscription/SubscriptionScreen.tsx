@@ -2,7 +2,7 @@ import React, { useMemo, useRef, useState } from "react";
 import { Alert, ScrollView as RNScrollView } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ChevronLeft, Crown, RefreshCcw, Settings2 } from "@tamagui/lucide-icons";
+import { Crown, RefreshCcw, Settings2 } from "@tamagui/lucide-icons";
 import { Button, ScrollView, Text, XStack, YStack } from "tamagui";
 
 import { ComparisonTable } from "../../components/subscription/ComparisonTable";
@@ -10,6 +10,7 @@ import { PlanStatusCard } from "../../components/subscription/PlanStatusCard";
 import { PricingCard } from "../../components/subscription/PricingCard";
 import { SubscriptionCard } from "../../components/subscription/SubscriptionCard";
 import { DisplayHeading } from "../../components/ui/DisplayHeading";
+import { GoBackButton } from "../../components/ui/GoBackButton";
 import { useSubscription } from "../../hooks/useSubscription";
 import type {
   SubscriptionBillingCycle,
@@ -172,15 +173,7 @@ export default function SubscriptionScreen() {
   return (
     <YStack flex={1} backgroundColor="$background">
       <YStack position="absolute" top={insets.top + 10} left={20} zIndex={100}>
-        <Button
-          circular
-          size="$3"
-          chromeless
-          backgroundColor="rgba(255,255,255,0.08)"
-          icon={ChevronLeft}
-          onPress={() => navigation.goBack()}
-          color="$color"
-        />
+        <GoBackButton onPress={() => navigation.goBack()} iconColor="$color" />
       </YStack>
 
       <ScrollView
@@ -304,7 +297,7 @@ export default function SubscriptionScreen() {
                 title={PLAN_COPY[planType].title}
                 description={PLAN_COPY[planType].description}
                 price={planPrice}
-                period={billingCycle === "MONTHLY" ? " / mes" : " / ano"}
+                period={billingCycle === "MONTHLY" ? " / mes" : " / año"}
                 isSelected={selectedPlanType === planType}
                 onSelect={() => setSelectedPlanType(planType)}
                 isBestValue={planType === "FAMILY"}
@@ -382,7 +375,7 @@ export default function SubscriptionScreen() {
           <PricingCard
             title="Anual"
             price={yearlyPrice}
-            period="ano"
+            period="año"
             isSelected={billingCycle === "YEARLY"}
             onSelect={() => setBillingCycle("YEARLY")}
             badge={selectedOffering?.yearly ? "Disponible" : undefined}

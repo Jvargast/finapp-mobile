@@ -27,9 +27,8 @@ const REVENUECAT_ENTITLEMENT_ID =
   process.env.EXPO_PUBLIC_REVENUECAT_ENTITLEMENT_ID ?? "woufinance_pro";
 
 const REVENUECAT_OFFERING_IDS: Record<SubscriptionProductKind, string> = {
-  PRO: process.env.EXPO_PUBLIC_REVENUECAT_PRO_OFFERING_ID ?? "woufinance_pro",
-  FAMILY:
-    process.env.EXPO_PUBLIC_REVENUECAT_FAMILY_OFFERING_ID ?? "woufinance_family",
+  PRO: process.env.EXPO_PUBLIC_REVENUECAT_PRO_OFFERING_ID ?? "pro",
+  FAMILY: process.env.EXPO_PUBLIC_REVENUECAT_FAMILY_OFFERING_ID ?? "family",
 };
 
 const OFFERING_COPY: Record<
@@ -64,7 +63,7 @@ const getRevenueCatApiKey = () => {
 };
 
 const formatPeriodLabel = (billingCycle: SubscriptionBillingCycle) => {
-  return billingCycle === "MONTHLY" ? "/ mes" : "/ ano";
+  return billingCycle === "MONTHLY" ? "/ mes" : "/ año";
 };
 
 const buildPackageOption = (
@@ -281,7 +280,7 @@ export const RevenueCatService = {
     const canOpen = await Linking.canOpenURL(url);
 
     if (!canOpen) {
-      throw new Error("No pudimos abrir la URL de gestion de suscripcion.");
+      throw new Error("No pudimos abrir la URL de gestión de suscripción.");
     }
 
     await Linking.openURL(url);

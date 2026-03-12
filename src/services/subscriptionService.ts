@@ -2,6 +2,7 @@ import finappApi from "../api/finappApi";
 import {
   type BackendSubscriptionState,
   type SubscriptionFamilyRole,
+  type SubscriptionPeriodType,
 } from "../types/subscription.types";
 import { SubscriptionPlan } from "../types/user.types";
 
@@ -43,6 +44,20 @@ const normalizeNullableString = (value: unknown): string | null => {
   return typeof value === "string" ? value : null;
 };
 
+const normalizePeriodType = (value: unknown): SubscriptionPeriodType => {
+  switch (value) {
+    case "TRIAL":
+    case "INTRO":
+    case "NORMAL":
+    case "PROMOTIONAL":
+    case "PREPAID":
+    case "UNKNOWN":
+      return value;
+    default:
+      return "UNKNOWN";
+  }
+};
+
 const normalizeSubscription = (payload: unknown): BackendSubscriptionState => {
   const source =
     typeof payload === "object" &&
@@ -67,7 +82,10 @@ const normalizeSubscription = (payload: unknown): BackendSubscriptionState => {
   return {
     plan,
     isActive: Boolean("isActive" in data ? data.isActive : false),
+    purchasedAt: normalizeNullableString(data.purchasedAt),
+    currentPeriodStartsAt: normalizeNullableString(data.currentPeriodStartsAt),
     expiresAt: normalizeNullableString(data.expiresAt),
+    periodType: normalizePeriodType(data.periodType),
     willRenew: Boolean("willRenew" in data ? data.willRenew : false),
     isCanceled: Boolean("isCanceled" in data ? data.isCanceled : false),
     canceledAt: normalizeNullableString(data.canceledAt),
@@ -75,7 +93,6 @@ const normalizeSubscription = (payload: unknown): BackendSubscriptionState => {
     entitlement: normalizeNullableString(data.entitlement),
     environment: normalizeNullableString(data.environment),
     store: normalizeNullableString(data.store),
-    purchasedAt: normalizeNullableString(data.purchasedAt),
     family: {
       role: normalizeFamilyRole(
         familySource && "role" in familySource ? familySource.role : null,

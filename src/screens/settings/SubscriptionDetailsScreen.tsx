@@ -4,36 +4,30 @@ import { useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   Calendar,
-  ChevronLeft,
   CreditCard,
   Download,
   RefreshCcw,
   Settings2,
   Store,
-  Ticket,
   Users,
 } from "@tamagui/lucide-icons";
-import { Button, ScrollView, Spacer, Text, XStack, YStack } from "tamagui";
+import { Button, ScrollView, Text, XStack, YStack } from "tamagui";
 
 import { BillingRow } from "../../components/subscription/BillingRow";
 import { PlanStatusCard } from "../../components/subscription/PlanStatusCard";
 import { DisplayHeading } from "../../components/ui/DisplayHeading";
+import { GoBackButton } from "../../components/ui/GoBackButton";
 import { useSubscription } from "../../hooks/useSubscription";
 import { SubscriptionPlan } from "../../types/user.types";
-
-const formatDateTime = (value: string | null) => {
-  if (!value) {
-    return "No informado";
-  }
-
-  return new Date(value).toLocaleString("es-CL", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-};
+import {
+  formatSubscriptionDateTime,
+  formatSubscriptionRemainingTime,
+  getSubscriptionFamilyRoleName,
+  getSubscriptionPlanName,
+  getSubscriptionPeriodTypeName,
+  getSubscriptionProductName,
+  getSubscriptionStoreName,
+} from "../../utils/subscriptionDisplay";
 
 export default function SubscriptionDetailsScreen() {
   const navigation = useNavigation<any>();
@@ -51,13 +45,95 @@ export default function SubscriptionDetailsScreen() {
     refresh,
   } = useSubscription();
 
-  const expiresAtLabel = formatDateTime(backendSubscription?.expiresAt ?? null);
-  const purchasedAtLabel = formatDateTime(
-    backendSubscription?.purchasedAt ?? null
+  const displayPlan = backendSubscription?.plan ?? plan;
+  const isTrialPeriod = backendSubscription?.periodType === "TRIAL";
+  const isCanceledButActive = Boolean(
+    backendSubscription?.isActive && backendSubscription?.isCanceled
   );
-  const canceledAtLabel = formatDateTime(
-    backendSubscription?.canceledAt ?? null
+  const expiresAtLabel = formatSubscriptionDateTime(
+    backendSubscription?.expiresAt ?? null
   );
+  const purchasedAtLabel =
+    formatSubscriptionDateTime(backendSubscription?.purchasedAt ?? null) ??
+    (displayPlan === SubscriptionPlan.FREE
+      ? "Sin compra registrada"
+      : "Pendiente de confirmación");
+  const currentPeriodStartsAtLabel =
+    formatSubscriptionDateTime(
+      backendSubscription?.currentPeriodStartsAt ?? null
+    ) ??
+    (displayPlan === SubscriptionPlan.FREE
+      ? "No aplica"
+      : "Pendiente de confirmación");
+  const canceledAtLabel =
+    backendSubscription?.isCanceled || backendSubscription?.canceledAt
+      ? formatSubscriptionDateTime(backendSubscription?.canceledAt ?? null) ??
+        "Pendiente de confirmación"
+      : null;
+  const remainingTimeLabel =
+    displayPlan === SubscriptionPlan.FREE
+      ? "No aplica"
+      : formatSubscriptionRemainingTime(backendSubscription?.expiresAt ?? null) ??
+        (backendSubscription?.isActive ? "Por confirmar" : "Expirada");
+  const periodTypeLabel =
+    displayPlan === SubscriptionPlan.FREE
+      ? "No aplica"
+      : getSubscriptionPeriodTypeName(backendSubscription?.periodType);
+  const accessLabel =
+    displayPlan === SubscriptionPlan.FREE
+      ? "No aplica"
+      : !backendSubscription?.isActive
+      ? backendSubscription?.isCanceled
+        ? "Cancelada"
+        : "Inactivo"
+      : isTrialPeriod
+      ? "En prueba"
+      : isCanceledButActive
+      ? "Activo hasta vencimiento"
+      : "Activo";
+  const renewalStatusLabel =
+    displayPlan === SubscriptionPlan.FREE
+      ? "No aplica"
+      : !backendSubscription?.isActive
+      ? backendSubscription?.isCanceled
+        ? "Cancelada"
+        : "Suscripción inactiva"
+      : isTrialPeriod
+      ? "Período de prueba en curso"
+      : isCanceledButActive
+      ? "Cancelada, seguirá activa hasta el vencimiento"
+      : backendSubscription?.willRenew
+      ? "Renovación automática activa"
+      : "No renovará al terminar el período";
+  const expiryRowLabel =
+    displayPlan === SubscriptionPlan.FREE
+      ? "Vigencia"
+      : !backendSubscription?.isActive
+      ? "Venció"
+      : isTrialPeriod
+      ? "Fin de prueba"
+      : "Expira el";
+  const expiryRowValue =
+    displayPlan === SubscriptionPlan.FREE
+      ? "No aplica"
+      : expiresAtLabel ??
+        (backendSubscription?.isActive ? "Por confirmar" : "Sin registro");
+  const familyRoleLabel = getSubscriptionFamilyRoleName(
+    displayPlan === SubscriptionPlan.FAMILY_ADMIN
+      ? "ADMIN"
+      : displayPlan === SubscriptionPlan.FAMILY_MEMBER
+      ? "MEMBER"
+      : familyRole
+  );
+  const productLabel = backendSubscription?.productId
+    ? getSubscriptionProductName(backendSubscription.productId)
+    : displayPlan === SubscriptionPlan.FREE
+    ? "Sin compra registrada"
+    : "Producto por confirmar";
+  const storeLabel =
+    displayPlan === SubscriptionPlan.FREE && !backendSubscription?.store
+      ? "No aplica"
+      : getSubscriptionStoreName(backendSubscription?.store ?? null);
 
   const handleRestore = async () => {
     try {
@@ -74,7 +150,7 @@ export default function SubscriptionDetailsScreen() {
       await openCustomerCenter();
     } catch (manageError) {
       if (manageError instanceof Error) {
-        Alert.alert("No se pudo abrir la gestion", manageError.message);
+        Alert.alert("No se pudo abrir la gestión", manageError.message);
       }
     }
   };
@@ -84,15 +160,12 @@ export default function SubscriptionDetailsScreen() {
       <YStack
         paddingTop={insets.top + 10}
         paddingHorizontal="$4"
-        marginBottom="$4"
+        paddingBottom="$1"
       >
-        <Button
-          unstyled
-          icon={ChevronLeft}
-          color="$color"
+        <GoBackButton
           onPress={() => navigation.goBack()}
+          iconColor="$color"
           marginBottom="$2"
-          alignSelf="flex-start"
         />
         <DisplayHeading
           fontSize="$8"
@@ -100,19 +173,19 @@ export default function SubscriptionDetailsScreen() {
           color="$color"
           lineHeight={36}
         >
-          Tu suscripcion
+          Tu suscripción
         </DisplayHeading>
       </YStack>
 
       <ScrollView showsVerticalScrollIndicator={false}>
-        <YStack paddingHorizontal="$4" paddingBottom="$9" space="$6">
+        <YStack paddingHorizontal="$4" paddingTop="$2" paddingBottom="$9" space="$5">
           <PlanStatusCard
             subscription={backendSubscription}
             familyRole={familyRole}
-            dateLabel={backendSubscription?.expiresAt ? expiresAtLabel : undefined}
+            dateLabel={expiresAtLabel ?? undefined}
           />
 
-          {plan === SubscriptionPlan.FREE ? (
+          {displayPlan === SubscriptionPlan.FREE ? (
             <YStack
               backgroundColor="$gray2"
               borderRadius="$6"
@@ -122,7 +195,7 @@ export default function SubscriptionDetailsScreen() {
               space="$3"
             >
               <Text color="$color" fontWeight="700">
-                No tienes una suscripcion premium activa.
+                No tienes una suscripción premium activa.
               </Text>
               <Button
                 size="$4"
@@ -134,7 +207,7 @@ export default function SubscriptionDetailsScreen() {
             </YStack>
           ) : null}
 
-          <YStack space="$2">
+          <YStack space="$2.5" marginTop="$4">
             <Text
               fontSize={13}
               fontWeight="700"
@@ -142,7 +215,7 @@ export default function SubscriptionDetailsScreen() {
               textTransform="uppercase"
               letterSpacing={1}
             >
-              Estado backend
+              Estado actual
             </Text>
 
             <YStack
@@ -152,33 +225,66 @@ export default function SubscriptionDetailsScreen() {
               borderWidth={1}
               borderColor="$gray4"
             >
-              <BillingRow label="Plan" value={backendSubscription?.plan ?? plan} />
               <BillingRow
-                label="Acceso premium"
-                value={backendSubscription?.isActive ? "Activo" : "Inactivo"}
+                label="Plan"
+                value={getSubscriptionPlanName(displayPlan)}
               />
               <BillingRow
-                label="Expira"
-                value={expiresAtLabel}
+                label="Acceso"
+                value={accessLabel}
+              />
+              <BillingRow
+                label="Período actual"
+                value={periodTypeLabel}
+              />
+              <BillingRow
+                label={expiryRowLabel}
+                value={expiryRowValue}
                 icon={Calendar}
+                stacked
               />
               <BillingRow
-                label="Renovacion automatica"
-                value={backendSubscription?.willRenew ? "Si" : "No"}
+                label="Tiempo restante"
+                value={remainingTimeLabel}
               />
               <BillingRow
-                label="Cancelada"
-                value={backendSubscription?.isCanceled ? "Si" : "No"}
+                label="Estado de renovación"
+                value={renewalStatusLabel}
               />
               <BillingRow
-                label="Cancelada el"
-                value={canceledAtLabel}
-                hideSeparator
+                label="Renovación automática"
+                value={
+                  displayPlan === SubscriptionPlan.FREE
+                    ? "No aplica"
+                    : backendSubscription?.willRenew
+                    ? "Sí"
+                    : "No"
+                }
               />
+              <BillingRow
+                label="Cancelación programada"
+                value={
+                  backendSubscription?.isCanceled
+                    ? isCanceledButActive
+                      ? "Sí, sigue activa"
+                      : "Sí"
+                    : "No"
+                }
+                hideSeparator={!canceledAtLabel}
+              />
+              {canceledAtLabel ? (
+                <BillingRow
+                  label="Cancelada el"
+                  value={canceledAtLabel}
+                  icon={Calendar}
+                  stacked
+                  hideSeparator
+                />
+              ) : null}
             </YStack>
           </YStack>
 
-          <YStack space="$2">
+          <YStack space="$2.5">
             <Text
               fontSize={13}
               fontWeight="700"
@@ -186,7 +292,7 @@ export default function SubscriptionDetailsScreen() {
               textTransform="uppercase"
               letterSpacing={1}
             >
-              Datos de compra
+              Compra y renovación
             </Text>
 
             <YStack
@@ -198,34 +304,35 @@ export default function SubscriptionDetailsScreen() {
             >
               <BillingRow
                 label="Producto"
-                value={backendSubscription?.productId ?? "No informado"}
+                value={productLabel}
                 icon={CreditCard}
               />
               <BillingRow
-                label="Entitlement"
-                value={backendSubscription?.entitlement ?? "No informado"}
-                icon={Ticket}
-              />
-              <BillingRow
-                label="Store"
-                value={backendSubscription?.store ?? "No informado"}
+                label="Tienda"
+                value={storeLabel}
                 icon={Store}
-              />
-              <BillingRow
-                label="Environment"
-                value={backendSubscription?.environment ?? "No informado"}
               />
               <BillingRow
                 label="Comprada el"
                 value={purchasedAtLabel}
                 icon={Calendar}
+                stacked
               />
               <BillingRow
-                label="Rol familiar"
-                value={familyRole === "NONE" ? "No aplica" : familyRole}
-                icon={Users}
-                hideSeparator
+                label="Inicio del período actual"
+                value={currentPeriodStartsAtLabel}
+                icon={Calendar}
+                stacked
+                hideSeparator={!familyRoleLabel}
               />
+              {familyRoleLabel ? (
+                <BillingRow
+                  label="Rol familiar"
+                  value={familyRoleLabel}
+                  icon={Users}
+                  hideSeparator
+                />
+              ) : null}
             </YStack>
           </YStack>
 
@@ -256,50 +363,47 @@ export default function SubscriptionDetailsScreen() {
               {isRestoring ? "Restaurando..." : "Restaurar compras"}
             </Button>
 
-            {hasManageSubscription && plan !== SubscriptionPlan.FREE ? (
-              <Button
-                size="$4"
-                backgroundColor="#F59E0B"
-                color="#111827"
-                icon={Settings2}
-                onPress={handleManage}
-                disabled={isManaging}
-              >
-                {isManaging ? "Abriendo..." : "Manage subscription"}
-              </Button>
-            ) : null}
-          </YStack>
-
-          <Spacer size="$2" />
-
-          <YStack
-            backgroundColor="$gray2"
-            borderRadius="$6"
-            borderWidth={1}
-            borderColor="$borderColor"
-            padding="$4"
-            space="$3"
-          >
-            <Text fontSize={13} color="$gray11" lineHeight={20}>
-              Las cancelaciones y cambios de plan se gestionan desde RevenueCat
-              Customer Center o directamente desde App Store / Google Play. El
-              backend sigue siendo la fuente de verdad para acceso premium.
-            </Text>
-
-            {plan === SubscriptionPlan.FAMILY_ADMIN ? (
-              <XStack justifyContent="space-between" alignItems="center">
-                <Text color="$gray10" fontSize={13}>
-                  Miembros del plan familiar
-                </Text>
-                <Button chromeless onPress={() => navigation.navigate("FamilyGroup")}>
-                  Abrir grupo
+            {hasManageSubscription && displayPlan !== SubscriptionPlan.FREE ? (
+              <YStack space="$2.5">
+                <Button
+                  size="$4"
+                  backgroundColor="#F59E0B"
+                  color="#111827"
+                  icon={Settings2}
+                  onPress={handleManage}
+                  disabled={isManaging}
+                >
+                  {isManaging ? "Abriendo..." : "Gestionar suscripción"}
                 </Button>
-              </XStack>
+                <Text fontSize={13} color="$gray11" lineHeight={19}>
+                  Si necesitas cancelar o cambiar tu plan, usa este acceso para
+                  abrir la gestión de la tienda.
+                </Text>
+              </YStack>
             ) : null}
           </YStack>
+
+          {displayPlan === SubscriptionPlan.FAMILY_ADMIN ? (
+            <XStack
+              justifyContent="space-between"
+              alignItems="center"
+              backgroundColor="$gray2"
+              borderRadius="$4"
+              borderWidth={1}
+              borderColor="$gray4"
+              paddingHorizontal="$4"
+              paddingVertical="$3.5"
+            >
+              <Text color="$gray10" fontSize={13}>
+                Miembros del plan familiar
+              </Text>
+              <Button chromeless onPress={() => navigation.navigate("FamilyGroup")}>
+                Abrir grupo
+              </Button>
+            </XStack>
+          ) : null}
         </YStack>
       </ScrollView>
     </YStack>
   );
 }
-

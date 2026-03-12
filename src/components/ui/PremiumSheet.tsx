@@ -117,26 +117,26 @@ export const PremiumSheet = ({
         >
           <FeatureRow
             icon={LayoutDashboard}
-            label="Sin Límites"
-            sublabel="Cuentas ilimitadas, categorías custom y exportación."
+            label="Más Cuentas"
+            sublabel="Crea y conecta más cuentas sin el tope del plan gratis."
             color={ACCENT_COLOR}
           />
           <FeatureRow
             icon={Users}
-            label="Modo Pareja o Familia"
-            sublabel="Comparte con tu pareja o crea un grupo familiar."
+            label="Colaboración"
+            sublabel="Presupuestos compartidos y plan pareja o familiar."
             color={ACCENT_COLOR}
           />
           <FeatureRow
             icon={Zap}
-            label="Inteligencia Artificial"
-            sublabel="Proyección de saldo, Wou Score y alertas."
+            label="Automatización"
+            sublabel="Setup automático, reglas bancarias y sync por período."
             color={ACCENT_COLOR}
           />
           <FeatureRow
             icon={Shield}
-            label="Privacidad Total"
-            sublabel="Modo Discreto (Shake-to-hide) y Sin Anuncios."
+            label="Control Premium"
+            sublabel="Edita cuentas en efectivo y desbloquea flujos premium."
             color={ACCENT_COLOR}
           />
         </YStack>

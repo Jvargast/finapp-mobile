@@ -47,33 +47,24 @@ export const GoBackButton = ({
 
   return (
     <Stack
-      width={42}
-      height={42}
+      width={38}
+      height={38}
       justifyContent="center"
       alignItems="center"
       onPress={handlePress}
       hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
-      backgroundColor={transparent ? "rgba(255,255,255,0.8)" : "$background"}
-      borderRadius="$10"
-      borderWidth={1}
-      borderColor="$gray4"
-      shadowColor="$shadowColor"
-      shadowOffset={{ width: 0, height: 2 }}
-      shadowOpacity={0.08}
-      shadowRadius={8}
+      backgroundColor="transparent"
+      borderRadius={999}
       pressStyle={{
-        scale: 0.92,
-        backgroundColor: "$gray3",
-        borderColor: "$gray5",
+        scale: 0.96,
+        backgroundColor: transparent ? "rgba(148,163,184,0.12)" : "$gray3",
       }}
       animation="quick"
       accessibilityRole="button"
       accessibilityLabel="Volver atrás"
       {...props}
     >
-      <Stack x={-1.5}>
-        <ChevronLeft size={24} color={iconColor} strokeWidth={2.5} />
-      </Stack>
+      <ChevronLeft size={22} color={iconColor} strokeWidth={2.5} />
     </Stack>
   );
 };

@@ -88,9 +88,11 @@ export default function App() {
   const currentTheme = isDarkMode ? "dark" : "light";
 
   const [loaded, error] = useFonts({
-    Manrope: require("./assets/fonts/Manrope-VariableFont_wght.ttf"),
-    InstrumentSerif: require("./assets/fonts/InstrumentSerif-Regular.ttf"),
-    InstrumentSerifItalic: require("./assets/fonts/InstrumentSerif-Italic.ttf"),
+    QuicksandLight: require("./assets/fonts/static/Quicksand-Light.ttf"),
+    QuicksandRegular: require("./assets/fonts/static/Quicksand-Regular.ttf"),
+    QuicksandMedium: require("./assets/fonts/static/Quicksand-Medium.ttf"),
+    QuicksandSemiBold: require("./assets/fonts/static/Quicksand-SemiBold.ttf"),
+    QuicksandBold: require("./assets/fonts/static/Quicksand-Bold.ttf"),
   });
 
   if (error) {

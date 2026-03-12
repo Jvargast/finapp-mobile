@@ -227,7 +227,7 @@ export default function SettingsScreen() {
                 <SettingItem
                   icon={Crown}
                   color="#F59E0B"
-                  label="Suscripcion Familiar"
+                  label="Suscripción Familiar"
                   value="Facturacion"
                   onPress={() => navigation.navigate("SubscriptionDetails")}
                 />
@@ -247,7 +247,7 @@ export default function SettingsScreen() {
                 <SettingItem
                   icon={Crown}
                   color="#F59E0B"
-                  label="Tu Suscripcion"
+                  label="Tu Suscripción"
                   value="Detalles"
                   onPress={() => navigation.navigate("SubscriptionDetails")}
                 />

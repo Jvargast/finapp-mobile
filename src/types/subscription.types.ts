@@ -5,11 +5,21 @@ import { SubscriptionPlan } from "./user.types";
 export type SubscriptionBillingCycle = "MONTHLY" | "YEARLY";
 export type SubscriptionProductKind = "PRO" | "FAMILY";
 export type SubscriptionFamilyRole = "ADMIN" | "MEMBER" | "NONE";
+export type SubscriptionPeriodType =
+  | "TRIAL"
+  | "INTRO"
+  | "NORMAL"
+  | "PROMOTIONAL"
+  | "PREPAID"
+  | "UNKNOWN";
 
 export interface BackendSubscriptionState {
   plan: SubscriptionPlan;
   isActive: boolean;
+  purchasedAt: string | null;
+  currentPeriodStartsAt: string | null;
   expiresAt: string | null;
+  periodType: SubscriptionPeriodType;
   willRenew: boolean;
   isCanceled: boolean;
   canceledAt: string | null;
@@ -17,7 +27,6 @@ export interface BackendSubscriptionState {
   entitlement: string | null;
   environment: string | null;
   store: string | null;
-  purchasedAt: string | null;
   family: {
     role: SubscriptionFamilyRole;
   } | null;

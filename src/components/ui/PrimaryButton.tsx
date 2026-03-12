@@ -1,4 +1,4 @@
-import { Button, Text, Spinner, ButtonProps } from "tamagui";
+import { Button, Text, Spinner, ButtonProps, useThemeName } from "tamagui";
 import { Check } from "@tamagui/lucide-icons";
 
 interface PrimaryButtonProps extends ButtonProps {
@@ -16,42 +16,46 @@ export const PrimaryButton = ({
   disabled,
   ...props
 }: PrimaryButtonProps) => {
-  const BRAND_COLOR = "#4F46E5";
+  const themeName = useThemeName();
+  const isDark = themeName.startsWith("dark");
+  const backgroundColor = isDark ? "#F8FAFC" : "#111827";
+  const textColor = isDark ? "#0F172A" : "#FFFFFF";
+  const pressedColor = isDark ? "#E2E8F0" : "#1F2937";
 
   return (
     <Button
-      backgroundColor={BRAND_COLOR}
+      backgroundColor={backgroundColor}
       height={56}
-      borderRadius="$6"
-      shadowColor="$shadowColor"
-      shadowOffset={{ width: 0, height: 4 }}
-      shadowOpacity={0.4}
-      shadowRadius={10}
+      borderRadius={20}
+      shadowColor={isDark ? "#FFFFFF" : "#0F172A"}
+      shadowOffset={{ width: 0, height: 8 }}
+      shadowOpacity={isDark ? 0.1 : 0.1}
+      shadowRadius={12}
       animation="quick"
       pressStyle={{
         scale: 0.97,
         opacity: 0.9,
-        backgroundColor: "#4338CA", 
+        backgroundColor: pressedColor,
       }}
       hoverStyle={{
-        backgroundColor: "#4338CA",
+        backgroundColor: pressedColor,
       }}
       disabled={isLoading || disabled}
       opacity={isLoading || disabled ? 0.6 : 1}
       icon={
         isLoading ? (
-          <Spinner color="white" />
+          <Spinner color={textColor} />
         ) : showIcon ? (
-          <Check size={20} color="white" />
+          <Check size={20} color={textColor} />
         ) : undefined
       }
       {...props}
     >
       <Text
-        color="white" 
-        fontWeight="700"
+        color={textColor}
+        fontWeight="800"
         fontSize={16}
-        letterSpacing={0.5}
+        letterSpacing={0.2}
       >
         {isLoading ? loadingText : label}
       </Text>

@@ -35,72 +35,52 @@ export const SUBSCRIPTION_PRODUCTS = {
 
 export const COMPARISON_DATA = [
   {
-    category: "Cuentas & Control",
+    category: "Cuentas & Automatización",
     features: [
       {
         name: "Cuentas Sincronizadas",
-        free: "Máx 2",
+        free: "Máx 3",
         pro: "Ilimitadas",
       },
       {
-        name: "Categorías",
-        free: "Estándar",
-        pro: "Emojis + Custom",
+        name: "Setup Automático de Cuentas",
+        free: "❌",
+        pro: "✅",
       },
       {
-        name: "Exportar Datos (Excel)",
-        free: "Resumido",
-        pro: "Detalle Total",
+        name: "Sincronización por Período",
+        free: "❌",
+        pro: "✅ Hasta 90 días",
+      },
+      {
+        name: "Reglas Bancarias",
+        free: "❌",
+        pro: "✅",
       },
     ],
   },
   {
-    category: "Inteligencia Artificial",
+    category: "Colaboración",
     features: [
       {
-        name: "Wou Score (Salud)",
-        free: "Básico",
-        pro: "Análisis Profundo",
+        name: "Presupuestos Compartidos",
+        free: "Limitado",
+        pro: "✅",
       },
       {
-        name: "Proyección de Saldo",
+        name: "Plan Pareja / Familiar",
         free: "❌",
-        pro: "✅ Futuro IA",
-      },
-      {
-        name: "Detector de Gastos Hormiga",
-        free: "❌",
-        pro: "✅ Alerta IA",
-      },
-      {
-        name: "Colaboración",
-        free: "❌",
-        pro: "Modo Pareja",
-      },
-      {
-        name: "Dashboard Unificado",
-        free: "❌",
-        pro: "dynamic_dashboard",
+        pro: "dynamic_collaboration",
       },
     ],
   },
   {
-    category: "Superpoderes",
+    category: "Control Premium",
     features: [
       {
-        name: "Modo Discreto (Privacidad)",
+        name: "Editar Cuentas en Efectivo",
         free: "❌",
-        pro: "✅ Shake-to-Hide",
-      },
-      {
-        name: "Candado de Metas",
-        free: "❌",
-        pro: "✅ Smart Lock",
-      },
-      {
-        name: "Publicidad",
-        free: "Con Anuncios",
-        pro: "Sin Interrupciones",
+        pro: "✅",
       },
     ],
   },

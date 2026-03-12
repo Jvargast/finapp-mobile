@@ -12,7 +12,6 @@ import {
   Lock,
 } from "@tamagui/lucide-icons";
 import { useNavigation } from "@react-navigation/native";
-import { useAccountStore } from "../../../stores/useAccountStore";
 import { DangerModal } from "../../ui/DangerModal";
 import {
   Account,
@@ -47,6 +46,9 @@ export const AccountOptionsSheet = ({
   const [showDangerModal, setShowDangerModal] = useState(false);
   const [showPremiumSheet, setShowPremiumSheet] = useState(false);
   const [showPaywall, setShowPaywall] = useState(false);
+  const [paywallDescription, setPaywallDescription] = useState(
+    "Las integraciones bancarias y sus automatizaciones están disponibles solo en WOU+."
+  );
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -58,6 +60,12 @@ export const AccountOptionsSheet = ({
   const setupMethod = account.setupMethod || null;
   const isSetupPending = setupStatus === AccountSetupStatus.PENDING;
   const isSetupActive = setupStatus === AccountSetupStatus.ACTIVE;
+
+  const openPremiumAccessSheet = (description: string) => {
+    setPaywallDescription(description);
+    setShowPaywall(true);
+  };
+
   const getVisuals = (type: string = "BANK") => {
     const normalizedType = type.toUpperCase();
     switch (normalizedType) {
@@ -143,11 +151,6 @@ export const AccountOptionsSheet = ({
       accountId: account.id,
       startAt: 2,
     });
-  };
-
-  const handleManualMovement = () => {
-    onOpenChange(false);
-    navigation.navigate("AddExpense", { accountId: account.id });
   };
 
   const handleDelete = async () => {
@@ -290,77 +293,106 @@ export const AccountOptionsSheet = ({
           >
             <YStack flex={1} justifyContent="flex-start" space="$4">
               <YStack space="$2">
-                {isPro &&
-                  !isCashAccount &&
-                  (isSetupPending || isSetupActive) && (
-                    <YStack space="$2">
-                      {isSetupPending && (
-                        <Button
-                          size="$5"
-                          backgroundColor="$brand"
-                          icon={<Link size={20} color="white" />}
-                          onPressIn={handleSetupPress}
-                          color="white"
-                          fontWeight="700"
-                          borderRadius="$10"
-                        >
-                          Terminar configuracion
-                        </Button>
-                      )}
-                  {isSetupActive && (
-                    <>
+                {!isCashAccount && (isSetupPending || isSetupActive) && (
+                  <YStack space="$2">
+                    {isSetupPending && (
                       <Button
                         size="$5"
-                        backgroundColor="$blue10"
-                        icon={<Link size={20} color="white" />}
-                        onPressIn={handleSyncPress}
-                        disabled={isSyncing}
-                        opacity={isSyncing ? 0.7 : 1}
-                        color="white"
+                        backgroundColor={isPro ? "$brand" : "$gray3"}
+                        icon={
+                          isPro ? (
+                            <Link size={20} color="white" />
+                          ) : (
+                            <Lock size={16} color="$gray10" />
+                          )
+                        }
+                        onPressIn={() => {
+                          if (!isPro) {
+                            openPremiumAccessSheet(
+                              "La configuración automática de cuentas está disponible solo en WOU+."
+                            );
+                            return;
+                          }
+                          handleSetupPress();
+                        }}
+                        color={isPro ? "white" : "$gray10"}
+                        fontWeight="700"
+                        borderRadius="$10"
+                        opacity={isPro ? 1 : 0.85}
+                      >
+                        Terminar configuracion
+                      </Button>
+                    )}
+
+                    {isSetupActive && (
+                      <Button
+                        size="$5"
+                        backgroundColor={isPro ? "$blue10" : "$gray3"}
+                        icon={
+                          isPro ? (
+                            <Link size={20} color="white" />
+                          ) : (
+                            <Lock size={16} color="$gray10" />
+                          )
+                        }
+                        onPressIn={() => {
+                          if (!isPro) {
+                            openPremiumAccessSheet(
+                              "La sincronización avanzada de cuentas está disponible solo en WOU+."
+                            );
+                            return;
+                          }
+                          handleSyncPress();
+                        }}
+                        disabled={isPro && isSyncing}
+                        opacity={isPro && isSyncing ? 0.7 : isPro ? 1 : 0.85}
+                        color={isPro ? "white" : "$gray10"}
                         fontWeight="700"
                         borderRadius="$10"
                       >
-                        {setupMethod === AccountSetupMethod.STATEMENT
-                          ? "Importar cartola"
-                          : isSyncing
-                            ? "Sincronizando..."
+                        {isPro
+                          ? setupMethod === AccountSetupMethod.STATEMENT
+                            ? "Importar cartola"
+                            : isSyncing
+                              ? "Sincronizando..."
+                              : "Sincronizar"
+                          : setupMethod === AccountSetupMethod.STATEMENT
+                            ? "Importar cartola"
                             : "Sincronizar"}
                       </Button>
-                    </>
-                  )}
-                    </YStack>
-                  )}
+                    )}
+                  </YStack>
+                )}
 
                 {!isCashAccount && (
                   <Button
                     size="$5"
-                    backgroundColor="$purple2"
-                    icon={<Eye size={20} color="$purple10" />}
+                    backgroundColor={isPro ? "$purple2" : "$gray3"}
+                    icon={
+                      isPro ? (
+                        <Eye size={20} color="$purple10" />
+                      ) : (
+                        <Lock size={16} color="$gray10" />
+                      )
+                    }
                     onPressIn={() => {
+                      if (!isPro) {
+                        openPremiumAccessSheet(
+                          "El detalle avanzado de cuentas está disponible solo en WOU+."
+                        );
+                        return;
+                      }
                       onOpenChange(false);
                       navigation.navigate("AccountDetail", {
                         accountId: account.id,
                       });
                     }}
-                    color="$purple10"
+                    color={isPro ? "$purple10" : "$gray10"}
                     fontWeight="700"
                     borderRadius="$10"
+                    opacity={isPro ? 1 : 0.85}
                   >
                     Ver detalles
-                  </Button>
-                )}
-
-                {!isPro && (
-                  <Button
-                    size="$5"
-                    backgroundColor="$blue10"
-                    icon={<Banknote size={20} color="white" />}
-                    onPressIn={handleManualMovement}
-                    color="white"
-                    fontWeight="700"
-                    borderRadius="$10"
-                  >
-                    Agregar movimiento manual
                   </Button>
                 )}
 
@@ -387,7 +419,7 @@ export const AccountOptionsSheet = ({
                             borderRadius="$10"
                             opacity={isEditLocked ? 0.7 : 1}
                           >
-                            {isEditLocked ? "Editar (WOU+)" : "Editar detalles"}
+                            Editar detalles
                           </Button>
                         </YStack>
 
@@ -466,18 +498,31 @@ export const AccountOptionsSheet = ({
                     borderRadius="$10"
                     opacity={isEditLocked ? 0.7 : 1}
                   >
-                    {isEditLocked ? "Editar (WOU+)" : "Editar detalles"}
+                    Editar detalles
                   </Button>
                   <Button
                     size="$5"
-                    backgroundColor="$red2"
-                    borderColor="$red4"
+                    backgroundColor={isEditLocked ? "$gray2" : "$red2"}
+                    borderColor={isEditLocked ? "$gray5" : "$red4"}
                     borderWidth={1}
-                    icon={<Trash2 size={20} color="$red10" />}
-                    onPressIn={() => setShowDangerModal(true)}
-                    color="$red10"
+                    icon={
+                      isEditLocked ? (
+                        <Lock size={16} color="$gray8" />
+                      ) : (
+                        <Trash2 size={20} color="$red10" />
+                      )
+                    }
+                    onPressIn={() => {
+                      if (isEditLocked) {
+                        setShowPremiumSheet(true);
+                        return;
+                      }
+                      setShowDangerModal(true);
+                    }}
+                    color={isEditLocked ? "$gray8" : "$red10"}
                     fontWeight="700"
                     borderRadius="$10"
+                    opacity={isEditLocked ? 0.7 : 1}
                   >
                     Eliminar cuenta
                   </Button>
@@ -514,13 +559,13 @@ export const AccountOptionsSheet = ({
         open={showPremiumSheet}
         onOpenChange={setShowPremiumSheet}
         title="Control de Efectivo Pro"
-        description="La edición manual avanzada de cuentas de efectivo es una característica exclusiva de WOU+."
+        description="La edición y eliminación de cuentas de efectivo es una característica exclusiva de WOU+."
       />
       <PremiumSheet
         open={showPaywall}
         onOpenChange={setShowPaywall}
         title="Requiere Wou+"
-        description="La sincronización automática está disponible solo en WOU+."
+        description={paywallDescription}
       />
       <ActionModal
         visible={showErrorModal}

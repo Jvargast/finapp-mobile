@@ -1,6 +1,6 @@
 import { AlertCircle, Info } from "@tamagui/lucide-icons";
 import { useState } from "react";
-import { YStack, Label, Input, XStack, Text } from "tamagui";
+import { YStack, Input, XStack, Text, Stack } from "tamagui";
 
 interface EditInputRowProps {
   label: string;
@@ -24,100 +24,86 @@ export const EditInputRow = ({
   helperText,
 }: EditInputRowProps) => {
   const [isFocused, setIsFocused] = useState(false);
-
-  const BRAND_COLOR = "#4F46E5";
-
-  const borderColor = error
-    ? "$red10"
-    : isFocused
-    ? BRAND_COLOR
-    : "$borderColor";
-
-  const backgroundColor = "$background";
-  const iconColor = error ? "$red10" : BRAND_COLOR;
-  const iconBgColor = error ? "$red2" : `${BRAND_COLOR}15`;
-  const labelColor = error ? "$red10" : isFocused ? BRAND_COLOR : "$gray11";
+  const brandColor = "#4F46E5";
+  const dangerColor = "#DC2626";
+  const borderColor = error ? "$red10" : isFocused ? brandColor : "$appBorder";
+  const iconColor = error ? dangerColor : brandColor;
+  const iconBgColor = error ? "$red2" : isFocused ? "$appAccentSoft" : "$appPage";
+  const labelColor = error ? "$red10" : isFocused ? brandColor : "$gray11";
+  const helperColor = error ? "$red10" : isFocused ? brandColor : "$gray10";
 
   return (
-    <YStack marginBottom="$2">
-      <Label
-        fontSize={12}
+    <YStack marginBottom="$2.5" space="$1.5">
+      <Text
+        fontSize={11}
         color={labelColor}
-        marginBottom="$1.5"
-        fontWeight="600"
+        fontWeight="800"
         animation="quick"
-        opacity={isFocused ? 1 : 0.8}
+        letterSpacing={0.9}
+        textTransform="uppercase"
         marginLeft="$1"
       >
         {label}
-      </Label>
+      </Text>
 
       <XStack
         alignItems="center"
-        backgroundColor={backgroundColor}
+        backgroundColor="$background"
         borderWidth={1}
         borderColor={borderColor}
-        borderRadius="$4"
-        height={50}
+        borderRadius={18}
+        minHeight={56}
         paddingHorizontal="$3"
-        shadowColor={isFocused ? BRAND_COLOR : "transparent"}
-        shadowRadius={isFocused ? 6 : 0}
-        shadowOffset={{ width: 0, height: isFocused ? 3 : 0 }}
-        shadowOpacity={isFocused ? 0.15 : 0}
         animation="quick"
       >
         {Icon && (
-          <YStack
+          <Stack
             backgroundColor={iconBgColor}
-            borderRadius="$3"
-            padding="$1.5"
+            borderRadius={12}
             marginRight="$3"
             justifyContent="center"
             alignItems="center"
-            width={32}
-            height={32}
+            width={36}
+            height={36}
           >
-            <Icon size={18} color={iconColor} opacity={1} />
-          </YStack>
+            <Icon size={17} color={iconColor} opacity={1} />
+          </Stack>
         )}
 
         <Input
           flex={1}
           unstyled
           value={value}
-          onChangeText={onChangeText}
+          onChange={(event: any) => onChangeText(event?.nativeEvent?.text ?? "")}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           placeholder={placeholder}
-          placeholderTextColor="$gray8"
+          placeholderTextColor="gray"
           autoCapitalize={autoCapitalize}
+          size="$5"
           color="$color"
-          fontSize={15}
-          fontWeight="500"
-          height="100%"
         />
 
         {error ? (
           <AlertCircle size={18} color="$red10" animation="bouncy" />
         ) : (
-          isFocused &&
           helperText && (
             <Info
               size={16}
-              color={BRAND_COLOR}
-              opacity={0.5}
+              color={brandColor}
+              opacity={isFocused ? 0.55 : 0.22}
               animation="quick"
             />
           )
         )}
       </XStack>
 
-      <YStack minHeight={20} justifyContent="center" marginTop="$1.5">
+      <YStack minHeight={helperText || error ? 18 : 0} justifyContent="center">
         {error ? (
           <Text
             color="$red10"
             fontSize={11}
-            fontWeight="600"
+            fontWeight="700"
             marginLeft="$2"
             animation="quick"
             enterStyle={{ opacity: 0, y: -5 }}
@@ -126,7 +112,7 @@ export const EditInputRow = ({
           </Text>
         ) : helperText ? (
           <Text
-            color={isFocused ? BRAND_COLOR : "$gray10"}
+            color={helperColor}
             fontSize={11}
             marginLeft="$2"
             animation="quick"

@@ -1,4 +1,4 @@
-import { YStack, Label, XStack, Text, Button } from "tamagui";
+import { YStack, XStack, Text, Button, Stack, useThemeName } from "tamagui";
 import { Edit3, ShieldCheck, AlertTriangle } from "@tamagui/lucide-icons";
 
 interface SensitiveRowProps {
@@ -15,58 +15,74 @@ export const SensitiveRow = ({
   onEdit,
 }: SensitiveRowProps) => {
   const hasValue = !!value;
-
+  const themeName = useThemeName();
+  const isDark = themeName.startsWith("dark");
   const brandColor = "#4F46E5";
-  const placeholderColor = "$gray9"; 
+  const warningColor = "#C2410C";
+  const actionColor = hasValue ? brandColor : warningColor;
+  const actionBg = isDark ? "rgba(255,255,255,0.08)" : "rgba(15,23,42,0.04)";
+  const actionPressedBg = isDark
+    ? "rgba(255,255,255,0.14)"
+    : "rgba(15,23,42,0.08)";
 
   return (
-    <YStack marginBottom="$4">
+    <YStack marginBottom="$2.5">
       <XStack
-        backgroundColor="$background"
-        borderRadius="$6"
-        padding="$3.5"
+        paddingVertical="$2"
         alignItems="center"
-        borderWidth={1}
-        borderColor="$borderColor"
-        shadowColor="$shadowColor"
-        shadowRadius={8}
-        shadowOffset={{ width: 0, height: 4 }}
-        shadowOpacity={0.05}
-        animation="quick"
+        space="$3"
       >
-        <YStack
-          backgroundColor="$gray2"
-          padding="$2.5"
-          borderRadius="$4"
-          marginRight="$3.5"
+        <Stack
+          backgroundColor={hasValue ? "$appAccentSoft" : "$warningSoft"}
+          width={42}
+          height={42}
+          borderRadius={14}
           alignItems="center"
           justifyContent="center"
         >
-          <Icon
-            size={20}
-            color={hasValue ? brandColor : placeholderColor}
-            strokeWidth={2}
-          />
-        </YStack>
+          <Icon size={18} color={actionColor} strokeWidth={2} />
+        </Stack>
 
         <YStack flex={1} space="$0.5">
-          <XStack alignItems="center" space="$1.5">
+          <XStack alignItems="center" space="$2" flexWrap="wrap">
             <Text
               fontSize={11}
-              color="$gray10" 
-              fontWeight="700"
+              color="$gray11"
+              fontWeight="800"
               textTransform="uppercase"
-              letterSpacing={0.5}
+              letterSpacing={0.9}
             >
               {label}
             </Text>
-            {hasValue && <ShieldCheck size={10} color="#10B981" />}
+            <XStack
+              alignItems="center"
+              space="$1"
+              paddingHorizontal="$2"
+              paddingVertical={2}
+              borderRadius={999}
+              backgroundColor={hasValue ? "$successSoft" : "$warningSoft"}
+            >
+              {hasValue ? (
+                <ShieldCheck size={10} color="#15803D" />
+              ) : (
+                <AlertTriangle size={10} color={warningColor} />
+              )}
+              <Text
+                fontSize={10}
+                color={hasValue ? "$appSuccess" : "$appWarning"}
+                fontWeight="800"
+                textTransform="uppercase"
+                letterSpacing={0.5}
+              >
+                {hasValue ? "Verificado" : "Pendiente"}
+              </Text>
+            </XStack>
           </XStack>
 
           <Text
             fontSize={15}
-            color={hasValue ? "$color" : placeholderColor}
-            fontWeight="600"
+            color={hasValue ? "$color" : "$gray9"}
+            fontWeight="700"
             numberOfLines={1}
             ellipsizeMode="middle"
           >
@@ -75,36 +91,26 @@ export const SensitiveRow = ({
         </YStack>
 
         <Button
+          unstyled
           onPress={onEdit}
-          size="$3"
-          backgroundColor="$gray3"
-          hoverStyle={{ backgroundColor: "$gray4" }}
-          pressStyle={{ backgroundColor: "$gray5", scale: 0.97 }}
-          borderWidth={1}
-          borderColor="$borderColor"
-          borderRadius="$10"
-          paddingHorizontal="$3"
-          icon={<Edit3 size={14} color={brandColor} />}
+          backgroundColor="transparent"
+          borderRadius={999}
+          pressStyle={{ opacity: 1, backgroundColor: "transparent" }}
         >
-          <Text fontSize={12} fontWeight="600" color={brandColor}>
-            {hasValue ? "Editar" : "Añadir"}
-          </Text>
+          <Stack
+            width={34}
+            height={34}
+            borderRadius={999}
+            alignItems="center"
+            justifyContent="center"
+            backgroundColor={actionBg}
+            animation="quick"
+            pressStyle={{ backgroundColor: actionPressedBg }}
+          >
+            <Edit3 size={15} color={actionColor} />
+          </Stack>
         </Button>
       </XStack>
-
-      {!hasValue && (
-        <XStack
-          marginTop="$1.5"
-          marginLeft="$2"
-          alignItems="center"
-          space="$1.5"
-        >
-          <AlertTriangle size={12} color="#F59E0B" />
-          <Text fontSize={11} color="#F59E0B" fontWeight="500">
-            Recomendado para recuperar tu cuenta.
-          </Text>
-        </XStack>
-      )}
     </YStack>
   );
 };

@@ -1,7 +1,7 @@
-import React, { useEffect, useMemo } from "react";
-import { Pressable, ScrollView } from "react-native";
-import { YStack, Text, Circle, XStack } from "tamagui";
-import { Plus } from "@tamagui/lucide-icons";
+import React, { useEffect, useMemo, useState } from "react";
+import { Pressable, ScrollView, TextInput } from "react-native";
+import { YStack, Text, Circle, XStack, useThemeName } from "tamagui";
+import { Plus, Search } from "@tamagui/lucide-icons";
 import { useCategoryStore } from "../../stores/useCategoryStore";
 import { CategoryActions } from "../../actions/categoryActions";
 import { getIcon } from "../../utils/iconMap";
@@ -27,6 +27,9 @@ export const CategorySelector = ({
   onAddCategory,
   transactionType,
 }: Props) => {
+  const [searchQuery, setSearchQuery] = useState("");
+  const themeName = useThemeName();
+  const isDark = themeName.startsWith("dark");
   const categories = useCategoryStore((state) => state.categories);
   const isLoading = useCategoryStore((state) => state.isLoading);
 
@@ -45,6 +48,29 @@ export const CategorySelector = ({
       )
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [categories, transactionType]);
+  const normalizedSearch = searchQuery.trim().toLowerCase();
+  const filteredCategories = useMemo(() => {
+    if (!normalizedSearch) return activeCategories;
+    return activeCategories.filter((category) =>
+      category.name.toLowerCase().includes(normalizedSearch)
+    );
+  }, [activeCategories, normalizedSearch]);
+  const showSearch = activeCategories.length > 7;
+  const categoryScopeLabel =
+    transactionType === "EXPENSE"
+      ? "de gasto"
+      : transactionType === "INCOME"
+      ? "de ingreso"
+      : "activas";
+  const counterLabel = normalizedSearch
+    ? `${filteredCategories.length} resultados`
+    : `${activeCategories.length} ${categoryScopeLabel}`;
+  const searchPlaceholder =
+    transactionType === "EXPENSE"
+      ? "Buscar categoría de gasto"
+      : transactionType === "INCOME"
+      ? "Buscar categoría de ingreso"
+      : "Buscar categoría";
 
   const headerPadding = embedded ? 0 : "$4";
 
@@ -65,9 +91,37 @@ export const CategorySelector = ({
           Categoría
         </Text>
         <Text fontSize={10} color="$gray8">
-          {activeCategories.length} disponibles
+          {counterLabel}
         </Text>
       </XStack>
+
+      {showSearch ? (
+        <XStack
+          alignItems="center"
+          space="$2"
+          marginHorizontal={embedded ? 0 : 20}
+          paddingHorizontal="$2.5"
+          height={36}
+          borderRadius="$10"
+          backgroundColor="$gray2"
+          borderWidth={1}
+          borderColor="$gray4"
+        >
+          <Search size={14} color="#94A3B8" />
+          <TextInput
+            style={{
+              flex: 1,
+              fontSize: 13,
+              color: isDark ? "#F8FAFC" : "#0F172A",
+              paddingVertical: 0,
+            }}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholder={searchPlaceholder}
+            placeholderTextColor="#94A3B8"
+          />
+        </XStack>
+      ) : null}
 
       <ScrollView
         horizontal
@@ -81,7 +135,7 @@ export const CategorySelector = ({
           paddingTop: embedded ? 6 : 10,
         }}
       >
-        {activeCategories.map((cat) => {
+        {filteredCategories.map((cat) => {
           const isSelected = selectedId === cat.id;
           const Icon = getIcon(cat.icon);
           const softColor = getSoftColor(cat.color);
@@ -159,6 +213,16 @@ export const CategorySelector = ({
           </YStack>
         </Pressable>
       </ScrollView>
+
+      {showSearch && normalizedSearch && filteredCategories.length === 0 ? (
+        <Text
+          paddingHorizontal={headerPadding}
+          fontSize={11}
+          color="$gray8"
+        >
+          No hay {categoryScopeLabel} con ese nombre.
+        </Text>
+      ) : null}
     </YStack>
   );
 };

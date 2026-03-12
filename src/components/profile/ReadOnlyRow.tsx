@@ -1,5 +1,5 @@
 import { Lock } from "@tamagui/lucide-icons";
-import { Label, Text, XStack, YStack } from "tamagui";
+import { Text, XStack, YStack, Stack } from "tamagui";
 
 interface ReadOnlyRowProps {
   label: string;
@@ -8,34 +8,38 @@ interface ReadOnlyRowProps {
 
 export const ReadOnlyRow = ({ label, value }: ReadOnlyRowProps) => {
   return (
-    <YStack>
-      <Label
-        fontSize={12}
+    <YStack space="$1.5">
+      <Text
+        fontSize={11}
         color="$gray11"
-        marginBottom="$1"
-        fontWeight="600"
+        fontWeight="800"
+        textTransform="uppercase"
+        letterSpacing={0.9}
+        marginLeft="$1"
       >
         {label}
-      </Label>
+      </Text>
 
       <XStack
         alignItems="center"
-        backgroundColor="$gray3"
-        borderRadius="$4"
-        paddingHorizontal="$3"
-        height={50}
-        borderWidth={1}
-        borderColor="$borderColor"
+        paddingVertical="$2"
+        space="$3"
       >
-        <Lock size={16} color="$gray9" /> 
-        <Text
-          color="$gray10"
-          marginLeft="$2"
-          fontSize={15}
-          fontWeight="500"
+        <Stack
+          width={36}
+          height={36}
+          borderRadius={12}
+          backgroundColor="$appPage"
+          alignItems="center"
+          justifyContent="center"
         >
-          {value}
-        </Text>
+          <Lock size={16} color="#64748B" />
+        </Stack>
+        <YStack flex={1} space={2}>
+          <Text color="$gray11" fontSize={15} fontWeight="700">
+            {value}
+          </Text>
+        </YStack>
       </XStack>
     </YStack>
   );

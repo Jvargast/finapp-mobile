@@ -12,14 +12,17 @@ import {
   useThemeName,
 } from "tamagui";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ChevronLeft, Link2Off, Link2 } from "@tamagui/lucide-icons";
+import { Link2Off, Link2, Lock } from "@tamagui/lucide-icons";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { AppState, Image, Linking } from "react-native";
 import { BankingActions } from "../../actions/bankingActions";
 import { BankingPublicActions } from "../../actions/bankingPublicActions";
+import { PremiumSheet } from "../../components/ui/PremiumSheet";
 import { useToastStore } from "../../stores/useToastStore";
+import { useSubscription } from "../../hooks/useSubscription";
 import { useUserStore } from "../../stores/useUserStore";
 import { DisplayHeading } from "../../components/ui/DisplayHeading";
+import { GoBackButton } from "../../components/ui/GoBackButton";
 
 type Provider = "GMAIL" | "GOOGLE";
 type ProviderKey = Provider | "OUTLOOK";
@@ -177,6 +180,7 @@ export default function BankingIntegrationsScreen() {
   const insets = useSafeAreaInsets();
   const { showToast } = useToastStore();
   const user = useUserStore((state) => state.user);
+  const { isPro } = useSubscription();
   const themeName = useThemeName();
   const isDark = themeName.startsWith("dark");
 
@@ -188,6 +192,7 @@ export default function BankingIntegrationsScreen() {
     useState<PendingOAuthContext | null>(null);
   const [gmailEmail, setGmailEmail] = useState(user?.email || "");
   const [googleEmail, setGoogleEmail] = useState(user?.email || "");
+  const [showPremiumSheet, setShowPremiumSheet] = useState(false);
   const hasCheckedInitialUrlRef = useRef(false);
   const oauthCallbackInFlightRef = useRef(false);
 
@@ -521,6 +526,11 @@ export default function BankingIntegrationsScreen() {
   );
 
   const handleConnect = async (provider: Provider) => {
+    if (!isPro) {
+      setShowPremiumSheet(true);
+      return;
+    }
+
     setIsConnecting(provider);
     try {
       let source = getProviderSource(provider);
@@ -625,7 +635,11 @@ export default function BankingIntegrationsScreen() {
     const connected = isProviderConnected(provider);
     const isBusy = isConnecting === provider;
     const primaryBackground = theme.accent;
-    const primaryIcon = <Link2 size={16} color="white" />;
+    const primaryIcon = isPro ? (
+      <Link2 size={16} color="white" />
+    ) : (
+      <Lock size={16} color="$gray10" />
+    );
     const inputBackground = isDark ? "$gray2" : "$white";
     const inputBorder = isDark
       ? hexToRgba(theme.accent, 0.4)
@@ -702,7 +716,9 @@ export default function BankingIntegrationsScreen() {
           <Input
             placeholder="tu@email.com"
             value={emailValue}
-            onChangeText={onEmailChange}
+            onChange={(event: any) =>
+              onEmailChange(event?.nativeEvent?.text ?? "")
+            }
             backgroundColor={inputBackground}
             borderWidth={1}
             borderColor={inputBorder}
@@ -714,16 +730,25 @@ export default function BankingIntegrationsScreen() {
           <Button
             size="$5"
             width="100%"
-            backgroundColor={primaryBackground}
-            color="white"
-            onPress={() => handleConnect(provider)}
+            backgroundColor={isPro ? primaryBackground : "$gray3"}
+            color={isPro ? "white" : "$gray10"}
+            onPress={() => {
+              void handleConnect(provider);
+            }}
             disabled={isBusy}
             opacity={isBusy ? 0.7 : 1}
             icon={primaryIcon}
             borderRadius="$10"
           >
-            {connected ? "Reconectar" : "Conectar"}
+            {connected
+                ? "Reconectar"
+                : "Conectar"}
           </Button>
+          {!isPro && (
+            <Text fontSize="$2" color="$gray9">
+              Esta integración está disponible solo en WOU+.
+            </Text>
+          )}
           {connected && (
             <Button
               size="$5"
@@ -817,13 +842,10 @@ export default function BankingIntegrationsScreen() {
         paddingHorizontal="$4"
         marginBottom="$4"
       >
-        <Button
-          unstyled
-          icon={ChevronLeft}
-          color="$color"
+        <GoBackButton
           onPress={() => navigation.goBack()}
+          iconColor="$color"
           marginBottom="$2"
-          alignSelf="flex-start"
         />
         <DisplayHeading
           fontSize="$8"
@@ -879,6 +901,13 @@ export default function BankingIntegrationsScreen() {
           )}
         </YStack>
       </ScrollView>
+
+      <PremiumSheet
+        open={showPremiumSheet}
+        onOpenChange={setShowPremiumSheet}
+        title="Integraciones Premium"
+        description="La conexión y automatización de integraciones bancarias está disponible solo en WOU+."
+      />
     </YStack>
   );
 }

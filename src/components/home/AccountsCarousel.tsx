@@ -76,7 +76,7 @@ export const AccountsCarousel = () => {
       <XStack
         justifyContent="space-between"
         alignItems="flex-start"
-        paddingHorizontal="$4"
+        paddingHorizontal="$2"
       >
         <YStack>
           <DisplayHeading fontSize="$6" fontWeight="400" color="$color">

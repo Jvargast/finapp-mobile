@@ -4,24 +4,39 @@ import { useUserStore } from "../stores/useUserStore";
 import { NotificationService } from "../services/notificationService";
 
 export const usePushNotifications = () => {
-  const { user } = useUserStore();
+  const userId = useUserStore((state) => state.user?.id ?? null);
+  const storedPushToken = useUserStore((state) => state.user?.pushToken ?? null);
 
   const notificationListener = useRef<Notifications.Subscription | null>(null);
   const responseListener = useRef<Notifications.Subscription | null>(null);
+  const lastSyncedTokenRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!user) return;
+    if (!userId) {
+      lastSyncedTokenRef.current = null;
+      return;
+    }
 
     const register = async () => {
       const token =
         await NotificationService.registerForPushNotificationsAsync();
-      if (token) {
-        console.log("📲 Token listo:", token);
-        await NotificationService.updateUserToken(token);
+
+      if (!token) {
+        return;
       }
+
+      const syncKey = `${userId}:${token}`;
+
+      if (storedPushToken === token || lastSyncedTokenRef.current === syncKey) {
+        return;
+      }
+
+      console.log("📲 Token listo:", token);
+      await NotificationService.updateUserToken(token);
+      lastSyncedTokenRef.current = syncKey;
     };
 
-    register();
+    void register();
 
     notificationListener.current =
       Notifications.addNotificationReceivedListener((notification) => {
@@ -37,5 +52,5 @@ export const usePushNotifications = () => {
       if (notificationListener.current) notificationListener.current.remove();
       if (responseListener.current) responseListener.current.remove();
     };
-  }, [user]);
+  }, [userId]);
 };

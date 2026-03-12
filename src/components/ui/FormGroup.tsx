@@ -1,37 +1,35 @@
-import { YStack, Text } from "tamagui";
+import type { ReactNode } from "react";
+import { Text, YStack } from "tamagui";
 
 interface FormGroupProps {
-  children: React.ReactNode;
+  children: ReactNode;
   title?: string;
 }
 
 export const FormGroup = ({ children, title }: FormGroupProps) => (
-  <YStack marginBottom="$5">
-    {title && (
+  <YStack marginBottom="$4" space="$2">
+    {title ? (
       <Text
-        fontSize={13}
-        fontWeight="700"
+        fontSize={11}
+        fontWeight="800"
         color="$gray11"
-        marginBottom="$2.5"
-        marginLeft="$2"
         textTransform="uppercase"
-        letterSpacing={0.5}
+        letterSpacing={0.9}
+        paddingHorizontal="$1"
       >
         {title}
       </Text>
-    )}
+    ) : null}
 
     <YStack
-      backgroundColor="$gray2"
-      borderRadius="$6"
-      borderWidth={1}
-      borderColor="$borderColor"
+      backgroundColor="$appSurface"
+      borderRadius={24}
       padding="$4"
       space="$3"
       shadowColor="$shadowColor"
-      shadowRadius={3}
-      shadowOffset={{ width: 0, height: 2 }}
-      shadowOpacity={0.05}
+      shadowRadius={10}
+      shadowOffset={{ width: 0, height: 6 }}
+      shadowOpacity={0.04}
     >
       {children}
     </YStack>

@@ -29,11 +29,14 @@ export const PlanStatusCard = ({
   const planType = subscription?.plan ?? SubscriptionPlan.FREE;
   const isActive = subscription?.isActive ?? false;
   const isCanceled = subscription?.isCanceled ?? false;
+  const isTrial = subscription?.periodType === "TRIAL";
   const statusLabel = isActive
-    ? isCanceled
+    ? isTrial
+      ? "Período de prueba activo"
+      : isCanceled
       ? "Cancelada, activa hasta el fin del ciclo"
-      : "Suscripcion activa"
-    : "Sin suscripcion activa";
+      : "Suscripción activa"
+    : "Sin suscripción activa";
 
   const config = {
     PRO: {
@@ -55,10 +58,10 @@ export const PlanStatusCard = ({
       description: "Plan gestionado por el administrador del grupo.",
     },
     FREE: {
-      title: "Plan Free",
+      title: "Plan gratuito",
       icon: Clock3,
       color: "#64748B",
-      description: "Acceso basico sin beneficios premium.",
+      description: "Acceso básico sin beneficios premium.",
     },
   }[planType];
 
@@ -66,12 +69,16 @@ export const PlanStatusCard = ({
   const toneColor = isActive ? config.color : "#94A3B8";
   const secondaryLabel = dateLabel
     ? isActive
-      ? subscription?.willRenew
+      ? isTrial
+        ? `Prueba hasta ${dateLabel}`
+        : isCanceled
+        ? `Activa hasta ${dateLabel}`
+        : subscription?.willRenew
         ? `Renueva ${dateLabel}`
         : `Acceso hasta ${dateLabel}`
-      : `Vencio ${dateLabel}`
+      : `Venció ${dateLabel}`
     : isActive
-    ? "Sin fecha de expiracion informada"
+    ? "Estamos confirmando la vigencia de tu plan"
     : "Activa un plan para desbloquear WouFinance Pro";
   const familyRoleLabel =
     planType === SubscriptionPlan.FAMILY_ADMIN
@@ -86,7 +93,7 @@ export const PlanStatusCard = ({
       borderRadius="$8"
       borderWidth={1}
       borderColor={toneColor}
-      padding="$5"
+      padding="$4"
       shadowColor={toneColor}
       shadowOpacity={0.1}
     >
@@ -95,11 +102,11 @@ export const PlanStatusCard = ({
         alignItems="flex-start"
         marginBottom="$4"
       >
-        <XStack space="$3" alignItems="center">
+        <XStack space="$3" alignItems="center" flex={1}>
           <Circle size={48} backgroundColor={`${toneColor}20`}>
             <Icon size={24} color={toneColor} />
           </Circle>
-          <YStack>
+          <YStack flex={1} flexShrink={1}>
             <DisplayHeading
               fontSize="$6"
               fontWeight="400"
@@ -108,7 +115,7 @@ export const PlanStatusCard = ({
             >
               {config.title}
             </DisplayHeading>
-            <XStack alignItems="center" space="$1.5">
+            <XStack alignItems="flex-start" space="$1.5" flexShrink={1}>
               {isActive ? (
                 <CheckCircle2 size={12} color={toneColor} />
               ) : (
@@ -118,6 +125,9 @@ export const PlanStatusCard = ({
                 fontSize={12}
                 fontWeight="700"
                 color={isActive ? toneColor : "$red10"}
+                flex={1}
+                flexShrink={1}
+                lineHeight={16}
               >
                 {statusLabel}
               </Text>
@@ -131,21 +141,34 @@ export const PlanStatusCard = ({
       </Text>
 
       <YStack space="$2">
-        <XStack justifyContent="space-between" alignItems="center">
+        <YStack space="$1">
           <Text fontSize={12} color="$gray10">
-            Estado backend
+            Vigencia actual
           </Text>
-          <Text fontSize={12} color="$color" fontWeight="700">
+          <Text
+            fontSize={12}
+            color="$color"
+            fontWeight="700"
+            lineHeight={18}
+            flexShrink={1}
+          >
             {secondaryLabel}
           </Text>
-        </XStack>
+        </YStack>
 
         {familyRoleLabel ? (
           <XStack justifyContent="space-between" alignItems="center">
             <Text fontSize={12} color="$gray10">
               Rol familiar
             </Text>
-            <Text fontSize={12} color="$color" fontWeight="700">
+            <Text
+              fontSize={12}
+              color="$color"
+              fontWeight="700"
+              flexShrink={1}
+              textAlign="right"
+              marginLeft="$3"
+            >
               {familyRoleLabel}
             </Text>
           </XStack>
